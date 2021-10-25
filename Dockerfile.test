@@ -134,8 +134,8 @@ COPY --from=api $LIB/libz.so.* $LIB/
 COPY --from=api /usr/bin/acap-runtime /usr/bin/
 
 # Test image
-#COPY --from=api /usr/bin/acap-runtime.test /usr/bin/
-#COPY --from=api /opt/acap-runtime/testdata/* /testdata/
+COPY --from=api /usr/bin/acap-runtime.test /usr/bin/
+COPY --from=api /opt/acap-runtime/testdata/* /testdata/
 
 # This container is used for finding out what libraries acap-runtime
 # needs, and the outcome is the list above of libraries to preserve.
