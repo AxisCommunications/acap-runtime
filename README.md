@@ -38,12 +38,12 @@ export BASE_IMAGE=$REPO/acap-api:$API_VERSION-$ARCH-ubuntu$UBUNTU_VERSION
 export ACAP_RUNTIME=$REPO/acap-runtime:$VERSION-api.$API_VERSION-$ARCH-ubuntu$UBUNTU_VERSION
 
 # Build official docker container image for camera
-DOCKER_BUILDKIT=1 docker build . -t $ACAP_RUNTIME --build-arg UBUNTU_VERSION --build-arg BASE_IMAGE
+DOCKER_BUILDKIT=1 docker build . -t $ACAP_RUNTIME -f Dockerfile.armv7hf --target release --build-arg UBUNTU_VERSION --build-arg BASE_IMAGE
 docker push $ACAP_RUNTIME
 
 # Build docker test container image for camera
 export ACAP_RUNTIME=$REPO/acap-runtime:$VERSION.test-api.$API_VERSION-$ARCH-ubuntu$UBUNTU_VERSION
-DOCKER_BUILDKIT=1 docker build . -t $ACAP_RUNTIME --build-arg UBUNTU_VERSION --build-arg BASE_IMAGE -f Dockerfile.test
+DOCKER_BUILDKIT=1 docker build . -t $ACAP_RUNTIME -f Dockerfile.armv7hf --build-arg UBUNTU_VERSION --build-arg BASE_IMAGE
 docker push $ACAP_RUNTIME
 
 # Run test container on camera, example:
