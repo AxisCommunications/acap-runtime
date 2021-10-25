@@ -104,7 +104,8 @@ RUN mkdir apis &&\
 COPY . ./
 RUN make install
 
-FROM arm32v7/ubuntu:$UBUNTU_VERSION as release
+# Runtime image
+FROM arm32v7/ubuntu:$UBUNTU_VERSION as runtime
 ENV LIB=/usr/lib/arm-linux-gnueabihf
 ENV LD_LIBRARY_PATH=/host/lib
 
@@ -134,7 +135,7 @@ COPY --from=api $LIB/libz.so.* $LIB/
 COPY --from=api /usr/bin/acap-runtime /usr/bin/
 
 # Test image
-FROM release as test
+FROM runtime as test
 COPY --from=api /usr/bin/acap-runtime.test /usr/bin/
 COPY --from=api /opt/acap-runtime/testdata/* /testdata/
 
