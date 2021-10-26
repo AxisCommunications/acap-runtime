@@ -28,35 +28,25 @@ To get started following system requirements shall be met:
 ## Build
 Example docker build command for camera:
 ```sh
-# Set docker names
-export VERSION=0.1
-export UBUNTU_VERSION=20.04
-export API_VERSION=4.0
-export REPO=axisecp
-export ARCH=armv7hf
-export BASE_IMAGE=$REPO/acap-api:$API_VERSION-$ARCH-ubuntu$UBUNTU_VERSION
-export ACAP_RUNTIME=$REPO/acap-runtime:$VERSION-api.$API_VERSION-$ARCH-ubuntu$UBUNTU_VERSION
-
 # Build official docker container image for camera
-DOCKER_BUILDKIT=1 docker build . -t $ACAP_RUNTIME -f Dockerfile.armv7hf --target release --build-arg UBUNTU_VERSION --build-arg BASE_IMAGE
-docker push $ACAP_RUNTIME
+docker build . -t axisecp/acap-runtime:latest -f Dockerfile.armv7hf --target runtime
+docker push axisecp/acap-runtime:latest
 
 # Build docker test container image for camera
-export ACAP_RUNTIME=$REPO/acap-runtime:$VERSION.test-api.$API_VERSION-$ARCH-ubuntu$UBUNTU_VERSION
-DOCKER_BUILDKIT=1 docker build . -t $ACAP_RUNTIME -f Dockerfile.armv7hf --build-arg UBUNTU_VERSION --build-arg BASE_IMAGE
-docker push $ACAP_RUNTIME
+docker build . -t axisecp/acap-runtime:latest-test -f Dockerfile.armv7hf
+docker push axisecp/acap-runtime:latest-test
 
 # Run test container on camera, example:
 export AXIS_TARGET_IP=<IP Address>
 docker -H tcp://$AXIS_TARGET_IP system prune -af
-docker -H tcp://$AXIS_TARGET_IP pull $ACAP_RUNTIME
+docker -H tcp://$AXIS_TARGET_IP pull axisecp/acap-runtime:latest-test
 docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
- --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket -it $ACAP_RUNTIME acap-runtime.test
+ --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket -it axisecp/acap-runtime:latest-test acap-runtime.test
 
 # Run test container with verbose prints on camera
 docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $ACAP_RUNTIME acap-runtime.test --gtest_color=yes --gtest_filter=Inference.PredictTpuModel3
+ -it axisecp/acap-runtime:latest-test acap-runtime.test --gtest_color=yes --gtest_filter=Inference.PredictTpuModel3
 ```
 
 Example docker build command for desktop:

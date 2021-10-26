@@ -6,12 +6,13 @@
 #include <unistd.h>
 #include "read_text.h"
 #include "inference.h"
+#include "parameter.h"
 
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acap_runtime: "
 
 using namespace std;
 using namespace grpc;
-using namespace inference_server;
+using namespace acap_runtime;
 
 bool _verbose = false;
 
@@ -29,47 +30,53 @@ void RunServer(
   LOG(INFO) << "RunServer time=" << time << endl;
   stringstream server_address;
   server_address << address << ":" << port;
-  Inference service;
-  if (service.Init(_verbose, chipId, models)) {
-    ServerBuilder builder;
-    if (certificateFile.length() == 0 || keyFile.length() == 0) {
-      shared_ptr<ServerCredentials> creds = InsecureServerCredentials();
-      builder.AddListeningPort(server_address.str(), creds);
-    }
-    else {
-      SslServerCredentialsOptions ssl_opts;
-      ssl_opts.pem_root_certs = "";
-      string server_cert = read_text(certificateFile.c_str());
-      string server_key = read_text(keyFile.c_str());
-      SslServerCredentialsOptions::PemKeyCertPair pkcp = {
-        server_key.c_str(),
-        server_cert.c_str()
-      };
-      ssl_opts.pem_key_cert_pairs.push_back(pkcp);
-      shared_ptr<ServerCredentials> creds = SslServerCredentials(ssl_opts);
-      builder.AddListeningPort(server_address.str(), creds);
-    }
+  ServerBuilder builder;
+  if (certificateFile.length() == 0 || keyFile.length() == 0) {
+    shared_ptr<ServerCredentials> creds = InsecureServerCredentials();
+    builder.AddListeningPort(server_address.str(), creds);
+  }
+  else {
+    SslServerCredentialsOptions ssl_opts;
+    ssl_opts.pem_root_certs = "";
+    string server_cert = read_text(certificateFile.c_str());
+    string server_key = read_text(keyFile.c_str());
+    SslServerCredentialsOptions::PemKeyCertPair pkcp = {
+      server_key.c_str(),
+      server_cert.c_str()
+    };
+    ssl_opts.pem_key_cert_pairs.push_back(pkcp);
+    shared_ptr<ServerCredentials> creds = SslServerCredentials(ssl_opts);
+    builder.AddListeningPort(server_address.str(), creds);
+  }
 
-    // Start gRPC service
-    builder.RegisterService(&service);
-    unique_ptr<Server> server(builder.BuildAndStart());
-    if (!server) {
-      LOG(ERROR) << "Could not start gRPC server";
-      return;
-    }
-    cout << "Server listening on " << server_address.str() << endl;
+  // Start gRPC service
+  Inference inference;
+  if (!inference.Init(_verbose, chipId, models)) {
+    LOG(ERROR) << "Could not Init inference";
+    return;
+  }
+  builder.RegisterService(&inference);
 
-    // Wait for gRPC sercice termination
-    if (time > 0) {
-      LOG(INFO) << "Server run time (s): " << time << endl;
-      sleep(time);
-      server->Shutdown();
-      LOG(INFO) << "Server shutdown" << endl;
-    }
-    else
-    {
-      server->Wait();
-    }
+  Parameter parameter;
+  builder.RegisterService(&parameter);
+
+  unique_ptr<Server> server(builder.BuildAndStart());
+  if (!server) {
+    LOG(ERROR) << "Could not start gRPC server";
+    return;
+  }
+  cout << "Server listening on " << server_address.str() << endl;
+
+  // Wait for gRPC sercice termination
+  if (time > 0) {
+    LOG(INFO) << "Server run time (s): " << time << endl;
+    sleep(time);
+    server->Shutdown();
+    LOG(INFO) << "Server shutdown" << endl;
+  }
+  else
+  {
+    server->Wait();
   }
 }
 

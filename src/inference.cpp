@@ -15,7 +15,7 @@
 
 using namespace std::chrono;
 
-namespace inference_server {
+namespace acap_runtime {
 const char* const DATA_TYPES[] = {
     "LAROD_TENSOR_DATA_TYPE_INVALID", "LAROD_TENSOR_DATA_TYPE_UNSPECIFIED",
     "LAROD_TENSOR_DATA_TYPE_BOOL",    "LAROD_TENSOR_DATA_TYPE_UINT8",
@@ -961,4 +961,4 @@ bool Inference::LarodOutputToPredictResponse(
   response->mutable_model_spec()->CopyFrom(model_spec);
   return true;
 }
-}  // namespace inference_server
+}  // namespace acap_runtime

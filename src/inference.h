@@ -1,6 +1,5 @@
 /* Copyright 2020 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
-#pragma once
 #include <larod.h>
 #include "prediction_service.grpc.pb.h"
 
@@ -9,8 +8,7 @@ using namespace grpc;
 using namespace tensorflow;
 using namespace tensorflow::serving;
 
-namespace inference_server {
-
+namespace acap_runtime {
 class Inference : public PredictionService::Service
 {
 public:
@@ -75,5 +73,4 @@ private:
   size_t _numInputs;
   size_t _numOutputs;
 };
-
-}  // namespace inference_server
+}  // namespace acap_runtime

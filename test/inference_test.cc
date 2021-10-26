@@ -15,7 +15,7 @@ using namespace tensorflow;
 using namespace tensorflow::serving;
 using namespace google::protobuf;
 
-namespace inference_server {
+namespace acap_runtime {
 namespace test {
 namespace {
 
@@ -508,4 +508,4 @@ TEST(Inference, PredictTpuModel3)
 
 }  // namespace
 }  // namespace test
-}  // namespace inference_server
+}  // namespace acap_runtime
