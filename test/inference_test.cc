@@ -422,7 +422,7 @@ void PredictFail(
   ASSERT_FALSE(status.ok());
 }
 
-TEST(Inference_Test, ServerAuthentication)
+TEST(InferenceTest, ServerAuthentication)
 {
   shm_unlink(sharedFile);
   thread main(ServiceSecurity, 5, cpuChipId, serverCertificatePath, serverKeyPath);
@@ -438,7 +438,7 @@ TEST(Inference_Test, ServerAuthentication)
   main.join();
 }
 
-TEST(Inference_Test, ServerInsecureCredentials_Fail)
+TEST(InferenceTest, ServerInsecureCredentials_Fail)
 {
   shm_unlink(sharedFile);
   thread main(ServiceSecurity, 5, cpuChipId, serverCertificatePath, serverKeyPath);
@@ -452,7 +452,7 @@ TEST(Inference_Test, ServerInsecureCredentials_Fail)
   main.join();
 }
 
-TEST(Inference_Test, PredictCpuModel1Preload)
+TEST(InferenceTest, PredictCpuModel1Preload)
 {
   shm_unlink(sharedFile);
   thread main(ServiceModel, 5, cpuChipId, cpuModel1);
@@ -474,7 +474,7 @@ TEST(Inference_Test, PredictCpuModel1Preload)
   main.join();
 }
 
-TEST(Inference_Test, PredictCpuModel1)
+TEST(InferenceTest, PredictCpuModel1)
 {
   shm_unlink(sharedFile);
   thread main(Service, 5, cpuChipId);
@@ -496,7 +496,7 @@ TEST(Inference_Test, PredictCpuModel1)
   main.join();
 }
 
-TEST(Inference_Test, PredictCpuModel2)
+TEST(InferenceTest, PredictCpuModel2)
 {
   shm_unlink(sharedFile);
   thread main(Service, 8, cpuChipId);
@@ -521,7 +521,7 @@ TEST(Inference_Test, PredictCpuModel2)
   main.join();
 }
 
-TEST(Inference_Test, PredictCpuModel3)
+TEST(InferenceTest, PredictCpuModel3)
 {
   shm_unlink(sharedFile);
   thread main(Service, 15, cpuChipId);
@@ -543,7 +543,7 @@ TEST(Inference_Test, PredictCpuModel3)
   main.join();
 }
 
-TEST(Inference_Test, PredictModel_Fail)
+TEST(InferenceTest, PredictModel_Fail)
 {
   const char* noModelFile = "nomodel";
   shm_unlink(sharedFile);
@@ -558,7 +558,7 @@ TEST(Inference_Test, PredictModel_Fail)
 }
 
 #ifdef __arm__
-TEST(Inference_Test, ServerAuthenticationTpu)
+TEST(InferenceTest, ServerAuthenticationTpu)
 {
   shm_unlink(sharedFile);
   thread main(ServiceSecurity, 5, tpuChipId, serverCertificatePath, serverKeyPath);
@@ -578,7 +578,7 @@ TEST(Inference_Test, ServerAuthenticationTpu)
   main.join();
 }
 
-TEST(Inference_Test, PredictTpuModel1Preload)
+TEST(InferenceTest, PredictTpuModel1Preload)
 {
   shm_unlink(sharedFile);
   thread main(ServiceModel, 5, tpuChipId, tpuModel1);
@@ -600,7 +600,7 @@ TEST(Inference_Test, PredictTpuModel1Preload)
   main.join();
 }
 
-TEST(Inference_Test, PredictTpuModel1)
+TEST(InferenceTest, PredictTpuModel1)
 {
   shm_unlink(sharedFile);
   thread main(Service, 5, tpuChipId);
@@ -617,7 +617,7 @@ TEST(Inference_Test, PredictTpuModel1)
   main.join();
 }
 
-TEST(Inference_Test, PredictTpuModel2)
+TEST(InferenceTest, PredictTpuModel2)
 {
   shm_unlink(sharedFile);
   thread main(Service, 5, tpuChipId);
@@ -634,7 +634,7 @@ TEST(Inference_Test, PredictTpuModel2)
   main.join();
 }
 
-TEST(Inference_Test, PredictTpuModel3)
+TEST(InferenceTest, PredictTpuModel3)
 {
   shm_unlink(sharedFile);
   thread main(Service, 5, tpuChipId);
@@ -652,7 +652,7 @@ TEST(Inference_Test, PredictTpuModel3)
 }
 #endif
 
-TEST(Inference_Test, DISABLED_PredictLoop)
+TEST(InferenceTest, DISABLED_PredictLoop)
 {
   shm_unlink(sharedFile);
   thread main(Service, 24 * 3600, cpuChipId);

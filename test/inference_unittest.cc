@@ -302,7 +302,7 @@ void PredictModel3(
   }
 }
 
-TEST(Inference_Unittest, InitCpu)
+TEST(InferenceUnittest, InitCpu)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { cpuModel1 };
@@ -311,7 +311,7 @@ TEST(Inference_Unittest, InitCpu)
   ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
 }
 
-TEST(Inference_Unittest, Init_Fail)
+TEST(InferenceUnittest, Init_Fail)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { cpuModel1, "invalid" };
@@ -320,7 +320,7 @@ TEST(Inference_Unittest, Init_Fail)
   ASSERT_FALSE(inference.Init(verbose, cpuChipId, models));
 }
 
-TEST(Inference_Unittest, PredictCpuModel1Preload)
+TEST(InferenceUnittest, PredictCpuModel1Preload)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { cpuModel1 };
@@ -340,7 +340,7 @@ TEST(Inference_Unittest, PredictCpuModel1Preload)
 #endif
 }
 
-TEST(Inference_Unittest, PredictCpuModel1)
+TEST(InferenceUnittest, PredictCpuModel1)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };
@@ -360,7 +360,7 @@ TEST(Inference_Unittest, PredictCpuModel1)
 #endif
 }
 
-TEST(Inference_Unittest, PredictCpuModel2)
+TEST(InferenceUnittest, PredictCpuModel2)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };
@@ -383,7 +383,7 @@ TEST(Inference_Unittest, PredictCpuModel2)
 #endif
 }
 
-TEST(Inference_Unittest, PredictCpuModel3)
+TEST(InferenceUnittest, PredictCpuModel3)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };
@@ -406,7 +406,7 @@ TEST(Inference_Unittest, PredictCpuModel3)
 #endif
 }
 
-TEST(Inference_Unittest, PredictCpuModelMix)
+TEST(InferenceUnittest, PredictCpuModelMix)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };
@@ -430,7 +430,7 @@ TEST(Inference_Unittest, PredictCpuModelMix)
 }
 
 #ifdef __arm__
-TEST(Inference_Unittest, InitTpu)
+TEST(InferenceUnittest, InitTpu)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { tpuModel1 };
@@ -439,7 +439,7 @@ TEST(Inference_Unittest, InitTpu)
   ASSERT_TRUE(inference.Init(verbose, tpuChipId, models));
 }
 
-TEST(Inference_Unittest, PredictTpuModel1Preload)
+TEST(InferenceUnittest, PredictTpuModel1Preload)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { tpuModel1 };
@@ -459,7 +459,7 @@ TEST(Inference_Unittest, PredictTpuModel1Preload)
   PredictModel1(inference, tpuModel1, imageFile2, 0.878906, 0.5, true);
 }
 
-TEST(Inference_Unittest, PredictTpuModel1)
+TEST(InferenceUnittest, PredictTpuModel1)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };
@@ -474,7 +474,7 @@ TEST(Inference_Unittest, PredictTpuModel1)
   PredictModel1(inference, tpuModel1, imageFile2, 0.878906, 0.5, true);
 }
 
-TEST(Inference_Unittest, PredictTpuModel2)
+TEST(InferenceUnittest, PredictTpuModel2)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };
@@ -489,7 +489,7 @@ TEST(Inference_Unittest, PredictTpuModel2)
   PredictModel2(inference, tpuModel2, imageFile2, 458, 69, true);
 }
 
-TEST(Inference_Unittest, PredictTpuModel3)
+TEST(InferenceUnittest, PredictTpuModel3)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   const vector<string> models = { };

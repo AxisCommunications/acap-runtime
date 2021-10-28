@@ -77,7 +77,7 @@ vector<pair<string,string>> GetValues(
   return values;
 }
 
-TEST(Parameter_Test, GetValues)
+TEST(ParameterTest, GetValues)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   vector<string> keys = {

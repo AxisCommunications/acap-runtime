@@ -43,7 +43,7 @@ docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
 # Run test container with verbose prints on camera
 docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it axisecp/acap-runtime:latest-test acap-runtime.test --gtest_color=yes --gtest_filter=ParameterServer.GetValues
+ -it axisecp/acap-runtime:latest-test acap-runtime.test --gtest_color=yes --gtest_filter=ParameterTest.GetValues
 ```
 
 Example docker build command for desktop:
