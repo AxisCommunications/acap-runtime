@@ -103,11 +103,9 @@ RUN cd apis &&\
 ## Build and install
 RUN make install
 
-# Runtime image
+# Create runtime image
 FROM arm32v7/ubuntu:$UBUNTU_VERSION as runtime
-ENV LIB=/usr/lib/arm-linux-gnueabihf
-ENV LD_LIBRARY_PATH=/host/lib
-
+ARG LIB=/usr/lib/arm-linux-gnueabihf
 COPY --from=api $LIB/ld-*.so $LIB/
 COPY --from=api $LIB/ld-linux-armhf.so.* $LIB/
 COPY --from=api $LIB/libc-*.so $LIB/
@@ -133,12 +131,15 @@ COPY --from=api $LIB/libstdc++.so* $LIB/
 COPY --from=api $LIB/libz.so.* $LIB/
 COPY --from=api /usr/bin/acap-runtime /usr/bin/
 
-# Test image
+# Find liblarod.so on target device
+ENV LD_LIBRARY_PATH=/host/lib
+
+# Create test image
 FROM runtime as test
 COPY --from=api /usr/bin/acap-runtime.test /usr/bin/
 COPY --from=api /opt/acap-runtime/testdata/* /testdata/
 
 # This container is used for finding out what libraries acap-runtime
-# needs, and the outcome is the list above of libraries to preserve.
+# needs and the outcome is the list above of libraries to preserve.
 #ENTRYPOINT [ "/usr/bin/ldd",  "/usr/bin/acap-runtime" ]
 #CMD ["/usr/bin/acap-runtime"]

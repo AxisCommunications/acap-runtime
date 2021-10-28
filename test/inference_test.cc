@@ -1,48 +1,126 @@
 /* Copyright 2020 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
 #include <gtest/gtest.h>
+#include <thread>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include "grpcpp/create_channel.h"
+#include "tensorflow_serving/apis/prediction_service.grpc.pb.h"
+#include "memory_use.h"
 #include "milli_seconds.h"
-#include "inference.h"
+#include "read_text.h"
 #include "bitmap.h"
 #include "testdata.h"
+
+int AcapRuntime(int argc, char* argv[]);
 
 using namespace ::testing;
 using namespace std;
 using namespace grpc;
+using namespace google::protobuf;
 using namespace tensorflow;
 using namespace tensorflow::serving;
-using namespace google::protobuf;
 
 namespace acap_runtime {
-namespace test {
-namespace {
+namespace inference_test {
 
-const uint64_t cpuChipId = 2;
-const uint64_t tpuChipId = 4;
+const char* cpuChipId = "2";
+const char* tpuChipId = "4";
+
 const char* sharedFile = "/test.bmp";
+const char* target = "localhost:9001";
+int logTime = -1;
+
+void LogMemory()
+{
+  time_t now = time(NULL);
+  struct tm *nTime = localtime(&now);
+  int nowTime = nTime->tm_hour;
+  if (nowTime != logTime)
+  {
+    int mem = memory_use();
+    printf("%d/%d %02d:%02d %d kB\n",
+      nTime->tm_mday, nTime->tm_mon, nTime->tm_hour, nTime->tm_min, mem);
+    logTime = nowTime;
+  }
+}
+
+void Service(
+  int seconds,
+  const char* chipId)
+{
+  char timeout[10];
+  sprintf(timeout, "%d", seconds);
+  const bool verbose = FLAGS_gtest_color == "yes";
+  char const * argv[] = {
+    "acap-runtime", verbose ? "-v" : "",
+    "-p", "9001",
+    "-t", timeout,
+    "-j", chipId
+     };
+  const int argc = sizeof(argv) / sizeof(const char*);
+  ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
+}
+
+void ServiceSecurity(
+  int seconds,
+  const char* chipId,
+  const char* certificateFile,
+  const char* keyFile)
+{
+  char timeout[10];
+  sprintf(timeout, "%d", seconds);
+  const bool verbose = FLAGS_gtest_color == "yes";
+  char const * argv[] = {
+    "acap-runtime", verbose ? "-v" : "",
+    "-p", "9001",
+    "-t", timeout,
+    "-j", chipId,
+    "-c", certificateFile,
+    "-k", keyFile
+     };
+  const int argc = sizeof(argv) / sizeof(const char*);
+  ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
+}
+
+void ServiceModel(
+  int seconds,
+  const char* chipId,
+  const char* modelFile)
+{
+  char timeout[10];
+  sprintf(timeout, "%d", seconds);
+  const bool verbose = FLAGS_gtest_color == "yes";
+  char const * argv[] = {
+    "acap-runtime", verbose ? "-v" : "",
+    "-p", "9001",
+    "-t", timeout,
+    "-j", chipId,
+    "-m", modelFile
+     };
+  const int argc = sizeof(argv) / sizeof(const char*);
+  ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
+}
 
 void PredictModel1(
-  Inference& inference,
-  string modelName,
+  unique_ptr<PredictionService::Stub>& stub,
+  const char* modelPath,
   const char* imageFile,
   float score0,
   float score1,
   bool zeroCopy)
 {
-  const float CONFIDENCE_CUTOFF = 0.3;
   int fd = -1;
   void* data = nullptr;
 
-  uchar *pixels;
   int width;
   int height;
   int channels;
+  uchar *pixels;
   ReadImage(imageFile, &pixels, &width, &height, &channels);
   size_t size = width * height * channels;
 
-  // Set image, LAROD_TENSOR_LAYOUT_NHWC assumed
+    // Set image
   TensorProto proto;
   proto.mutable_tensor_shape()->add_dim()->set_size(1);
   proto.mutable_tensor_shape()->add_dim()->set_size(height);
@@ -66,21 +144,21 @@ void PredictModel1(
   else
   {
     proto.set_tensor_content(pixels, size);
-    proto.set_dtype(DataType::DT_UINT8);
+    proto.set_dtype(tensorflow::DataType::DT_UINT8);
   }
   free(pixels);
 
   // Initialize input protobuf
   PredictRequest request;
-  request.mutable_model_spec()->set_name(modelName);
+  request.mutable_model_spec()->set_name(modelPath);
   Map<string, TensorProto> &inputs = *request.mutable_inputs();
   inputs["data"] = proto;
 
   // Inference
   PredictResponse response;
-  ServerContext context;
+  ClientContext context;
   uint64_t start = MilliSeconds();
-  Status status = inference.Predict(&context, &request, &response);
+  Status status = stub->Predict(&context, request, &response);
   ASSERT_TRUE(status.ok());
   uint64_t elapsed = MilliSeconds() - start;
   cout << fixed << setprecision(2) << "Inference time: "
@@ -112,33 +190,34 @@ void PredictModel1(
   EXPECT_EQ(31, classes[1]);
   EXPECT_FLOAT_EQ(score1, scores[1]);
 
-  if (fd >= 0) {
+  // Cleanup
+  if (fd >= 0)
+  {
     munmap(data, size);
+    close(fd);
     shm_unlink(sharedFile);
-    close (fd);
   }
 }
 
 void PredictModel2(
-  Inference& inference,
-  string modelName,
+  unique_ptr<PredictionService::Stub>& stub,
+  const char* modelPath,
   const char* imageFile,
   int index0,
   int score0,
   bool zeroCopy)
 {
-  const float CONFIDENCE_CUTOFF = 0.3;
   int fd = -1;
   void* data = nullptr;
 
-  uchar *pixels;
   int width;
   int height;
   int channels;
+  uchar *pixels;
   ReadImage(imageFile, &pixels, &width, &height, &channels);
   size_t size = width * height * channels;
 
-  // Set image, LAROD_TENSOR_LAYOUT_NHWC assumed
+    // Set image
   TensorProto proto;
   proto.mutable_tensor_shape()->add_dim()->set_size(1);
   proto.mutable_tensor_shape()->add_dim()->set_size(height);
@@ -162,21 +241,21 @@ void PredictModel2(
   else
   {
     proto.set_tensor_content(pixels, size);
-    proto.set_dtype(DataType::DT_UINT8);
+    proto.set_dtype(tensorflow::DataType::DT_UINT8);
   }
   free(pixels);
 
   // Initialize input protobuf
   PredictRequest request;
-  request.mutable_model_spec()->set_name(modelName);
+  request.mutable_model_spec()->set_name(modelPath);
   Map<string, TensorProto> &inputs = *request.mutable_inputs();
   inputs["data"] = proto;
 
   // Inference
   PredictResponse response;
-  ServerContext context;
+  ClientContext context;
   uint64_t start = MilliSeconds();
-  Status status = inference.Predict(&context, &request, &response);
+  Status status = stub->Predict(&context, request, &response);
   ASSERT_TRUE(status.ok());
   uint64_t elapsed = MilliSeconds() - start;
   cout << fixed << setprecision(2) << "Inference time: "
@@ -205,33 +284,34 @@ void PredictModel2(
     EXPECT_FLOAT_EQ(score0, maxProb);
   }
 
-  if (fd >= 0) {
+  // Cleanup
+  if (fd >= 0)
+  {
     munmap(data, size);
+    close(fd);
     shm_unlink(sharedFile);
-    close (fd);
   }
 }
 
 void PredictModel3(
-  Inference& inference,
-  string modelName,
+  unique_ptr<PredictionService::Stub>& stub,
+  const char* modelPath,
   const char* imageFile,
   int index0,
   int score0,
   bool zeroCopy)
 {
-  const float CONFIDENCE_CUTOFF = 0.3;
   int fd = -1;
   void* data = nullptr;
 
-  uchar *pixels;
   int width;
   int height;
   int channels;
+  uchar *pixels;
   ReadImage(imageFile, &pixels, &width, &height, &channels);
   size_t size = width * height * channels;
 
-  // Set image, LAROD_TENSOR_LAYOUT_NHWC assumed
+    // Set image
   TensorProto proto;
   proto.mutable_tensor_shape()->add_dim()->set_size(1);
   proto.mutable_tensor_shape()->add_dim()->set_size(height);
@@ -255,21 +335,21 @@ void PredictModel3(
   else
   {
     proto.set_tensor_content(pixels, size);
-    proto.set_dtype(DataType::DT_UINT8);
+    proto.set_dtype(tensorflow::DataType::DT_UINT8);
   }
   free(pixels);
 
   // Initialize input protobuf
   PredictRequest request;
-  request.mutable_model_spec()->set_name(modelName);
+  request.mutable_model_spec()->set_name(modelPath);
   Map<string, TensorProto> &inputs = *request.mutable_inputs();
   inputs["data"] = proto;
 
   // Inference
   PredictResponse response;
-  ServerContext context;
+  ClientContext context;
   uint64_t start = MilliSeconds();
-  Status status = inference.Predict(&context, &request, &response);
+  Status status = stub->Predict(&context, request, &response);
   ASSERT_TRUE(status.ok());
   uint64_t elapsed = MilliSeconds() - start;
   cout << fixed << setprecision(2) << "Inference time: "
@@ -296,216 +376,299 @@ void PredictModel3(
   EXPECT_EQ(index0, maxIdx);
   EXPECT_FLOAT_EQ(score0, maxProb);
 
-  if (fd >= 0) {
+  // Cleanup
+  if (fd >= 0)
+  {
     munmap(data, size);
+    close(fd);
     shm_unlink(sharedFile);
-    close (fd);
   }
 }
 
-TEST(Inference, InitCpu)
+void PredictFail(
+  unique_ptr<PredictionService::Stub>& stub,
+  const char* modelPath)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { cpuModel1 };
+  int fd = -1;
+  void* data = nullptr;
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
+  int width;
+  int height;
+  int channels;
+  uchar *pixels;
+  ReadImage(imageFile1, &pixels, &width, &height, &channels);
+  size_t size = width * height * channels;
+
+  // Set image
+  TensorProto proto;
+  proto.mutable_tensor_shape()->add_dim()->set_size(1);
+  proto.mutable_tensor_shape()->add_dim()->set_size(height);
+  proto.mutable_tensor_shape()->add_dim()->set_size(width);
+  proto.mutable_tensor_shape()->add_dim()->set_size(channels);
+  proto.set_tensor_content(pixels, size);
+  proto.set_dtype(tensorflow::DataType::DT_UINT8);
+  free(pixels);
+
+  // Initialize input protobuf
+  PredictRequest request;
+  request.mutable_model_spec()->set_name(modelPath);
+  Map<string, TensorProto> &inputs = *request.mutable_inputs();
+  inputs["data"] = proto;
+
+  // Inference
+  PredictResponse response;
+  ClientContext context;
+  Status status = stub->Predict(&context, request, &response);
+  ASSERT_FALSE(status.ok());
 }
 
-TEST(Inference, Init_Fail)
+TEST(Inference_Test, ServerAuthentication)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { cpuModel1, "invalid" };
-
-  Inference inference;
-  ASSERT_FALSE(inference.Init(verbose, cpuChipId, models));
-}
-
-TEST(Inference, PredictCpuModel1Preload)
-{
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { cpuModel1 };
   shm_unlink(sharedFile);
+  thread main(ServiceSecurity, 5, cpuChipId, serverCertificatePath, serverKeyPath);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
+  string root_cert = read_text(serverCertificatePath);
+  SslCredentialsOptions ssl_opts = {root_cert.c_str(), "", ""};
+  shared_ptr<ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
+  shared_ptr<Channel> channel = CreateChannel(target, creds);
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
+  main.join();
+}
+
+TEST(Inference_Test, ServerInsecureCredentials_Fail)
+{
+  shm_unlink(sharedFile);
+  thread main(ServiceSecurity, 5, cpuChipId, serverCertificatePath, serverKeyPath);
+
+  shared_ptr<ChannelCredentials> creds = grpc::InsecureChannelCredentials();
+  shared_ptr<Channel> channel = CreateChannel(target, creds);
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictFail(stub, cpuModel1);
+  main.join();
+}
+
+TEST(Inference_Test, PredictCpuModel1Preload)
+{
+  shm_unlink(sharedFile);
+  thread main(ServiceModel, 5, cpuChipId, cpuModel1);
+
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
 #ifdef __arm__
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
 #else
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
 #endif
+  main.join();
 }
 
-TEST(Inference, PredictCpuModel1)
+TEST(Inference_Test, PredictCpuModel1)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
   shm_unlink(sharedFile);
+  thread main(Service, 5, cpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
 #ifdef __arm__
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, false);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
 #else
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.58203125, false);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
 #endif
+  main.join();
 }
 
-TEST(Inference, PredictCpuModel2)
+TEST(Inference_Test, PredictCpuModel2)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
   shm_unlink(sharedFile);
+  thread main(Service, 8, cpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
 #ifdef __arm__
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, true);
-  PredictModel2(inference, cpuModel2, imageFile2, 458, 168, true);
-  PredictModel2(inference, cpuModel2, imageFile2, 458, 168, true);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 168, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 168, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 168, true);
 #else
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 165, false);
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 165, false);
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 165, true);
-  PredictModel2(inference, cpuModel2, imageFile2, 458, 166, true);
-  PredictModel2(inference, cpuModel2, imageFile2, 458, 166, true);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 165, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 165, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 165, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 166, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 166, true);
 #endif
+  main.join();
 }
 
-TEST(Inference, PredictCpuModel3)
+TEST(Inference_Test, PredictCpuModel3)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
   shm_unlink(sharedFile);
+  thread main(Service, 15, cpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
 #ifdef __arm__
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, true);
-  PredictModel3(inference, cpuModel3, imageFile2, 653, 200, true);
-  PredictModel3(inference, cpuModel3, imageFile2, 653, 200, true);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 190, true);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 200, true);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 200, true);
 #else
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 194, false);
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 194, false);
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 194, true);
-  PredictModel3(inference, cpuModel3, imageFile2, 653, 197, true);
-  PredictModel3(inference, cpuModel3, imageFile2, 653, 197, true);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 194, false);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 197, true);
 #endif
+  main.join();
 }
 
-TEST(Inference, PredictCpuModelMix)
+TEST(Inference_Test, PredictModel_Fail)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
+  const char* noModelFile = "nomodel";
   shm_unlink(sharedFile);
+  thread main(Service, 5, cpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
-#ifdef __arm__
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
-  PredictModel2(inference, cpuModel2, imageFile2, 458, 168, true);
-  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
-  PredictModel3(inference, cpuModel3, imageFile2, 653, 200, false);
-#else
-  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
-  PredictModel2(inference, cpuModel2, imageFile1, 653, 165, false);
-  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.58203125, true);
-  PredictModel2(inference, cpuModel2, imageFile2, 458, 166, true);
-#endif
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictFail(stub, noModelFile);
+  main.join();
 }
 
 #ifdef __arm__
-TEST(Inference, InitTpu)
+TEST(Inference_Test, ServerAuthenticationTpu)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { tpuModel1 };
+  shm_unlink(sharedFile);
+  thread main(ServiceSecurity, 5, tpuChipId, serverCertificatePath, serverKeyPath);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, tpuChipId, models));
+  string root_cert = read_text(serverCertificatePath);
+  SslCredentialsOptions ssl_opts = {root_cert.c_str(), "", ""};
+  shared_ptr<ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
+  shared_ptr<Channel> channel = CreateChannel(target, creds);
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  main.join();
 }
 
-TEST(Inference, PredictTpuModel1Preload)
+TEST(Inference_Test, PredictTpuModel1Preload)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { tpuModel1 };
   shm_unlink(sharedFile);
+  thread main(ServiceModel, 5, tpuChipId, tpuModel1);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, tpuChipId, models));
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile2, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  main.join();
 }
 
-TEST(Inference, PredictTpuModel1)
+TEST(Inference_Test, PredictTpuModel1)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
   shm_unlink(sharedFile);
+  thread main(Service, 5, tpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, tpuChipId, models));
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, false);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, false);
-  PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile2, 0.878906, 0.5, true);
-  PredictModel1(inference, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, false);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, false);
+  PredictModel1(stub, tpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  PredictModel1(stub, tpuModel1, imageFile2, 0.878906, 0.5, true);
+  main.join();
 }
 
-TEST(Inference, PredictTpuModel2)
+TEST(Inference_Test, PredictTpuModel2)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
   shm_unlink(sharedFile);
+  thread main(Service, 5, tpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, tpuChipId, models));
-  PredictModel2(inference, tpuModel2, imageFile1, 653, 118, false);
-  PredictModel2(inference, tpuModel2, imageFile1, 653, 118, false);
-  PredictModel2(inference, tpuModel2, imageFile1, 653, 118, false);
-  PredictModel2(inference, tpuModel2, imageFile2, 458, 69, true);
-  PredictModel2(inference, tpuModel2, imageFile2, 458, 69, true);
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel2(stub, tpuModel2, imageFile1, 653, 118, false);
+  PredictModel2(stub, tpuModel2, imageFile1, 653, 118, false);
+  PredictModel2(stub, tpuModel2, imageFile1, 653, 118, true);
+  PredictModel2(stub, tpuModel2, imageFile2, 458, 69, true);
+  PredictModel2(stub, tpuModel2, imageFile2, 458, 69, true);
+  main.join();
 }
 
-TEST(Inference, PredictTpuModel3)
+TEST(Inference_Test, PredictTpuModel3)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { };
   shm_unlink(sharedFile);
+  thread main(Service, 5, tpuChipId);
 
-  Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, tpuChipId, models));
-  PredictModel3(inference, tpuModel3, imageFile1, 653, 197, false);
-  PredictModel3(inference, tpuModel3, imageFile1, 653, 197, false);
-  PredictModel3(inference, tpuModel3, imageFile1, 653, 197, false);
-  PredictModel3(inference, tpuModel3, imageFile2, 653, 176, false);
-  PredictModel3(inference, tpuModel3, imageFile2, 653, 176, false);
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel3(stub, tpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(stub, tpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(stub, tpuModel3, imageFile1, 653, 197, true);
+  PredictModel3(stub, tpuModel3, imageFile2, 653, 176, true);
+  PredictModel3(stub, tpuModel3, imageFile2, 653, 176, true);
+  main.join();
 }
 #endif
 
-}  // namespace
-}  // namespace test
+TEST(Inference_Test, DISABLED_PredictLoop)
+{
+  shm_unlink(sharedFile);
+  thread main(Service, 24 * 3600, cpuChipId);
+
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(10, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  while (channel->GetState(false) == grpc_connectivity_state::GRPC_CHANNEL_READY)
+  {
+    LogMemory();
+    PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
+  }
+
+  main.join();
+}
+
+}  // namespace inference_test
 }  // namespace acap_runtime

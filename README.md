@@ -1,17 +1,14 @@
 ACAP runtime
 ======================
-
 In order to make larod also available to clients that do not reside on the very
 same device, which is the case in many real machine learning applications,
 we need to supply a network protocol based interface. The standard way to do
 this is to provide an inference server.
 
 ## API
-
 The larod inference server is an implementation of the API in [Tensorflow Serving](https://github.com/tensorflow/serving/tree/master/tensorflow_serving/apis) and uses [gRPC](https://grpc.io/) for access.
 
 ## Architecture
-
 The main file [acap-runtime.cpp](src/acap-runtime.cpp)
 starts the service using the front-end files [inference.h](src/inference.h) and
  [inference.cpp](src/inference.cpp).
@@ -28,7 +25,7 @@ To get started following system requirements shall be met:
 ## Build
 Example docker build command for camera:
 ```sh
-# Build official docker container image for camera
+# Build docker runtime container image for camera
 docker build . -t axisecp/acap-runtime:latest -f Dockerfile.armv7hf --target runtime
 docker push axisecp/acap-runtime:latest
 
@@ -46,7 +43,7 @@ docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
 # Run test container with verbose prints on camera
 docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it axisecp/acap-runtime:latest-test acap-runtime.test --gtest_color=yes --gtest_filter=Inference.PredictTpuModel3
+ -it axisecp/acap-runtime:latest-test acap-runtime.test --gtest_color=yes --gtest_filter=ParameterServer.GetValues
 ```
 
 Example docker build command for desktop:

@@ -49,14 +49,17 @@ void RunServer(
     builder.AddListeningPort(server_address.str(), creds);
   }
 
-  // Start gRPC service
+  // Register inference service
   Inference inference;
-  if (!inference.Init(_verbose, chipId, models)) {
-    LOG(ERROR) << "Could not Init inference";
-    return;
+  if (chipId > 0) {
+    if (!inference.Init(_verbose, chipId, models)) {
+      LOG(ERROR) << "Could not Init Inference";
+      return;
+    }
+    builder.RegisterService(&inference);
   }
-  builder.RegisterService(&inference);
 
+  // Register parameter service
   Parameter parameter;
   builder.RegisterService(&parameter);
 
