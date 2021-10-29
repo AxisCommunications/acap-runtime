@@ -1,29 +1,8 @@
-# Dockerfile for larod-inference-server on desktop
 FROM larod as larod-server
 
-## Install dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    clang-format \
-    git \
-    autoconf \
-    libtool \
-    pkg-config \
-    cmake \
-    libc++-dev \
-    libgrpc++-dev \
-    libprotobuf-dev \
-    libc-ares-dev \
-    libssl-dev \
-    libgtest-dev \
-    libgflags-dev \
-    protobuf-compiler \
-    protobuf-compiler-grpc \
-    valgrind
-
-# Build larod
-COPY ./larod .
-RUN meson build -Duse_tflite_cpu=true -Duse_libyuv=true &&\
+COPY ./larod ./larod
+RUN cd larod &&\
+    meson build -Duse_tflite_cpu=true -Duse_libyuv=true &&\
     cd build &&\
     ninja install &&\
     ldconfig

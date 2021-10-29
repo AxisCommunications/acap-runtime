@@ -1,0 +1,85 @@
+# Dockerfile for larod-inference-server on desktop
+FROM larod-server as build
+
+## Install dependencies
+RUN apt-get update && apt-get install -y \
+#    build-essential \
+#    clang-format \
+#    git \
+#    autoconf \
+#    libtool \
+#    pkg-config \
+#    cmake \
+#    libc++-dev \
+    libgrpc++-dev \
+#    libc-ares-dev \
+#    libssl-dev \
+#    libgtest-dev \
+#    libgflags-dev \
+    protobuf-compiler \
+    protobuf-compiler-grpc \
+#    valgrind
+    libprotobuf-dev
+
+# Install Edge TPU compiler
+RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
+    curl -k https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &&\
+    apt-get update && apt-get install -y --no-install-recommends \
+    edgetpu-compiler
+
+# Get testdata models
+WORKDIR /opt/acap-runtime/testdata
+
+# Generate TSL/SSL test certificate
+RUN openssl req -x509 -batch -subj '/CN=localhost' -days 10000 -newkey rsa:4096 -nodes -out server.pem -keyout server.key
+
+# Get SSD Mobilenet V2
+ADD https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite .
+ADD https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess.tflite .
+ADD https://github.com/google-coral/edgetpu/raw/master/test_data/coco_labels.txt .
+ADD https://github.com/google-coral/edgetpu/raw/master/test_data/grace_hopper.bmp .
+
+# Get Mobilenet V2
+ADD http://download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224_quant.tgz tmp/
+ADD https://github.com/google-coral/edgetpu/raw/master/test_data/mobilenet_v2_1.0_224_quant_edgetpu.tflite .
+ADD https://github.com/google-coral/edgetpu/raw/master/test_data/imagenet_labels.txt .
+RUN cd tmp &&\
+    tar -xvf mobilenet_v2_1.0_224_quant.tgz &&\
+    mv *.tflite .. &&\
+    cd .. && rm -rf tmp
+
+# Get EfficientNet-EdgeTpu (M)
+ADD https://storage.googleapis.com/cloud-tpu-checkpoints/efficientnet/efficientnet-edgetpu-M.tar.gz tmp/
+RUN cd tmp &&\
+    tar -xvf efficientnet-edgetpu-M.tar.gz &&\
+    cd efficientnet-edgetpu-M &&\
+    edgetpu_compiler --min_runtime_version 13 efficientnet-edgetpu-M_quant.tflite &&\
+    mv efficientnet-edgetpu-M_quant*.tflite ../.. &&\
+    cd ../.. && rm -rf tmp
+
+## Get Tensorflow and Tensorflow Serving
+WORKDIR /opt/acap-runtime
+RUN git clone -b r1.14 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
+RUN git clone -b r1.14 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+
+# Setup build structure
+COPY . ./
+RUN cd apis &&\
+    ln -fs /opt/tensorflow/tensorflow/tensorflow &&\
+    ln -fs /opt/tensorflow/serving/tensorflow_serving
+
+## Build and install
+RUN make install
+RUN ldconfig
+
+FROM debian:buster-slim
+COPY --from=build /usr/lib /usr/lib
+COPY --from=build /usr/local/lib/x86_64-linux-gnu /usr/lib
+COPY --from=build /usr/bin /usr/bin
+COPY --from=build /usr/local/bin /usr/bin
+COPY --from=build /opt/acap-runtime/testdata /testdata
+
+# This container is used for finding out what libraries larod-inference-server
+# needs, and the outcome is the list above of libraries to preserve.
+#ENTRYPOINT [ "/usr/bin/ldd",  "/usr/bin/larod-inference-server" ]
+#CMD ["/usr/bin/larod-inference-server"]
