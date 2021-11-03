@@ -10,65 +10,66 @@ To get started following system requirements shall be met:
 * Docker version 19.03.5 or higher
 * Ubuntu version 20.04
 * Firmware: Axis Q1615-MkIII release 10.7
-* Docker Daemon installed on the camera
+* [Docker daemon](https://github.com/AxisCommunications/docker-acap) installed on the camera with TLS enabled
 
 ## Build and run test suite
-Docker build commands for camera (armv7hf):
+Docker build and test commands for camera (armv7hf):
 ```sh
-# Build acap-runtime container image for camera
-docker build . -t axisecp/acap-runtime:latest-armv7hf -f Dockerfile.armv7hf --target runtime
-docker push axisecp/acap-runtime:latest-armv7hf
+# Set your camera IP address and clear docker memory
+export AXIS_TARGET_IP=<actual camera IP address>
+docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 system prune -af
 
-# Build acap-runtime test container image for camera
-docker build . -t axisecp/acap-runtime:latest-armv7hf-test -f Dockerfile.armv7hf
-docker push axisecp/acap-runtime:latest-armv7hf-test
+# Set environment variables
+export ARCH=armv7hf
+export APP_NAME=acap-runtime
+
+# Build acap-runtime test container image and load on camera
+docker build . -t $APP_NAME:$ARCH-test -f Dockerfile.$ARCH
+docker save $APP_NAME:$ARCH-test | docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 load
 
 # Run acap-runtime test container on camera
-export AXIS_TARGET_IP=<IP Address>
-docker -H tcp://$AXIS_TARGET_IP system prune -af
-docker -H tcp://$AXIS_TARGET_IP pull axisecp/acap-runtime:latest-armv7hf-test
-docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
+docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 run --rm \
+ --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it axisecp/acap-runtime:latest-armv7hf-test acap-runtime.test
+ -it $APP_NAME:$ARCH-test acap-runtime.test
 
-# Run test container with verbose prints on camera
-docker -H tcp://$AXIS_TARGET_IP run --rm --volume /usr/acap-root/lib:/host/lib \
+# Run test container with single test and verbose prints on camera
+docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 run --rm \
+ --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it axisecp/acap-runtime:latest-armv7hf-test acap-runtime.test \
+ -it $APP_NAME:$ARCH-test acap-runtime.test \
  --gtest_color=yes --gtest_filter=ParameterTest.GetValues
 ```
 
-Docker build command for desktop (amd64):
+Docker build and test commands for desktop (amd64):
 ```sh
-# Add Larod D-Bus policy
-sudo cp src/service/com.axis.Larod1.conf /etc/dbus-1/system.d/
+# Set environment variables
+export ARCH=amd64
+export APP_NAME=acap-runtime
+export LAROD_VERSION=R3.0.31
 
 # Get larod
-export LAROD_VERSION=R3.0.31
 git clone -b $LAROD_VERSION https://gittools.se.axis.com/gerrit/a/apps/larod
 
+# Add Larod D-Bus policy
+sudo cp larod/src/service/com.axis.Larod1.conf /etc/dbus-1/system.d/
+
 # Build larod and larod-server
-docker build ./larod -t larod
-docker build . -f Dockerfile.larod-server -t larod-server
+docker build larod -t larod:$ARCH
+docker build . -f Dockerfile.larod-server-$ARCH -t larod-server:$ARCH
 
-# Build acap-runtime
-docker build . -f Dockerfile.amd64 -t acap-runtime:latest-amd64-test
-```
+# Build acap-runtime test image
+docker build . -f Dockerfile.$ARCH -t $APP_NAME:$ARCH-test
 
-Run acap-runtime server integration and unit tests on desktop computer.
-```sh
-# Start larod server in a separate window
+# Start larod server as a background process
 docker run --rm --privileged\
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it acap-runtime:latest-amd64-test larod
-```
+ -itd $APP_NAME:$ARCH-test larod
 
-Test acap-runtime by running the test suite:
-```sh
-# Run test suite in another window
+# Run acap-runttime test suite
 docker container run --rm --privileged\
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it acap-runtime:latest-amd64-test acap-runtime.test
+ -it $APP_NAME:$ARCH-test acap-runtime.test
 ```
 
 ## Command line options

@@ -1,5 +1,5 @@
 # Dockerfile for larod-inference-server on desktop
-FROM larod-server as build
+FROM larod-server:amd64 as build
 
 ## Install dependencies
 RUN apt-get update && apt-get install -y \

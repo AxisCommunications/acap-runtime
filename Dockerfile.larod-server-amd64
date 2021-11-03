@@ -1,4 +1,4 @@
-FROM larod as larod-server
+FROM larod:amd64 as larod-server
 
 COPY ./larod ./larod
 RUN cd larod &&\
