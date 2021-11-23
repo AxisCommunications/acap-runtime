@@ -1,0 +1,35 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true,
+		"files.associations": {
+			"optional": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"ratio": "cpp",
+			"system_error": "cpp",
+			"array": "cpp",
+			"functional": "cpp",
+			"tuple": "cpp",
+			"type_traits": "cpp",
+			"utility": "cpp",
+			"__bit_reference": "cpp",
+			"__functional_base": "cpp",
+			"algorithm": "cpp",
+			"atomic": "cpp",
+			"bitset": "cpp",
+			"chrono": "cpp",
+			"__memory": "cpp",
+			"iterator": "cpp",
+			"limits": "cpp",
+			"locale": "cpp",
+			"memory": "cpp",
+			"random": "cpp",
+			"vector": "cpp"
+		}
+	}
+}
