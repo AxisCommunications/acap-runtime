@@ -3,7 +3,8 @@ RM ?= rm -f
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
 # Paths
-OUT_PATH ?= $(CURDIR)/build_$(shell $(CXX) -dumpmachine)
+#OUT_PATH ?= $(CURDIR)/build_$(shell $(CXX) -dumpmachine)
+OUT_PATH ?= $(CURDIR)
 API_PATH := $(CURDIR)/apis
 SRC_PATH := $(CURDIR)/src
 TEST_PATH := $(CURDIR)/test
@@ -12,7 +13,7 @@ GRPC_CPP_PLUGIN := grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= $(shell which $(GRPC_CPP_PLUGIN))
 
 # Output binary name matches the repository name
-BINARY := $(shell basename -s .git $$(git config --get remote.origin.url))
+BINARY := $(subst -,_,$(shell basename -s .git $$(git config --get remote.origin.url)))
 TEST := $(addsuffix .test, $(BINARY))
 
 # Build files
@@ -31,12 +32,15 @@ PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --
 PKG_CONFIG_LDLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --libs-only-l $(PKGS))
 CXXFLAGS += -DLAROD_API_VERSION_2 -std=c++17 -I$(OUT_PATH) $(PKG_CONFIG_CFLAGS_OTHER) $(PKG_CONFIG_CFLAGS_I)
 LDLIBS   += -llarod -lrt $(PKG_CONFIG_LDLIBS)
+#LDLIBS   += -llarod -lrt
 LDFLAGS  += $(PKG_CONFIG_LDFLAGS)
 
 .PHONY: clean install install/strip
 
 # Do not remove intermediate files
 .SECONDARY:
+
+all: install/strip
 
 # Main binary
 $(OUT_PATH)/$(BINARY): $(SRC_FILES) $(PROTOBUF_H) $(PROTOBUF_O) $(PROTOBUF_GRPC_O)

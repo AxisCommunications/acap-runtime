@@ -20,6 +20,7 @@ namespace inference_unittest {
 
 const uint64_t cpuChipId = 2;
 const uint64_t tpuChipId = 4;
+const uint64_t dlpuChipId = 12;
 const char* sharedFile = "/test.bmp";
 
 void PredictModel1(
@@ -305,8 +306,37 @@ void PredictModel3(
 TEST(InferenceUnittest, InitCpu)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
-  const vector<string> models = { cpuModel1 };
+  if (verbose) {
+#ifdef __arm32__
+    cout << "Defined: __arm32__" << endl;
+#endif
+#ifdef __arm64__
+    cout << "Defined: __arm64__" << endl;
+#endif
+#ifdef __arm__
+    cout << "Defined: __arm__" << endl;
+#endif
+#ifdef __amd64__
+    cout << "Defined: __amd64__" << endl;
+#endif
+#ifdef __thumb__
+    cout << "Defined: __thumb__" << endl;
+#endif
+#ifdef __ARM_ARCH_5__
+    cout << "Defined: __ARM_ARCH_5__" << endl;
+#endif
+#ifdef __ARM_ARCH_6__
+    cout << "Defined: __ARM_ARCH_6__" << endl;
+#endif
+#ifdef __ARM_ARCH_7__
+    cout << "Defined: __ARM_ARCH_7__" << endl;
+#endif
+#ifdef __ARM_ARCH_8__
+    cout << "Defined: __ARM_ARCH_8__" << endl;
+#endif
+  }
 
+  const vector<string> models = { cpuModel1 };
   Inference inference;
   ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
 }
@@ -331,7 +361,10 @@ TEST(InferenceUnittest, PredictCpuModel1Preload)
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+#elif __arm__
   PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
   PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
 #else
@@ -351,7 +384,10 @@ TEST(InferenceUnittest, PredictCpuModel1)
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+#elif __arm__
   PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
   PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
 #else
@@ -368,7 +404,13 @@ TEST(InferenceUnittest, PredictCpuModel2)
 
   Inference inference;
   ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, true);
+  PredictModel2(inference, cpuModel2, imageFile2, 458, 168, true);
+  PredictModel2(inference, cpuModel2, imageFile2, 458, 168, true);
+#elif __arm__
   PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
   PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
   PredictModel2(inference, cpuModel2, imageFile1, 653, 168, true);
@@ -391,7 +433,13 @@ TEST(InferenceUnittest, PredictCpuModel3)
 
   Inference inference;
   ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, true);
+  PredictModel3(inference, cpuModel3, imageFile2, 653, 200, true);
+  PredictModel3(inference, cpuModel3, imageFile2, 653, 200, true);
+#elif __arm__
   PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
   PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
   PredictModel3(inference, cpuModel3, imageFile1, 653, 190, true);
@@ -414,7 +462,14 @@ TEST(InferenceUnittest, PredictCpuModelMix)
 
   Inference inference;
   ASSERT_TRUE(inference.Init(verbose, cpuChipId, models));
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel2(inference, cpuModel2, imageFile2, 458, 168, true);
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(inference, cpuModel3, imageFile2, 653, 200, false);
+#elif __arm__
   PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
   PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
   PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
@@ -429,7 +484,83 @@ TEST(InferenceUnittest, PredictCpuModelMix)
 #endif
 }
 
-#ifdef __arm__
+#ifdef __arm64__
+TEST(InferenceUnittest, InitDlpu)
+{
+  const bool verbose = FLAGS_gtest_color == "yes";
+  const vector<string> models = { cpuModel1 };
+
+  Inference inference;
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+}
+
+TEST(InferenceUnittest, PredictDlpuModel1Preload)
+{
+  const bool verbose = FLAGS_gtest_color == "yes";
+  const vector<string> models = { cpuModel1 };
+  shm_unlink(sharedFile);
+
+  Inference inference;
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+}
+
+TEST(InferenceUnittest, PredictDlpuModel1)
+{
+  const bool verbose = FLAGS_gtest_color == "yes";
+  const vector<string> models = { };
+  shm_unlink(sharedFile);
+
+  Inference inference;
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, false);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, false);
+  PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(inference, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+}
+
+TEST(InferenceUnittest, PredictDlpuModel2)
+{
+  const bool verbose = FLAGS_gtest_color == "yes";
+  const vector<string> models = { };
+  shm_unlink(sharedFile);
+
+  Inference inference;
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
+  PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
+  PredictModel2(inference, cpuModel2, imageFile2, 458, 170, true);
+  PredictModel2(inference, cpuModel2, imageFile2, 458, 170, true);
+}
+
+TEST(InferenceUnittest, DISABLED_PredictDlpuModel3)
+// ERROR in Inference: Failed to load model efficientnet-edgetpu-M_quant.tflite
+// (Could not load model: Asynchronous connection has been closed)
+{
+  const bool verbose = FLAGS_gtest_color == "yes";
+  const vector<string> models = { };
+  shm_unlink(sharedFile);
+
+  Inference inference;
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(inference, cpuModel3, imageFile2, 653, 176, false);
+  PredictModel3(inference, cpuModel3, imageFile2, 653, 176, false);
+}
+#elif __arm__
 TEST(InferenceUnittest, InitTpu)
 {
   const bool verbose = FLAGS_gtest_color == "yes";

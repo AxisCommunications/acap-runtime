@@ -31,13 +31,13 @@ docker save $APP_NAME:$ARCH-test | docker --tlsverify -H tcp://$AXIS_TARGET_IP:2
 docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 run --rm \
  --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $APP_NAME:$ARCH-test acap-runtime.test
+ -it $APP_NAME:$ARCH-test acap_runtime.test
 
 # Run test container with single test and verbose prints on camera
 docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 run --rm \
  --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $APP_NAME:$ARCH-test acap-runtime.test \
+ -it $APP_NAME:$ARCH-test acap_runtime.test \
  --gtest_color=yes --gtest_filter=ParameterTest.GetValues
 ```
 
@@ -69,12 +69,12 @@ docker run --rm --privileged\
 # Run acap-runttime test suite
 docker container run --rm --privileged\
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $APP_NAME:$ARCH-test acap-runtime.test
+ -it $APP_NAME:$ARCH-test acap_runtime.test
 ```
 
 ## Command line options
 The command to run the acap-runtime server is:\
-acap-runtime [-v] [-a address ] [-p port] [-j chip-id]  [-t timer] [-c certificate-file] [-k key-file] [-m model-file] ... [-m model-file]
+acap_runtime [-v] [-a address ] [-p port] [-j chip-id]  [-t timer] [-c certificate-file] [-k key-file] [-m model-file] ... [-m model-file]
 
 All parameters are optional with following meaning:\
   -v    Verbose\
@@ -88,7 +88,7 @@ All parameters are optional with following meaning:\
 
 Example of command to start the acap-runtime server on localhost port 9001:
 ```sh
-acap-runtime -v -p 9001 -j 4 -m ssdlite-mobilenet-v2-tpu
+acap_runtime -v -p 9001 -j 4 -m ssdlite-mobilenet-v2-tpu
 ```
 
 ## License

@@ -1,15 +1,16 @@
 # Dockerfile for acap-runtime on camera
 ARG UBUNTU_VERSION=20.04
 
-FROM axisecp/acap-api:4.1_beta1-armv7hf-ubuntu$UBUNTU_VERSION as api
+FROM axisecp/acap-api:4.1_beta1-aarch64-ubuntu$UBUNTU_VERSION as api
 LABEL maintainer="rapid@axis.com"
 
 ## Build environment
-ENV CXX="arm-linux-gnueabihf-g++ -mthumb -mfpu=neon -mfloat-abi=hard -mcpu=cortex-a9"
-ENV LIB=/usr/lib/arm-linux-gnueabihf
+ENV CXX="aarch64-linux-gnu-g++ -mcpu=cortex-a53 -march=armv8-a+crc+crypto -fstack-protector-strong -D__arm64__"
+
+ENV LIB=/usr/lib/aarch64-linux-gnu
 ENV PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR:$LIB/pkgconfig
 ENV DEBIAN_FRONTEND=noninteractive
-ENV SYSROOT=/opt/axis/sdk/temp/sysroots/armv7hf/usr
+ENV SYSROOT=/opt/axis/sdk/temp/sysroots/aarch64/usr
 
 # Add source for target arch
 RUN echo \
@@ -33,19 +34,19 @@ RUN apt-get update && apt-get install -y -f \
     autoconf \
     libtool \
     openssl \
-    g++-arm-linux-gnueabihf \
+    g++-aarch64-linux-gnu \
     binutils-multiarch \
     protobuf-compiler \
     protobuf-compiler-grpc
 
-RUN dpkg --add-architecture armhf &&\
+RUN dpkg --add-architecture arm64 &&\
     apt-get update && apt-get install -y -f \
-    libgrpc++-dev:armhf \
-    libprotobuf-dev:armhf \
-    libc-ares-dev:armhf \
-    libssl-dev:armhf \
-    libsystemd-dev:armhf \
-    libgtest-dev:armhf
+    libgrpc++-dev:arm64 \
+    libprotobuf-dev:arm64 \
+    libc-ares-dev:arm64 \
+    libssl-dev:arm64 \
+    libsystemd-dev:arm64 \
+    libgtest-dev:arm64
 
 # Install Edge TPU compiler
 RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
@@ -102,10 +103,10 @@ RUN cd apis &&\
 RUN make install
 
 # Create runtime image
-FROM arm32v7/ubuntu:$UBUNTU_VERSION as runtime
-ARG LIB=/usr/lib/arm-linux-gnueabihf
+FROM arm64v8/ubuntu:$UBUNTU_VERSION as runtime
+ARG LIB=/usr/lib/aarch64-linux-gnu
 COPY --from=api $LIB/ld-*.so $LIB/
-COPY --from=api $LIB/ld-linux-armhf.so.* $LIB/
+COPY --from=api $LIB/ld-linux-aarch64.so.* $LIB/
 COPY --from=api $LIB/libc-*.so $LIB/
 COPY --from=api $LIB/libc.so* $LIB/
 COPY --from=api $LIB/libcares.so* $LIB/

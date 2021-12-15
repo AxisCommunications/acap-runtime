@@ -26,6 +26,7 @@ namespace inference_test {
 
 const char* cpuChipId = "2";
 const char* tpuChipId = "4";
+const char* dlpuChipId = "12";
 
 const char* sharedFile = "/test.bmp";
 const char* target = "localhost:9001";
@@ -53,7 +54,7 @@ void Service(
   sprintf(timeout, "%d", seconds);
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
-    "acap-runtime", verbose ? "-v" : "",
+    "acap_runtime", verbose ? "-v" : "",
     "-p", "9001",
     "-t", timeout,
     "-j", chipId
@@ -72,7 +73,7 @@ void ServiceSecurity(
   sprintf(timeout, "%d", seconds);
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
-    "acap-runtime", verbose ? "-v" : "",
+    "acap_runtime", verbose ? "-v" : "",
     "-p", "9001",
     "-t", timeout,
     "-j", chipId,
@@ -92,7 +93,7 @@ void ServiceModel(
   sprintf(timeout, "%d", seconds);
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
-    "acap-runtime", verbose ? "-v" : "",
+    "acap_runtime", verbose ? "-v" : "",
     "-p", "9001",
     "-t", timeout,
     "-j", chipId,
@@ -464,7 +465,10 @@ TEST(InferenceTest, PredictCpuModel1Preload)
   PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
   PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
   PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+#elif __arm__
   PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
   PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
 #else
@@ -486,7 +490,10 @@ TEST(InferenceTest, PredictCpuModel1)
   PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
   PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
   PredictModel1(stub, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, false);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+#elif __arm__
   PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, false);
   PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
 #else
@@ -505,7 +512,13 @@ TEST(InferenceTest, PredictCpuModel2)
   ASSERT_TRUE(channel->WaitForConnected(
     gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
   unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 168, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 168, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 168, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 168, true);
+#elif __arm__
   PredictModel2(stub, cpuModel2, imageFile1, 653, 168, false);
   PredictModel2(stub, cpuModel2, imageFile1, 653, 168, false);
   PredictModel2(stub, cpuModel2, imageFile1, 653, 168, true);
@@ -530,7 +543,13 @@ TEST(InferenceTest, PredictCpuModel3)
   ASSERT_TRUE(channel->WaitForConnected(
     gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
   unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
-#ifdef __arm__
+#ifdef __arm64__
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 190, false);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 190, true);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 200, true);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 200, true);
+#elif __arm__
   PredictModel3(stub, cpuModel3, imageFile1, 653, 190, false);
   PredictModel3(stub, cpuModel3, imageFile1, 653, 190, false);
   PredictModel3(stub, cpuModel3, imageFile1, 653, 190, true);
@@ -557,7 +576,101 @@ TEST(InferenceTest, PredictModel_Fail)
   main.join();
 }
 
-#ifdef __arm__
+#ifdef __arm64__
+TEST(InferenceTest, ServerAuthenticationDlpu)
+{
+  shm_unlink(sharedFile);
+  thread main(ServiceSecurity, 5, dlpuChipId, serverCertificatePath, serverKeyPath);
+
+  string root_cert = read_text(serverCertificatePath);
+  SslCredentialsOptions ssl_opts = {root_cert.c_str(), "", ""};
+  shared_ptr<ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
+  shared_ptr<Channel> channel = CreateChannel(target, creds);
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  main.join();
+}
+
+TEST(InferenceTest, PredictDlpuModel1Preload)
+{
+  shm_unlink(sharedFile);
+  thread main(ServiceModel, 5, dlpuChipId, cpuModel1);
+
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  main.join();
+}
+
+TEST(InferenceTest, PredictDlpuModel1)
+{
+  shm_unlink(sharedFile);
+  thread main(Service, 5, dlpuChipId);
+
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, false);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, false);
+  PredictModel1(stub, cpuModel1, imageFile1, 0.878906, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  PredictModel1(stub, cpuModel1, imageFile2, 0.83984375, 0.5, true);
+  main.join();
+}
+
+TEST(InferenceTest, PredictDlpuModel2)
+{
+  shm_unlink(sharedFile);
+  thread main(Service, 5, dlpuChipId);
+
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 166, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 166, false);
+  PredictModel2(stub, cpuModel2, imageFile1, 653, 166, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 170, true);
+  PredictModel2(stub, cpuModel2, imageFile2, 458, 170, true);
+  main.join();
+}
+
+TEST(InferenceTest, DISABLED_PredictDlpuModel3)
+// Failed to load model efficientnet-edgetpu-M_quant.tflite (Could not send message: Connection reset by peer)
+{
+  shm_unlink(sharedFile);
+  thread main(Service, 10, dlpuChipId);
+
+  shared_ptr<Channel> channel = CreateChannel(target, InsecureChannelCredentials());
+  ASSERT_TRUE(channel->WaitForConnected(
+    gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(10, GPR_TIMESPAN))));
+  unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 197, false);
+  PredictModel3(stub, cpuModel3, imageFile1, 653, 197, true);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 176, true);
+  PredictModel3(stub, cpuModel3, imageFile2, 653, 176, true);
+  main.join();
+}
+#elif __arm__
 TEST(InferenceTest, ServerAuthenticationTpu)
 {
   shm_unlink(sharedFile);

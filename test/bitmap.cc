@@ -14,7 +14,7 @@
 #define ALL_COLORS_REQUIRED 0
 
 //***Inputs*****
-//fileName: The name of the file to open 
+//fileName: The name of the file to open
 //***Outputs****
 //pixels: A pointer to a byte array. This will contain the pixel data
 //width: An int pointer to store the width of the image in pixels
@@ -22,35 +22,64 @@
 //bytesPerPixel: An int pointer to store the number of bytes per pixel that are used in the image
 void ReadImage(const char *fileName, uchar **pixels, int *width, int *height, int *bytesPerPixel)
 {
+        *pixels = NULL;
+        *width = 0;
+        *height = 0;
+        *bytesPerPixel = 0;
+
         //Open the file for reading in binary mode
         FILE *imageFile = fopen(fileName, "rb");
+
         //Read data offset
         int32_t dataOffset;
         fseek(imageFile, DATA_OFFSET_OFFSET, SEEK_SET);
-        fread(&dataOffset, 4, 1, imageFile);
+        if (fread(&dataOffset, 4, 1, imageFile) == 0) {
+                printf("fread %s error 1\n", fileName);
+                fclose(imageFile);
+                return;
+        }
+
         //Read width
         fseek(imageFile, WIDTH_OFFSET, SEEK_SET);
-        fread(width, 4, 1, imageFile);
+        if (fread(width, 4, 1, imageFile) == 0)  {
+                printf("fread %s error 2\n", fileName);
+                fclose(imageFile);
+                return;
+        }
+
         //Read height
         fseek(imageFile, HEIGHT_OFFSET, SEEK_SET);
-        fread(height, 4, 1, imageFile);
+        if (fread(height, 4, 1, imageFile) == 0) {
+                printf("fread %s error 3\n", fileName);
+                fclose(imageFile);
+                return;
+        }
+
         //Read bits per pixel
         int16_t bitsPerPixel;
         fseek(imageFile, BITS_PER_PIXEL_OFFSET, SEEK_SET);
-        fread(&bitsPerPixel, 2, 1, imageFile);
+        if (fread(&bitsPerPixel, 2, 1, imageFile) == 0) {
+                printf("fread %s error 4\n", fileName);
+                fclose(imageFile);
+                return;
+        }
+
         //Allocate a pixel array
         *bytesPerPixel = ((int32_t)bitsPerPixel) / 8;
 
         //Rows are stored bottom-up
-        //Each row is padded to be a multiple of 4 bytes. 
+        //Each row is padded to be a multiple of 4 bytes.
         //We calculate the padded row size in bytes
         int paddedRowSize = (int)(4 * ceil((float)(*width) / 4.0f))*(*bytesPerPixel);
+
         //We are not interested in the padded bytes, so we allocate memory just for
         //the pixel data
         int unpaddedRowSize = (*width)*(*bytesPerPixel);
+
         //Total size of the pixel data in bytes
         int totalSize = unpaddedRowSize*(*height);
         *pixels = (uchar*)malloc(totalSize);
+
         //Read the pixel data Row by Row.
         //Data is padded and stored bottom-up
         int i = 0;
@@ -60,8 +89,14 @@ void ReadImage(const char *fileName, uchar **pixels, int *width, int *height, in
         {
                 //put file cursor in the next row from top to bottom
 	        fseek(imageFile, dataOffset+(i*paddedRowSize), SEEK_SET);
+
 	        //read only unpaddedRowSize bytes (we can ignore the padding bytes)
-	        fread(currentRowPointer, 1, unpaddedRowSize, imageFile);
+	        if (fread(currentRowPointer, 1, unpaddedRowSize, imageFile) == 0) {
+                        printf("fread %s error 5\n", fileName);
+                        fclose(imageFile);
+                        return;
+                }
+
 	        //point to the next row (from bottom to top)
 	        currentRowPointer -= unpaddedRowSize;
         }
@@ -70,7 +105,7 @@ void ReadImage(const char *fileName, uchar **pixels, int *width, int *height, in
 }
 
 //***Inputs*****
-//fileName: The name of the file to save 
+//fileName: The name of the file to save
 //pixels: Pointer to the pixel data array
 //width: The width of the image in pixels
 //height: The height of the image in pixels
@@ -119,7 +154,7 @@ void WriteImage(const char *fileName, uchar *pixels, int width, int height, int 
         int32_t resolutionY = 11811; //300 dpi
         fwrite(&resolutionX, 4, 1, outputFile);
         fwrite(&resolutionY, 4, 1, outputFile);
-        //write colors used 
+        //write colors used
         int32_t colorsUsed = MAX_NUMBER_OF_COLORS;
         fwrite(&colorsUsed, 4, 1, outputFile);
         //Write important colors
@@ -132,7 +167,7 @@ void WriteImage(const char *fileName, uchar *pixels, int width, int height, int 
         {
                 //start writing from the beginning of last row in the pixel array
                 int pixelOffset = ((height - i) - 1)*unpaddedRowSize;
-                fwrite(&pixels[pixelOffset], 1, paddedRowSize, outputFile);	
+                fwrite(&pixels[pixelOffset], 1, paddedRowSize, outputFile);
         }
         fclose(outputFile);
 }
