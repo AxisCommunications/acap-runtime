@@ -14,7 +14,7 @@ GRPC_CPP_PLUGIN_PATH ?= $(shell which $(GRPC_CPP_PLUGIN))
 
 # Output binary name matches the repository name
 BINARY := $(subst -,_,$(shell basename -s .git $$(git config --get remote.origin.url)))
-TEST := $(addsuffix .test, $(BINARY))
+TEST := $(addsuffix _test, $(BINARY))
 
 # Build files
 PROTOBUF_FILES := $(call rwildcard, $(API_PATH),*.proto)
@@ -32,7 +32,6 @@ PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --
 PKG_CONFIG_LDLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --libs-only-l $(PKGS))
 CXXFLAGS += -DLAROD_API_VERSION_2 -std=c++17 -I$(OUT_PATH) $(PKG_CONFIG_CFLAGS_OTHER) $(PKG_CONFIG_CFLAGS_I)
 LDLIBS   += -llarod -lrt $(PKG_CONFIG_LDLIBS)
-#LDLIBS   += -llarod -lrt
 LDFLAGS  += $(PKG_CONFIG_LDFLAGS)
 
 .PHONY: clean install install/strip

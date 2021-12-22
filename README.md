@@ -31,13 +31,13 @@ docker save $APP_NAME:$ARCH-test | docker --tlsverify -H tcp://$AXIS_TARGET_IP:2
 docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 run --rm \
  --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $APP_NAME:$ARCH-test acap_runtime.test
+ -it $APP_NAME:$ARCH-test acap_runtime_test
 
 # Run test container with single test and verbose prints on camera
 docker --tlsverify -H tcp://$AXIS_TARGET_IP:2376 run --rm \
  --volume /usr/acap-root/lib:/host/lib \
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $APP_NAME:$ARCH-test acap_runtime.test \
+ -it $APP_NAME:$ARCH-test acap_runtime_test \
  --gtest_color=yes --gtest_filter=ParameterTest.GetValues
 ```
 
@@ -69,7 +69,7 @@ docker run --rm --privileged\
 # Run acap-runttime test suite
 docker container run --rm --privileged\
  --volume /run/dbus/system_bus_socket:/run/dbus/system_bus_socket \
- -it $APP_NAME:$ARCH-test acap_runtime.test
+ -it $APP_NAME:$ARCH-test acap_runtime_test
 ```
 
 ## Command line options

@@ -439,7 +439,7 @@ TEST(InferenceTest, ServerAuthentication)
   main.join();
 }
 
-TEST(InferenceTest, ServerInsecureCredentials_Fail)
+TEST(InferenceTest, DISABLED_ServerInsecureCredentials_Fail)
 {
   shm_unlink(sharedFile);
   thread main(ServiceSecurity, 5, cpuChipId, serverCertificatePath, serverKeyPath);

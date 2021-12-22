@@ -1,0 +1,33 @@
+{
+    "schemaVersion": "1.1",
+    "acapPackageConf": {
+        "setup": {
+            "friendlyName": "ACAP Runtime",
+            "appName": "acap_runtime",
+            "vendor": "Axis Communications",
+            "embeddedSdkVersion": "3.0",
+            "user": {
+                "group": "sdk",
+                "username": "sdk"
+            },
+            "runOptions": "-p 9001 -j 4",
+            "vendorUrl": "https://www.axis.com",
+            "runMode": "never",
+            "version": "1.0.0"
+        },
+        "configuration": {
+            "paramConfig": [
+                {
+                    "name": "IpPort",
+                    "default": "9001",
+                    "type": "string"
+                },
+                {
+                    "name": "ChipId",
+                    "default": "4",
+                    "type": "string"
+                }
+            ]
+        }
+    }
+}
