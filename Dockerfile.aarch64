@@ -1,52 +1,23 @@
-# Dockerfile for acap-runtime on camera
+ARG ARCH=aarch64
+ARG VERSION=1.1_beta1
 ARG UBUNTU_VERSION=20.04
+ARG REPO=axisecp
 
-FROM axisecp/acap-api:4.1_beta1-aarch64-ubuntu$UBUNTU_VERSION as api
-LABEL maintainer="rapid@axis.com"
+FROM ${REPO}/acap-sdk:3.4.2-${ARCH}-ubuntu20.04 as acap-sdk
+FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} as acap-native-sdk
+FROM acap-native-sdk as build
 
-## Build environment
-ENV CXX="aarch64-linux-gnu-g++ -mcpu=cortex-a53 -march=armv8-a+crc+crypto -fstack-protector-strong -D__arm64__"
+ARG ARCH
+ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
 
-ENV LIB=/usr/lib/aarch64-linux-gnu
-ENV PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR:$LIB/pkgconfig
-ENV DEBIAN_FRONTEND=noninteractive
-ENV SYSROOT=/opt/axis/sdk/temp/sysroots/aarch64/usr
-
-# Add source for target arch
-RUN echo \
-"deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal main restricted universe multiverse\n\
-deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-updates main restricted universe multiverse\n\
-deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ focal-backports main restricted universe multiverse\n\
-deb [arch=amd64] http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse\n\
-deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal main restricted universe multiverse\n\
-deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main restricted universe multiverse\n\
-deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-backports main restricted universe multiverse\n\
-deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-security main restricted universe multiverse"\
- > /etc/apt/sources.list
-
-## Install dependencies
-RUN apt-get update && apt-get install -y -f \
-    git \
-    make \
-    curl \
-    gnupg \
+# Install openssl (to use instead of boringssl)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
-    autoconf \
-    libtool \
-    openssl \
-    g++-aarch64-linux-gnu \
-    binutils-multiarch \
-    protobuf-compiler \
-    protobuf-compiler-grpc
-
-RUN dpkg --add-architecture arm64 &&\
-    apt-get update && apt-get install -y -f \
-    libgrpc++-dev:arm64 \
-    libprotobuf-dev:arm64 \
-    libc-ares-dev:arm64 \
-    libssl-dev:arm64 \
-    libsystemd-dev:arm64 \
-    libgtest-dev:arm64
+    g++ \
+    cmake \
+    libssl-dev \
+    gnupg \
+    openssl
 
 # Install Edge TPU compiler
 RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
@@ -54,12 +25,8 @@ RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" |
     apt-get update && apt-get install -y --no-install-recommends \
     edgetpu-compiler
 
-# Copy larod library
-RUN cp $SYSROOT/lib/liblarod* $LIB &&\
-    cp $SYSROOT/include/larod* /usr/include
-
 # Get testdata models
-WORKDIR /opt/acap-runtime/testdata
+WORKDIR /opt/app/testdata
 
 # Generate TSL/SSL test certificate
 RUN openssl req -x509 -batch -subj '/CN=localhost' -days 10000 -newkey rsa:4096 -nodes -out server.pem -keyout server.key
@@ -88,57 +55,94 @@ RUN cd tmp &&\
     mv efficientnet-edgetpu-M_quant*.tflite ../.. &&\
     cd ../.. && rm -rf tmp
 
-## Get Tensorflow and Tensorflow Serving
-WORKDIR /opt/acap-runtime
+# Switch to build directory
+WORKDIR /opt
+
+# Build and install gRPC for the host architecture.
+# We do this because we need to be able to run protoc and grpc_cpp_plugin
+# while cross-compiling.
+RUN git clone -b v1.36.x https://github.com/grpc/grpc &&\
+    cd grpc &&\
+    git submodule update --init
+
+# Build and install gRPC for the host architecture.
+# We do this because we need to be able to run protoc and grpc_cpp_plugin
+# while cross-compiling.
+RUN mkdir -p "/opt/grpc/cmake/build" &&\
+    cd "/opt/grpc/cmake/build" &&\
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_BUILD_TESTS=OFF \
+        -DgRPC_SSL_PROVIDER=package \
+        ../.. &&\
+    make -j4 install
+
+# Build for ARM
+
+# Clone openssl and extract source code
+RUN curl -O https://www.openssl.org/source/openssl-1.1.1l.tar.gz && \
+    tar xzvf openssl-1.1.1l.tar.gz
+RUN mkdir -p openssl-1.1.1l/build &&\
+    cd openssl-1.1.1l/build &&\
+    rm -rf ../doc &&\
+    ../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr && \
+    make CC=aarch64-linux-gnu-gcc && \
+    make install
+
+# Build and install gRPC for ARM.
+# This build will use the host architecture copies of protoc and
+# grpc_cpp_plugin that we built earlier because we installed them
+# to a location in our PATH (/usr/local/bin).
+RUN mkdir -p "/opt/grpc/cmake/build_arm" &&\
+    cd "/opt/grpc/cmake/build_arm" &&\
+    . /opt/axis/acapsdk/environment-setup* &&\
+    CXXFLAGS="$CXXFLAGS -g0" cmake \
+        -DCMAKE_SYSTEM_NAME=Linux \
+        -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+        -DCMAKE_INSTALL_PREFIX=$SDKTARGETSYSROOT/usr \
+        -DCMAKE_FIND_ROOT_PATH=$SDKTARGETSYSROOT/usr \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_SSL_PROVIDER=package \
+        -DCMAKE_BUILD_TYPE=Release \
+        ../.. &&\
+    make -j4 install/strip &&\
+    cp -r /opt/grpc/third_party/googletest/googletest/include/gtest $SDKTARGETSYSROOT/usr/include
+
+# Get Tensorflow and Tensorflow Serving
 RUN git clone -b r1.14 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
 RUN git clone -b r1.14 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 
-# Setup build structure
-COPY . ./
+# Copy over axparameter from the acap-sdk
+COPY --from=acap-sdk $TARGETSYSROOT/usr/include/axsdk/ax_parameter $TARGETSYSROOT/usr/include/axsdk
+COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so $TARGETSYSROOT/usr/lib/libaxparameter.so
+COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so.1 $TARGETSYSROOT/usr/lib/libaxparameter.so.1
+COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so.1.0 $TARGETSYSROOT/usr/lib/libaxparameter.so.1.0
+COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/pkgconfig/axparameter.pc $TARGETSYSROOT/usr/lib/pkgconfig/axparameter.pc
+
+## Setup build structure
+WORKDIR /opt/app
+COPY . .
 RUN cd apis &&\
     ln -fs /opt/tensorflow/tensorflow/tensorflow &&\
     ln -fs /opt/tensorflow/serving/tensorflow_serving
 
-## Build and install
-RUN make install
+# Building the ACAP application
+ARG TEST
+RUN . /opt/axis/acapsdk/environment-setup* &&\
+    if [ -z "$TEST" ]; then \
+        printf "Building app\n" ; \
+        CXXFLAGS="$CXXFLAGS -g0 -D__arm64__" \
+        acap-build . -m manifest-aarch64.json ; \
+    else \
+        printf "Building test\n" ; \
+        CXXFLAGS="$CXXFLAGS -g0  -D__arm64__ -DTEST" \
+        acap-build . -m manifest-test.json -a 'testdata/*'; \
+    fi
 
-# Create runtime image
-FROM arm64v8/ubuntu:$UBUNTU_VERSION as runtime
-ARG LIB=/usr/lib/aarch64-linux-gnu
-COPY --from=api $LIB/ld-*.so $LIB/
-COPY --from=api $LIB/ld-linux-aarch64.so.* $LIB/
-COPY --from=api $LIB/libc-*.so $LIB/
-COPY --from=api $LIB/libc.so* $LIB/
-COPY --from=api $LIB/libcares.so* $LIB/
-COPY --from=api $LIB/libcares.so* $LIB/
-COPY --from=api $LIB/libcrypto.so* $LIB/
-COPY --from=api $LIB/libdl-*.so $LIB/
-COPY --from=api $LIB/libdl.so* $LIB/
-COPY --from=api $LIB/libgcc_s.so* $LIB/
-COPY --from=api $LIB/libgpr.so* $LIB/
-COPY --from=api $LIB/libgrpc.so* $LIB/
-COPY --from=api $LIB/libgrpc++.so* $LIB/
-COPY --from=api $LIB/libm.so* $LIB/
-COPY --from=api $LIB/librt-*.so $LIB/
-COPY --from=api $LIB/librt.so* $LIB/
-COPY --from=api $LIB/libprotobuf.so* $LIB/
-COPY --from=api $LIB/libpthread-*.so $LIB/
-COPY --from=api $LIB/libpthread.so* $LIB/
-COPY --from=api $LIB/libsystemd.so* $LIB/
-COPY --from=api $LIB/libssl.so* $LIB/
-COPY --from=api $LIB/libstdc++.so* $LIB/
-COPY --from=api $LIB/libz.so.* $LIB/
-COPY --from=api /usr/bin/acap_runtime /usr/bin/
+FROM acap-native-sdk
+WORKDIR /opt/app
+COPY --from=build /opt/app/*.eap ./
+COPY --from=build /opt/app/*.conf ./
 
-# Find liblarod.so on target device
-ENV LD_LIBRARY_PATH=/host/lib
-
-# Create test image
-FROM runtime as test
-COPY --from=api /usr/bin/acap_runtime_test /usr/bin/
-COPY --from=api /opt/acap-runtime/testdata/* /testdata/
-
-# This container is used for finding out what libraries acap-runtime
-# needs and the outcome is the list above of libraries to preserve.
-#ENTRYPOINT [ "/usr/bin/ldd",  "/usr/bin/acap_runtime" ]
-#CMD ["/usr/bin/acap_runtime"]
+ENTRYPOINT [ "/opt/axis/acapsdk/sysroots/x86_64-pokysdk-linux/usr/bin/eap-install.sh" ]

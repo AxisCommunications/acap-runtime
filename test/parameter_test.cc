@@ -43,7 +43,7 @@ void Service(int seconds)
   sprintf(timeout, "%d", seconds);
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
-    "acap_runtime", verbose ? "-v" : "",
+    "acapruntime", verbose ? "-v" : "",
     "-p", "9001",
     "-t", timeout
      };

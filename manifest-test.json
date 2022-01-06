@@ -3,7 +3,7 @@
     "acapPackageConf": {
         "setup": {
             "friendlyName": "ACAP Runtime Test Suite",
-            "appName": "acap_runtime_test",
+            "appName": "acapruntimetest",
             "vendor": "Axis Communications",
             "embeddedSdkVersion": "3.0",
             "user": {
@@ -11,8 +11,17 @@
                 "username": "sdk"
             },
             "vendorUrl": "https://www.axis.com",
-            "runMode": "never",
-            "version": "1.0.0"
+            "runMode": "once",
+            "version": "0.7.0"
+        },
+        "configuration": {
+            "paramConfig": [
+                {
+                    "name": "Verbose",
+                    "default": "no",
+                    "type": "enum:no|No, yes|Yes"
+                }
+            ]
         }
     }
 }
