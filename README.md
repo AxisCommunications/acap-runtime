@@ -10,24 +10,40 @@ To get started following system requirements shall be met:
 * Docker version 19.03.5 or higher
 * Ubuntu version 20.04
 
-## Build and run test suite for camera:
+## Run latest prebuilt acap runtime server on camera
 ```sh
 # Set your camera IP address and architecture: armv7hf or aarch64
 export AXIS_TARGET_IP=<actual camera IP address>
 export ARCH=armv7hf
 
-# Build acap-runtime test suite and install and run on camera
-docker build . -f Dockerfile.$ARCH --tag acap-runtime-test:$ARCH --build-arg TEST=true
-docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass install
-docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass start
+# Install and run acap-runtime server on camera
+docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP pass install
+docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP pass start
+
+# Find the logs in the camera web GUI and select the installed program in the Apps tab
+# Terminate and unistall acap-runtime server
+docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP pass stop
+docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP pass remove
+```
+
+## Run latest prebuilt test suite on camera
+```sh
+# Set your camera IP address and architecture: armv7hf or aarch64
+export AXIS_TARGET_IP=<actual camera IP address>
+export ARCH=armv7hf
+
+# Install and run test suite on camera
+docker run --rm axisecp/acap-runtime-test:$ARCH $AXIS_TARGET_IP pass install
+docker run --rm axisecp/acap-runtime-test:$ARCH $AXIS_TARGET_IP pass start
 
 # Find the logs in the camera web GUI and select the installed program in the Apps tab
 # Terminate and unistall test suite
-docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass stop
-docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass remove
+docker run --rm axisecp/acap-runtime-test:$ARCH $AXIS_TARGET_IP pass stop
+docker run --rm axisecp/acap-runtime-test:$ARCH $AXIS_TARGET_IP pass remove
 ```
 
-## Build and run acap runtime server for camera:
+## Build and run acap runtime server on camera
+This section requires access to acap-runtime GitHub repo.
 ```sh
 # Set your camera IP address and architecture: armv7hf or aarch64
 export AXIS_TARGET_IP=<actual camera IP address>
@@ -44,9 +60,26 @@ docker run --rm acap-runtime:$ARCH $AXIS_TARGET_IP pass stop
 docker run --rm acap-runtime:$ARCH $AXIS_TARGET_IP pass remove
 ```
 
+## Build and run test suite on camera
+This section requires access to acap-runtime GitHub repo.
+```sh
+# Set your camera IP address and architecture: armv7hf or aarch64
+export AXIS_TARGET_IP=<actual camera IP address>
+export ARCH=armv7hf
+
+# Build acap-runtime test suite and install and run on camera
+docker build . -f Dockerfile.$ARCH --tag acap-runtime-test:$ARCH --build-arg TEST=true
+docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass install
+docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass start
+
+# Find the logs in the camera web GUI and select the installed program in the Apps tab
+# Terminate and unistall test suite
+docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass stop
+docker run --rm acap-runtime-test:$ARCH $AXIS_TARGET_IP pass remove
+```
+
 ## Program options
 Following options are available in the camera web GUI by selecting the installed program in the **Apps** tab:
-
 ```
 Verbose     Enable extended logging
 IpPort      IP port of server
