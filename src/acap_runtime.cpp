@@ -12,12 +12,6 @@
 
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
 
-#ifdef TEST
-  #define PROGRAM "acapruntimetest"
-#else
-  #define PROGRAM "acapruntime"
-#endif
-
 using namespace std;
 using namespace grpc;
 using namespace acap_runtime;
@@ -188,15 +182,15 @@ int AcapRuntime(int argc, char* argv[])
   init_signals();
 
   // Read parameters from parameter storage
-  char *verbose = get_parameter_value(PROGRAM, "Verbose");
+  char *verbose = get_parameter_value(APP_NAME, "Verbose");
   if (verbose != NULL) {
     _verbose = strcmp(verbose, "yes") == 0;
   }
-  char *ip_port = get_parameter_value(PROGRAM, "IpPort");
+  char *ip_port = get_parameter_value(APP_NAME, "IpPort");
   if (ip_port != NULL) {
     ipPort = atoi(ip_port);
   }
-  char *chip_id = get_parameter_value(PROGRAM, "ChipId");
+  char *chip_id = get_parameter_value(APP_NAME, "ChipId");
   if (chip_id != NULL) {
     chipId = atoi(chip_id);
   }

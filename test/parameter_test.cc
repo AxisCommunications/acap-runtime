@@ -81,7 +81,10 @@ TEST(ParameterTest, GetValues)
 {
   const bool verbose = FLAGS_gtest_color == "yes";
   vector<string> keys = {
-    "key1", "key2", "key3", "key4", "key5", "key1", "key2", "key4"
+    "root.Brand.Brand",
+    "root.Brand.WebURL",
+    "root.Image.I0.Enabled",
+    "root.invalid"
   };
 
   thread main(Service, 5);
@@ -99,15 +102,11 @@ TEST(ParameterTest, GetValues)
     }
   }
 
-  EXPECT_EQ(8, values.size());
-  EXPECT_STREQ("value1", values[0].second.c_str());
-  EXPECT_STREQ("value2", values[1].second.c_str());
-  EXPECT_STREQ("value3", values[2].second.c_str());
-  EXPECT_STREQ("value4", values[3].second.c_str());
-  EXPECT_STREQ("value5", values[4].second.c_str());
-  EXPECT_STREQ("value1", values[5].second.c_str());
-  EXPECT_STREQ("value2", values[6].second.c_str());
-  EXPECT_STREQ("value4", values[7].second.c_str());
+  EXPECT_EQ(4, values.size());
+  EXPECT_STREQ("AXIS", values[0].second.c_str());
+  EXPECT_STREQ("http://www.axis.com", values[1].second.c_str());
+  EXPECT_STREQ("yes", values[2].second.c_str());
+  EXPECT_STREQ("", values[3].second.c_str());
 
   main.join();
 }
