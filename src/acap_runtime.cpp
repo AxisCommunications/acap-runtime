@@ -11,6 +11,9 @@
 #include "parameter.h"
 
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
+#define INSTALLDIR "/usr/local/packages/acapruntime/"
+static const char* serverCertificatePath = INSTALLDIR "server.pem";
+static const char* serverKeyPath = INSTALLDIR "server.key";
 
 using namespace std;
 using namespace grpc;
@@ -193,6 +196,13 @@ int AcapRuntime(int argc, char* argv[])
   char *chip_id = get_parameter_value(APP_NAME, "ChipId");
   if (chip_id != NULL) {
     chipId = atoi(chip_id);
+  }
+  char *useTls = get_parameter_value(APP_NAME, "UseTLS");
+  if (useTls != NULL) {
+    if (strcmp(useTls, "yes") == 0) {
+        pem_file.assign(serverCertificatePath);
+        key_file.assign(serverKeyPath);
+    }
   }
 
   // Override with parameters from command line

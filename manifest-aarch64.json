@@ -7,8 +7,8 @@
             "vendor": "Axis Communications",
             "embeddedSdkVersion": "3.0",
             "user": {
-                "group": "sdk",
-                "username": "sdk"
+                "group": "root",
+                "username": "root"
             },
             "vendorUrl": "https://www.axis.com",
             "runMode": "once",
@@ -30,6 +30,11 @@
                     "name": "ChipId",
                     "default": "12",
                     "type": "string"
+                },
+                {
+                    "name": "UseTLS",
+                    "default": "yes",
+                    "type": "enum:no|No, yes|Yes"
                 }
             ]
         }
