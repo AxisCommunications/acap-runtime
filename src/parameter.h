@@ -2,6 +2,12 @@
 ==============================================================================*/
 #include "keyvaluestore.grpc.pb.h"
 
+#ifdef TEST
+  #define APP_NAME "acapruntimetest"
+#else
+  #define APP_NAME "acapruntime"
+#endif
+
 using namespace grpc;
 using namespace keyvaluestore;
 

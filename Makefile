@@ -13,8 +13,8 @@ GRPC_CPP_PLUGIN := grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= $(shell which $(GRPC_CPP_PLUGIN))
 
 # Output binary name matches the repository name
-BINARY := $(subst -,_,$(shell basename -s .git $$(git config --get remote.origin.url)))
-TEST := $(addsuffix _test, $(BINARY))
+BINARY := $(subst -,,$(shell basename -s .git $$(git config --get remote.origin.url)))
+TEST := $(addsuffix test, $(BINARY))
 
 # Build files
 PROTOBUF_FILES := $(call rwildcard, $(API_PATH),*.proto)
@@ -25,11 +25,11 @@ SRC_FILES := $(wildcard $(SRC_PATH)/*.cpp $(SRC_PATH)/*.cc)
 TEST_FILES := $(wildcard $(TEST_PATH)/*.cpp $(TEST_PATH)/*.cc)
 
 # Compiler flags
-PKGS = protobuf grpc grpc++
-PKG_CONFIG_CFLAGS_I := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --cflags-only-I $(PKGS))
-PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --cflags-only-other $(PKGS))
-PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --libs-only-L $(PKGS))
-PKG_CONFIG_LDLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_LIBDIR) pkg-config --libs-only-l $(PKGS))
+PKGS = protobuf grpc grpc++ gio-2.0 glib-2.0 axparameter
+PKG_CONFIG_CFLAGS_I := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
+PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
+PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
+PKG_CONFIG_LDLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-l $(PKGS))
 CXXFLAGS += -DLAROD_API_VERSION_2 -std=c++17 -I$(OUT_PATH) $(PKG_CONFIG_CFLAGS_OTHER) $(PKG_CONFIG_CFLAGS_I)
 LDLIBS   += -llarod -lrt $(PKG_CONFIG_LDLIBS)
 LDFLAGS  += $(PKG_CONFIG_LDFLAGS)

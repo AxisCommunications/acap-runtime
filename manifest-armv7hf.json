@@ -3,20 +3,24 @@
     "acapPackageConf": {
         "setup": {
             "friendlyName": "ACAP Runtime",
-            "appName": "acap_runtime",
+            "appName": "acapruntime",
             "vendor": "Axis Communications",
             "embeddedSdkVersion": "3.0",
             "user": {
-                "group": "sdk",
-                "username": "sdk"
+                "group": "root",
+                "username": "root"
             },
-            "runOptions": "-p 9001 -j 4",
             "vendorUrl": "https://www.axis.com",
-            "runMode": "never",
-            "version": "1.0.0"
+            "runMode": "once",
+            "version": "0.7.0"
         },
         "configuration": {
             "paramConfig": [
+                {
+                    "name": "Verbose",
+                    "default": "no",
+                    "type": "enum:no|No, yes|Yes"
+                },
                 {
                     "name": "IpPort",
                     "default": "9001",
@@ -26,6 +30,11 @@
                     "name": "ChipId",
                     "default": "4",
                     "type": "string"
+                },
+                {
+                "name": "UseTLS",
+                "default": "yes",
+                "type": "enum:no|No, yes|Yes"
                 }
             ]
         }
