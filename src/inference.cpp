@@ -69,6 +69,8 @@ bool Inference::Init(const bool verbose, const uint64_t chipId, const vector<str
   _verbose = verbose;
   larodError* error = nullptr;
 
+  TRACELOG << "Init chipId=" << chipId << endl;
+
   if (pthread_mutex_init(&_mtx, NULL) != 0) {
     ERRORLOG << "Init mutex FAILED" << endl;
     return false;

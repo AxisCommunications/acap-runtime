@@ -87,6 +87,9 @@ docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS remove
 ```
 
 ## Program options
+
+> ACAP runtime must be restarted after program options has been changed.
+
 Following options are available in the camera web GUI after selecting the installed program in the **Apps** tab:
 
 ```

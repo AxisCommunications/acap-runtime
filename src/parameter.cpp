@@ -1,10 +1,21 @@
 /* Copyright 2021 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
 #include <axsdk/ax_parameter.h>
-#include <syslog.h>
 #include "parameter.h"
 
+using namespace std;
+
+#define ERRORLOG cerr << "ERROR in Parameter: "
+#define TRACELOG if (_verbose) cout << "TRACE in Parameter: "
+
 namespace acap_runtime {
+
+// Initialize Parameter Service
+bool Parameter::Init(const bool verbose) {
+  _verbose = verbose;
+  TRACELOG << "Init" << endl;
+  return true;
+}
 
 // Logic and data behind the server's behavior.
 Status Parameter::GetValues(ServerContext* context,
@@ -13,7 +24,7 @@ Status Parameter::GetValues(ServerContext* context,
 
     AXParameter *ax_parameter = ax_parameter_new(APP_NAME, &error);
     if (ax_parameter == NULL) {
-      syslog(LOG_ERR, "Error when creating axparameter: %s", error->message);
+      ERRORLOG << "Error when creating axparameter: " << error->message << endl;
       g_clear_error(&error);
       return Status::CANCELLED;
     }
@@ -25,6 +36,7 @@ Status Parameter::GetValues(ServerContext* context,
         parameter_value =  g_strdup("");
       }
 
+      TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
       Response response;
       response.set_value(parameter_value);
       stream->Write(response);

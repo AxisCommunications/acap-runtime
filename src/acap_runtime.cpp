@@ -118,7 +118,7 @@ void RunServer(
   Inference inference;
   if (chipId > 0) {
     if (!inference.Init(_verbose, chipId, models)) {
-      syslog(LOG_ERR, "Could not Init Inference");
+      syslog(LOG_ERR, "Could not Init Inference Service");
       return;
     }
     builder.RegisterService(&inference);
@@ -126,6 +126,10 @@ void RunServer(
 
   // Register parameter service
   Parameter parameter;
+  if (!parameter.Init(_verbose)) {
+      syslog(LOG_ERR, "Could not Init Parameter Service");
+      return;
+  }
   builder.RegisterService(&parameter);
 
   unique_ptr<Server> server(builder.BuildAndStart());
