@@ -16,7 +16,7 @@ Following system requirements shall be met:
 # Set your camera architecture and IP address
 export ARCH=<armv7hf or aarch64>
 export AXIS_TARGET_IP=<camera IP address>
-export PASS=<camera password>
+export PASS=<camera password> # Enclose with ' if password contains special characters
 
 # Install and run acap-runtime server on camera
 docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP $PASS install
@@ -34,7 +34,7 @@ docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP $PASS remove
 # Set your camera architecture and IP address
 export ARCH=<armv7hf or aarch64>
 export AXIS_TARGET_IP=<camera IP address>
-export PASS=<camera password>
+export PASS=<camera password> # Enclose with ' if password contains special characters
 
 # Install and run test suite on camera
 docker run --rm axisecp/acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS install
@@ -53,7 +53,7 @@ This section requires access to acap-runtime GitHub repo.
 # Set your camera architecture and IP address
 export ARCH=<armv7hf or aarch64>
 export AXIS_TARGET_IP=<camera IP address>
-export PASS=<camera password>
+export PASS=<camera password> # Enclose with ' if password contains special characters
 
 # Build acap-runtime server and install and run on camera
 docker build . -f Dockerfile.$ARCH --tag acap-runtime:$ARCH
@@ -73,7 +73,7 @@ This section requires access to acap-runtime GitHub repo.
 # Set your camera architecture and IP address
 export ARCH=<armv7hf or aarch64>
 export AXIS_TARGET_IP=<camera IP address>
-export PASS=<camera password>
+export PASS=<camera password> # Enclose with ' if password contains special characters
 
 # Build acap-runtime test suite and install and run on camera
 docker build . -f Dockerfile.$ARCH --tag acap-runtime:$ARCH-test --build-arg TEST=true
