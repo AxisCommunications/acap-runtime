@@ -2,6 +2,8 @@
 ==============================================================================*/
 #define TESTDATA "/usr/local/packages/acapruntimetest/testdata/"
 
+static const char* target = "unix:///tmp/acap-runtime.sock";
+static const char* target_port = "0";
 static const char* serverCertificatePath = TESTDATA "server.pem";
 static const char* serverKeyPath = TESTDATA "server.key";
 static const char* labelFile = TESTDATA "coco_labels.txt";

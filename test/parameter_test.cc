@@ -8,6 +8,7 @@
 #include "keyvaluestore.grpc.pb.h"
 #include "memory_use.h"
 #include "milli_seconds.h"
+#include "testdata.h"
 
 int AcapRuntime(int argc, char* argv[]);
 
@@ -17,7 +18,6 @@ using namespace grpc;
 using namespace google::protobuf;
 using namespace keyvaluestore;
 
-const char* target = "localhost:9001";
 int logTime = -1;
 
 namespace acap_runtime {
@@ -44,7 +44,7 @@ void Service(int seconds)
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
-    "-p", "9001",
+    "-p", target_port,
     "-t", timeout
      };
   const int argc = sizeof(argv) / sizeof(const char*);

@@ -1,5 +1,5 @@
 # ACAP runtime
-The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) for access. This makes service available to clients written in different languages or clients not even located at the same device.
+The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and Unix Domain Socket (USD) for access. This makes service available to clients written in different languages on the same device.
 
 The acap-runtime service includes following services:
 - Inference - An implementation of [Tensorflow Serving](https://github.com/tensorflow/serving/tree/master/tensorflow_serving/apis).
@@ -9,6 +9,7 @@ The acap-runtime service includes following services:
 Following system requirements shall be met:
 * Docker version 19.03.5 or higher
 * Ubuntu version 20.04
+* Certificate files if TLS is used
 
 ## Run latest prebuilt acap runtime server on camera
 
@@ -93,9 +94,17 @@ docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS remove
 Following options are available in the camera web GUI after selecting the installed program in the **Apps** tab:
 
 ```
-Verbose     Enable extended logging, default No
-IpPort      IP port of server
 ChipId      Chip id, see extended logging for available options, select 0 to disable inference server
+Use TLS     Enable SSL/TLS, default No
+Verbose     Enable extended logging, default No
+```
+
+## Use TLS
+This service can be run either unsecured or in TLS mode. TLS mode provides additional security and cryptation on the gRPC channel. There is a "Use TLS" dropdown in the web interface to switch between the two different modes. Note that the service has to be restarted every time TLS is activated or deactivated. TLS requires certificate and key file to work, which are listed below. For more information on how to generate these files, please see the [Parameter API](https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/master/parameter-api) example.
+
+```
+/usr/local/packages/acapruntime/server.pem
+/usr/local/packages/acapruntime/server.key
 ```
 
 ## License
