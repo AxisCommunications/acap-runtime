@@ -1,5 +1,5 @@
 # BETA - ACAP runtime
-The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and Unix Domain Socket (USD) for access. This makes service available to clients written in different languages on the same device.
+The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and Unix Domain Socket (UDS) for access. This makes service available to clients written in different languages on the same device.
 
 The acap-runtime service includes following services:
 - Inference - An implementation of [Tensorflow Serving](https://github.com/tensorflow/serving/tree/master/tensorflow_serving/apis).
@@ -108,7 +108,7 @@ This service can be run either unsecured or in TLS mode. TLS mode provides addit
 ```
 
 ## Access point
-The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and the accesspoint is an Unix Domain Socket (USD).
+The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and the accesspoint is an Unix Domain Socket (UDS).
 
 ```
 acap-runtime.sock
