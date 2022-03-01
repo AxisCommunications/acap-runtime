@@ -1,9 +1,10 @@
-/* Copyright 2020 Axis Communications AB. All Rights Reserved.
+/* Copyright 2022 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
 #include <axsdk/ax_parameter.h>
 #include <getopt.h>
 #include <grpcpp/grpcpp.h>
 #include <sstream>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <syslog.h>
 #include "read_text.h"
@@ -12,6 +13,9 @@
 
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
 #define INSTALLDIR "/usr/local/packages/acapruntime/"
+
+static const char* uds_path = "/tmp/acap-runtime.sock";
+static const char* uds_schema = "unix://";
 static const char* serverCertificatePath = INSTALLDIR "server.pem";
 static const char* serverKeyPath = INSTALLDIR "server.key";
 
@@ -82,7 +86,7 @@ static char *get_parameter_value(const char *domain, const char *parameter_name)
 }
 
 // Initialize acap-runtime and start gRPC service
-void RunServer(
+int RunServer(
   const string& address,
   const int port,
   const uint64_t chipId,
@@ -93,9 +97,16 @@ void RunServer(
 {
   // Setup gRPC service and credentials
   LOG(INFO) << "RunServer port=" << port <<" chipId=" << chipId << endl;
-  stringstream server_address;
-  server_address << address << ":" << port;
   ServerBuilder builder;
+
+  // Register channel
+  stringstream server_address;
+  if (port == 0) {
+    server_address << uds_schema << uds_path;
+  } else {
+    server_address << address << ":" << port;
+  }
+
   if (certificateFile.length() == 0 || keyFile.length() == 0) {
     shared_ptr<ServerCredentials> creds = InsecureServerCredentials();
     builder.AddListeningPort(server_address.str(), creds);
@@ -113,13 +124,14 @@ void RunServer(
     shared_ptr<ServerCredentials> creds = SslServerCredentials(ssl_opts);
     builder.AddListeningPort(server_address.str(), creds);
   }
+  LOG(INFO) << "Server listening on " << server_address.str() << endl;
 
   // Register inference service
   Inference inference;
   if (chipId > 0) {
     if (!inference.Init(_verbose, chipId, models)) {
       syslog(LOG_ERR, "Could not Init Inference Service");
-      return;
+      return EXIT_FAILURE;
     }
     builder.RegisterService(&inference);
   }
@@ -128,16 +140,32 @@ void RunServer(
   Parameter parameter;
   if (!parameter.Init(_verbose)) {
       syslog(LOG_ERR, "Could not Init Parameter Service");
-      return;
+      return EXIT_FAILURE;
   }
   builder.RegisterService(&parameter);
 
+  // Start server
   unique_ptr<Server> server(builder.BuildAndStart());
   if (!server) {
     syslog(LOG_ERR, "Could not start gRPC server");
-    return;
+    return EXIT_FAILURE;
   }
-  LOG(INFO) << "Server listening on " << server_address.str() << endl;
+
+  if (port == 0) {
+    // set uds ownership for current user
+    if (chown(uds_path, geteuid(), getegid()) != 0)
+    {
+      syslog(LOG_ERR, "Error setting uds ownership: %s", strerror(errno));
+      return EXIT_FAILURE;
+    }
+
+    // set uds permission as read-write for current user & group
+    if (chmod(uds_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) != 0)
+    {
+      syslog(LOG_ERR, "Error setting uds permissions: %s", strerror(errno));
+      return EXIT_FAILURE;
+    }
+  }
 
   // Wait for gRPC sercice termination
   if (time > 0) {
@@ -148,13 +176,13 @@ void RunServer(
   {
     /* Run the GLib event loop. */
     loop = g_main_loop_new(NULL, FALSE);
-    loop = g_main_loop_ref(loop);
     g_main_loop_run(loop);
     g_main_loop_unref(loop);
   }
 
-  server->Shutdown();
   LOG(INFO) << "Server shutdown" << endl;
+  server->Shutdown();
+  return EXIT_SUCCESS;
 }
 
 // Print help
@@ -176,7 +204,7 @@ void Usage(const char* name)
 // Note: name is _main not to conflict with test framework main()
 int AcapRuntime(int argc, char* argv[])
 {
-  int ipPort = 9001;
+  int ipPort = 0;
   string address = "0.0.0.0";
   string pem_file = "";
   string key_file = "";
@@ -220,7 +248,7 @@ int AcapRuntime(int argc, char* argv[])
         break;
       case 'h':
         Usage(argv[0]);
-        return 0;
+        return EXIT_SUCCESS;
       case 'j':
         chipId = atoi(optarg);
         break;
@@ -244,12 +272,12 @@ int AcapRuntime(int argc, char* argv[])
         break;
       default:
         Usage(argv[0]);
-        return 1;
+        return EXIT_FAILURE;
     }
   }
 
   LOG(INFO) << "Start " << argv[0] << endl;
-  RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
+  int ret = RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
   LOG(INFO) << "Exit " << argv[0] << endl;
-  return 0;
+  return ret;
 }

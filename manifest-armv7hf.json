@@ -7,12 +7,12 @@
             "vendor": "Axis Communications",
             "embeddedSdkVersion": "3.0",
             "user": {
-                "group": "root",
-                "username": "root"
+                "group": "sdk",
+                "username": "sdk"
             },
             "vendorUrl": "https://www.axis.com",
             "runMode": "once",
-            "version": "1.0.1"
+            "version": "1.1.0"
         },
         "configuration": {
             "paramConfig": [
@@ -22,19 +22,14 @@
                     "type": "enum:no|No, yes|Yes"
                 },
                 {
-                    "name": "IpPort",
-                    "default": "9001",
-                    "type": "string"
-                },
-                {
                     "name": "ChipId",
                     "default": "4",
                     "type": "string"
                 },
                 {
-                "name": "UseTLS",
-                "default": "yes",
-                "type": "enum:no|No, yes|Yes"
+                    "name": "UseTLS",
+                    "default": "no",
+                    "type": "enum:no|No, yes|Yes"
                 }
             ]
         }

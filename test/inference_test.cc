@@ -29,7 +29,6 @@ const char* tpuChipId = "4";
 const char* dlpuChipId = "12";
 
 const char* sharedFile = "/test.bmp";
-const char* target = "localhost:9001";
 int logTime = -1;
 
 void LogMemory()
@@ -55,7 +54,7 @@ void Service(
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
-    "-p", "9001",
+    "-p", target_port,
     "-t", timeout,
     "-j", chipId
      };
@@ -74,7 +73,7 @@ void ServiceSecurity(
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
-    "-p", "9001",
+    "-p", target_port,
     "-t", timeout,
     "-j", chipId,
     "-c", certificateFile,
@@ -94,7 +93,7 @@ void ServiceModel(
   const bool verbose = FLAGS_gtest_color == "yes";
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
-    "-p", "9001",
+    "-p", target_port,
     "-t", timeout,
     "-j", chipId,
     "-m", modelFile
