@@ -1,4 +1,4 @@
-# ACAP runtime
+# BETA - ACAP runtime
 The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and Unix Domain Socket (USD) for access. This makes service available to clients written in different languages on the same device.
 
 The acap-runtime service includes following services:
@@ -100,11 +100,18 @@ Verbose     Enable extended logging, default No
 ```
 
 ## Use TLS
-This service can be run either unsecured or in TLS mode. TLS mode provides additional security and cryptation on the gRPC channel. There is a "Use TLS" dropdown in the web interface to switch between the two different modes. Note that the service has to be restarted every time TLS is activated or deactivated. TLS requires certificate and key file to work, which are listed below. For more information on how to generate these files, please see the [Parameter API](https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/master/parameter-api) example.
+This service can be run either unsecured or in TLS mode. TLS mode provides additional security and encryption on the gRPC channel. There is a "Use TLS" dropdown in the web interface to switch between the two different modes. Note that the service has to be restarted every time TLS is activated or deactivated. TLS requires certificate and key file to work, which are listed below. For more information on how to generate these files, please see the [Parameter API](https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/master/parameter-api) example.
 
 ```
 /usr/local/packages/acapruntime/server.pem
 /usr/local/packages/acapruntime/server.key
+```
+
+## Access point
+The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and the accesspoint is an Unix Domain Socket (USD).
+
+```
+acap-runtime.sock
 ```
 
 ## License
