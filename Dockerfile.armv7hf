@@ -127,17 +127,25 @@ RUN cd apis &&\
     ln -fs /opt/tensorflow/tensorflow/tensorflow . &&\
     ln -fs /opt/tensorflow/serving/tensorflow_serving .
 
+# Patch the Predict call of Tensorflow Serving
+RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
+
 # Building the ACAP application
 ARG TEST
+ARG DEBUG
 RUN . /opt/axis/acapsdk/environment-setup* &&\
-    if [ -z "$TEST" ]; then \
-        printf "Building app\n" ; \
-        CXXFLAGS="$CXXFLAGS -g0" \
+    if [ -n "$DEBUG" ]; then \
+        printf "Building debug\n" ; \
+        CXXFLAGS="$CXXFLAGS -O0 -ggdb" \
         acap-build . -m manifest-armv7hf.json ; \
-    else \
+    elif [ -n "$TEST" ]; then \
         printf "Building test\n" ; \
         CXXFLAGS="$CXXFLAGS -g0 -DTEST" \
         acap-build . -m manifest-test.json -a 'testdata/*'; \
+    else \
+        printf "Building app\n" ; \
+        CXXFLAGS="$CXXFLAGS -g0" \
+        acap-build . -m manifest-armv7hf.json ; \
     fi
 
 FROM acap-native-sdk

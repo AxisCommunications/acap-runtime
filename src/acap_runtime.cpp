@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-#include <glib.h>
 #include <getopt.h>
+#include <glib.h>
 #include <grpcpp/grpcpp.h>
-#include <sstream>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <syslog.h>
-#include "read_text.h"
+#include <unistd.h>
+
+#include <sstream>
+
 #include "inference.h"
 #include "parameter.h"
+#include "read_text.h"
 #include "util.h"
- 
+#include "video_capture.h"
+
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
 #define INSTALLDIR "/usr/local/packages/acapruntime/"
 
@@ -115,16 +118,6 @@ int RunServer(
  }
  LOG(INFO) << "Server listening on " << server_address.str() << endl;
  
- // Register inference service
- Inference inference;
- if (chipId > 0) {
-   if (!inference.Init(_verbose, chipId, models)) {
-     syslog(LOG_ERR, "Could not Init Inference Service");
-     return EXIT_FAILURE;
-   }
-   builder.RegisterService(&inference);
- }
- 
  // Register parameter service
  Parameter parameter;
  if (!parameter.Init(_verbose)) {
@@ -132,7 +125,25 @@ int RunServer(
      return EXIT_FAILURE;
  }
  builder.RegisterService(&parameter);
- 
+
+ // Register video capture service
+ Capture capture;
+ if (!capture.Init(_verbose)) {
+   syslog(LOG_ERR, "Could not initialize VideoCapture service");
+   return EXIT_FAILURE;
+ }
+ builder.RegisterService(&capture);
+
+ // Register inference service
+ Inference inference;
+ if (chipId > 0) {
+   if (!inference.Init(_verbose, chipId, models, &capture)) {
+     syslog(LOG_ERR, "Could not Init Inference Service");
+     return EXIT_FAILURE;
+   }
+   builder.RegisterService(&inference);
+ }
+
  // Start server
  unique_ptr<Server> server(builder.BuildAndStart());
  if (!server) {

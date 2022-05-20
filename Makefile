@@ -4,7 +4,7 @@ rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst 
 
 # Paths
 #OUT_PATH ?= $(CURDIR)/build_$(shell $(CXX) -dumpmachine)
-OUT_PATH ?= $(CURDIR)
+OUT_PATH ?= $(CURDIR)/build
 API_PATH := $(CURDIR)/apis
 SRC_PATH := $(CURDIR)/src
 TEST_PATH := $(CURDIR)/test
@@ -27,7 +27,7 @@ TEST_FILES := $(wildcard $(TEST_PATH)/*.cpp $(TEST_PATH)/*.cc)
 # Compiler flags
 # gRPC and protobuf packages don't play well with pkg-config for include so we do a little workaround
 
-PKGS = protobuf grpc grpc++
+PKGS = protobuf grpc grpc++ vdostream
 PKG_CONFIG_CFLAGS_I := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
 PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
 PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
@@ -59,9 +59,9 @@ $(OUT_PATH)/$(BINARY): $(SRC_FILES) $(PROTOBUF_H) $(PROTOBUF_O) $(PROTOBUF_GRPC_
 $(OUT_PATH)/$(TEST): $(TEST_FILES) $(SRC_FILES) $(PROTOBUF_H) $(PROTOBUF_O) $(PROTOBUF_GRPC_O)
 	$(CXX) -g $(CXXFLAGS) $(LDFLAGS) \
 	-I$(SRC_PATH) \
-	-I$(OUT_PATH)/tensorflow_serving/apis \
 	-I/usr/src/googletest/googletest/include \
 	-I/usr/src/googletest/googlemock/include \
+	-I$(OUT_PATH)/tensorflow_serving/apis \
 	-o $@ $(TEST_FILES) $(SRC_FILES) $(PROTOBUF_O) $(PROTOBUF_GRPC_O) -lgtest_main -lgtest  $(LDLIBS)
 
 # Build directory
@@ -83,15 +83,13 @@ $(OUT_PATH)/%.grpc.pb.cc $(OUT_PATH)/%grpc.pb.h: $(API_PATH)/%.proto | $(OUT_PAT
 $(OUT_PATH)/%.pb.cc $(OUT_PATH)/%.pb.h: $(API_PATH)/%.proto | $(OUT_PATH)
 	protoc $(PKG_CONFIG_CFLAGS_I) -I$(API_PATH) --cpp_out=$(OUT_PATH) $<
 
-$(INSTALL_PATH)/$(BINARY): $(OUT_PATH)/$(BINARY)
-	$(INSTALL) $^ $@
+$(BINARY): $(OUT_PATH)/$(BINARY)
+	cp $(OUT_PATH)/$(BINARY) $(CURDIR)
 
-$(INSTALL_PATH)/$(TEST): $(OUT_PATH)/$(TEST)
-	$(INSTALL) $^ $@
+$(TEST): $(OUT_PATH)/$(TEST)
+	cp $(OUT_PATH)/$(TEST) $(CURDIR)
 
-install: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
-
-install/strip: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
+install/strip: $(BINARY) $(TEST) 
 	$(STRIP) $^
 
 clean:

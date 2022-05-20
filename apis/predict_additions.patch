@@ -1,0 +1,24 @@
+--- predict.proto	2022-09-12 16:37:10.111663108 +0000
++++ predict.proto.new	2022-09-12 16:31:39.959875393 +0000
+@@ -28,6 +28,11 @@
+   // exception that when none is specified, all tensors specified in the
+   // named signature will be run/fetched and returned.
+   repeated string output_filter = 3;
++
++  // Id of the stream from which to capture an image.
++  // If this is non-zero the prediction will be run using an image captured
++  // from this stream, instead of using the input tensors.
++  uint32 stream_id = 10;
+ }
+ 
+ // Response for PredictRequest on successful run.
+@@ -37,4 +39,9 @@
+ 
+   // Output tensors.
+   map<string, TensorProto> outputs = 1;
++
++  // A reference to the frame used to run the prediction. This is only set
++  // if stream_id was included in the request. The value can be used in the
++  // GetFrame call of the video capture API in order to fetch the frame.
++  uint32 frame_reference = 10;
+ }

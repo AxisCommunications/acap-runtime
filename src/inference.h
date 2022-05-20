@@ -16,6 +16,7 @@
 
 #include <larod.h>
 #include "prediction_service.grpc.pb.h"
+#include "video_capture.h"
 
 using namespace std;
 using namespace grpc;
@@ -31,7 +32,8 @@ public:
   bool Init(
     const bool verbose,
     const uint64_t chipId,
-    const vector<string>& models);
+    const vector<string>& models,
+    Capture* captureService);
   Status Predict(
     ServerContext* context,
     const PredictRequest* request,
@@ -54,11 +56,15 @@ private:
     TensorProto tp,
     larodTensor* tensor,
     vector<pair<FILE*, int>>& inFiles,
+    const u_int32_t stream,
+    uint32_t& frame_ref,
     larodError*& error);
   bool SetupInputTensors(
     larodModel*& model,
     const google::protobuf::Map<string, TensorProto>& inputs,
     vector<pair<FILE*, int>>& inFiles,
+    const u_int32_t stream,
+    uint32_t& frame_ref,
     larodError*& error);
   bool SetupOutputTensors(
     larodModel*& model,
@@ -86,5 +92,6 @@ private:
   size_t _ppNumOutputs;
   size_t _numInputs;
   size_t _numOutputs;
+  Capture* _captureService;
 };
 }  // namespace acap_runtime
