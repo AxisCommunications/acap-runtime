@@ -1,0 +1,22 @@
+/* Copyright 2022 Axis Communications AB. All Rights Reserved.
+==============================================================================*/
+
+syntax = "proto3";
+
+package videocapture;
+
+// A simple key-value storage service
+service VideoCapture {
+  // Provides a value for each key request
+  rpc GetValues (stream Request) returns (stream Response) {}
+}
+
+// The request message containing the key
+message Request {
+  string key = 1;
+}
+
+// The response message containing the value associated with the key
+message Response {
+  string value = 1;
+}

@@ -17,14 +17,18 @@
 #include <glib.h>
 #include <getopt.h>
 #include <grpcpp/grpcpp.h>
-#include <sstream>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <syslog.h>
-#include "read_text.h"
+#include <unistd.h>
+
+#include <sstream>
+
 #include "inference.h"
 #include "parameter.h"
  
+#include "read_text.h"
+#include "video_capture.h"
+
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
 #define INSTALLDIR "/usr/local/packages/acapruntime/"
 
@@ -171,6 +175,14 @@ int RunServer(
      return EXIT_FAILURE;
  }
  builder.RegisterService(&parameter);
+
+ // Register video capture service
+ Capture capture;
+ if (!capture.Init(_verbose)) {
+   syslog(LOG_ERR, "Could not initialize VideoCapture service");
+   return EXIT_FAILURE;
+ }
+ builder.RegisterService(&capture);
  
  // Start server
  unique_ptr<Server> server(builder.BuildAndStart());
