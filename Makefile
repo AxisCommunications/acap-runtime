@@ -25,7 +25,7 @@ SRC_FILES := $(wildcard $(SRC_PATH)/*.cpp $(SRC_PATH)/*.cc)
 TEST_FILES := $(wildcard $(TEST_PATH)/*.cpp $(TEST_PATH)/*.cc)
 
 # Compiler flags
-PKGS = protobuf grpc grpc++ gio-2.0 glib-2.0 
+PKGS = protobuf grpc grpc++ gio-2.0 glib-2.0 axparameter vdostream
 PKG_CONFIG_CFLAGS_I := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
 PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
 PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
@@ -75,16 +75,16 @@ $(OUT_PATH)/%.grpc.pb.cc $(OUT_PATH)/%grpc.pb.h: $(API_PATH)/%.proto | $(OUT_PAT
 $(OUT_PATH)/%.pb.cc $(OUT_PATH)/%.pb.h: $(API_PATH)/%.proto | $(OUT_PATH)
 	protoc $(PKG_CONFIG_CFLAGS_I) -I$(API_PATH) --cpp_out=$(OUT_PATH) $<
 
-$(INSTALL_PATH)/$(BINARY): $(OUT_PATH)/$(BINARY)
-	$(INSTALL) $^ $@
+# $(BINARY): $(OUT_PATH)/$(BINARY)
+# 	$(INSTALL) $^ $@
 
-$(INSTALL_PATH)/$(TEST): $(OUT_PATH)/$(TEST)
-	$(INSTALL) $^ $@
+# $(TEST): $(OUT_PATH)/$(TEST)
+# 	$(INSTALL) $^ $@
 
-install: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
+# install: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
 
-install/strip: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
-	$(STRIP) $^
+install/strip: $(OUT_PATH)/$(BINARY) $(OUT_PATH)/$(TEST)
+	$(STRIP) --strip-unneeded $^
 
 clean:
 	$(RM) -r $(OUT_PATH)
