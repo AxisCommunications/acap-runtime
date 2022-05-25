@@ -25,8 +25,14 @@ class Capture final : public VideoCapture::Service {
                       const VdoStreamNewRequest* request,
                       VdoStreamNewResponse* response);
 
-  bool _verbose;
+  Status VdoStreamGetFrame(ServerContext* context,
+                           const VdoStreamGetFrameRequest* request,
+                           VdoStreamGetFrameResponse* response);
 
+  Status OutputError(const char* msg, StatusCode code);
+  Status OutputError(const char* msg, StatusCode code, GError* error);
+
+  bool _verbose;
   map<uint, VdoStream*> streams;
   map<string, VdoBuffer*> buffers;
 };

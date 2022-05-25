@@ -10,6 +10,7 @@ service VideoCapture {
   // Provides a value for each key request
   rpc GetValues (stream Request) returns (stream Response) {}
   rpc VdoStreamNew(VdoStreamNewRequest) returns (VdoStreamNewResponse);
+  rpc VdoStreamGetFrame(VdoStreamGetFrameRequest) returns (VdoStreamGetFrameResponse);
 }
 
 // The request message containing the key

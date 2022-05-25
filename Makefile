@@ -83,7 +83,7 @@ $(OUT_PATH)/%.pb.cc $(OUT_PATH)/%.pb.h: $(API_PATH)/%.proto | $(OUT_PATH)
 
 # install: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
 
-install/strip: $(OUT_PATH)/$(BINARY) $(OUT_PATH)/$(TEST)
+install/strip: $(OUT_PATH)/$(BINARY) # $(OUT_PATH)/$(TEST)
 	$(STRIP) --strip-unneeded $^
 
 clean:
