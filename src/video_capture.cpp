@@ -7,6 +7,11 @@
 #include <vdo-map.h>
 #include <vdo-types.h>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+
 #include <sstream>
 
 using namespace std;
@@ -65,6 +70,8 @@ Status Capture::VdoStreamNew(ServerContext *context,
     return Status::CANCELLED;
   }
 
+  // TODO Fix errors
+
   VdoMap *info = vdo_stream_get_info(stream, &error);
   if (!info) {
     ERRORLOG << "Getting stream info failed";
@@ -114,52 +121,49 @@ Status Capture::VdoStreamGetFrame(ServerContext *context,
 
   g_clear_object(&info);
 
-  // VdoBuffer *buffer = vdo_stream_get_buffer(stream, &error);
-  // if (buffer == nullptr) {
-  //   PrintError("Unable to get VDO buffer", error);
-  //   return Status::CANCELLED;
-  // }
-  // VdoFrame *frame = vdo_buffer_get_frame(buffer);
-  // gsize size = vdo_frame_get_size(frame);
+  VdoBuffer *buffer = vdo_stream_get_buffer(stream, &error);
+  if (buffer == nullptr) {
+    return OutputError("Unable to get VDO buffer", StatusCode::INTERNAL, error);
+  }
+  VdoFrame *frame = vdo_buffer_get_frame(buffer);
+  gsize size = vdo_frame_get_size(frame);
 
-  // stringstream ss;
-  // ss << "/s" << vdo_stream_get_id(stream) << '-'
-  //    << vdo_frame_get_timestamp(frame);
+  stringstream ss;
+  ss << "/s" << vdo_stream_get_id(stream) << '-'
+     << vdo_frame_get_timestamp(frame);
 
-  // LOG(INFO) << "file name: " << ss.str().c_str() << endl;
+  // TODO Also support returning the actual data
 
-  // int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
-  // if (fd == -1) {
-  //   PrintError("Unable to to open shared memory object", nullptr);
-  //   LOG(ERROR) << "errno=" << errno << endl;
-  //   return Status::CANCELLED;
-  // }
-  // ftruncate(fd, size);
+  TRACELOG << "file name: " << ss.str().c_str() << endl;
 
-  // void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  // if (addr == MAP_FAILED) {
-  //   PrintError("Failed to creates mapping in the virtual address space",
-  //              nullptr);
-  //   return Status::CANCELLED;
-  // }
+  int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
+  if (fd == -1) {
+    return OutputError("Unable to to open shared memory file", StatusCode::INTERNAL, error);
+  }
+  // TODO Don't ignore the return value
+  (void)(ftruncate(fd, size) + 1);
 
-  // void *buffer_data = vdo_buffer_get_data(buffer);
-  // if (nullptr == buffer_data) {
-  //   PrintError("Get buffer failed", nullptr);
-  //   return Status::CANCELLED;
-  // }
+  void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (addr == MAP_FAILED) {
+    return OutputError("Failed to create memory mapping", StatusCode::INTERNAL);
+  }
+
+  void *buffer_data = vdo_buffer_get_data(buffer);
+  if (nullptr == buffer_data) {
+    return OutputError("Get buffer failed", StatusCode::INTERNAL);
+  }
 
   // LOG(INFO) << "After mmap, size: " << size << ", addr: " << addr
   //           << "buffer_data: " << buffer_data << endl;
 
-  // memcpy(addr, buffer_data, size);
+  memcpy(addr, buffer_data, size);
 
   // LOG(INFO) << "After memcpy" << endl;
 
-  // vdo_stream_buffer_unref(stream, &buffer, &error);
+  vdo_stream_buffer_unref(stream, &buffer, &error);
 
   // LOG(INFO) << "After vdo_stream_buffer_unref" << endl;
-  // response->set_file_name(ss.str());
+  response->set_file_name(ss.str());
   return Status::OK;
 }
 
