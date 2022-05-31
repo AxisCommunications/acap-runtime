@@ -163,7 +163,10 @@ Status Capture::VdoStreamGetFrame(ServerContext *context,
   vdo_stream_buffer_unref(stream, &buffer, &error);
 
   // LOG(INFO) << "After vdo_stream_buffer_unref" << endl;
-  response->set_file_name(ss.str());
+
+  response->set_data(buffer_data, size);
+  // response->set_file_name(ss.str());
+  
   return Status::OK;
 }
 
