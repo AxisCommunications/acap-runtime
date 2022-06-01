@@ -257,7 +257,7 @@ int AcapRuntime(int argc, char* argv[])
   }
 
   // Skipped if command line parameters are provided.
-  if(parameter_flag == 0 ){
+  if (parameter_flag == 0) {
     LOG(INFO) << "No command line parameters detected, reading parameters from storage" << argv[0] << endl;
     // Read parameters from parameter storage
     char *verbose = get_parameter_value(APP_NAME, "Verbose");
