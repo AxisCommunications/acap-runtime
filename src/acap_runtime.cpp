@@ -66,7 +66,6 @@ static void init_signals(void)
  */
 static char *get_parameter_value(const char *domain, const char *parameter_name)
 {
-  std::cout << "Getting the parameter " << endl;
   GError *error = NULL;
   AXParameter *ax_parameter = ax_parameter_new(domain, &error);
   
@@ -77,12 +76,10 @@ static char *get_parameter_value(const char *domain, const char *parameter_name)
   }
 
   char *parameter_value = NULL;
-  std::cout << "Getting the parameter value" << endl;
   if (!ax_parameter_get(ax_parameter, parameter_name, &parameter_value, &error)) {
     free(parameter_value);
     parameter_value = NULL;
   }
-  std::cout << "freeing the parameter " << endl;
   ax_parameter_free(ax_parameter);
   g_clear_error(&error);
   return parameter_value;
@@ -283,8 +280,6 @@ int AcapRuntime(int argc, char* argv[])
       }
     }
   }
-
-  
 
   LOG(INFO) << "Start " << argv[0] << endl;
   int ret = RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
