@@ -66,8 +66,10 @@ static void init_signals(void)
  */
 static char *get_parameter_value(const char *domain, const char *parameter_name)
 {
+  std::cout << "Getting the parameter " << endl;
   GError *error = NULL;
   AXParameter *ax_parameter = ax_parameter_new(domain, &error);
+  
   if (ax_parameter == NULL) {
     syslog(LOG_ERR, "Error when creating axparameter: %s", error->message);
     g_clear_error(&error);
@@ -75,11 +77,12 @@ static char *get_parameter_value(const char *domain, const char *parameter_name)
   }
 
   char *parameter_value = NULL;
+  std::cout << "Getting the parameter value" << endl;
   if (!ax_parameter_get(ax_parameter, parameter_name, &parameter_value, &error)) {
     free(parameter_value);
     parameter_value = NULL;
   }
-
+  std::cout << "freeing the parameter " << endl;
   ax_parameter_free(ax_parameter);
   g_clear_error(&error);
   return parameter_value;
@@ -212,36 +215,16 @@ int AcapRuntime(int argc, char* argv[])
   int time = 0; // Run time in seconds, 0 => infinity
 
   openlog(NULL, LOG_PID, LOG_USER);
-
   // Setup signal handling.
   init_signals();
 
-  // Read parameters from parameter storage
-  char *verbose = get_parameter_value(APP_NAME, "Verbose");
-  if (verbose != NULL) {
-    _verbose = strcmp(verbose, "yes") == 0;
-  }
-  char *ip_port = get_parameter_value(APP_NAME, "IpPort");
-  if (ip_port != NULL) {
-    ipPort = atoi(ip_port);
-  }
-  char *chip_id = get_parameter_value(APP_NAME, "ChipId");
-  if (chip_id != NULL) {
-    chipId = atoi(chip_id);
-  }
-  char *useTls = get_parameter_value(APP_NAME, "UseTLS");
-  if (useTls != NULL) {
-    if (strcmp(useTls, "yes") == 0) {
-        pem_file.assign(serverCertificatePath);
-        key_file.assign(serverKeyPath);
-    }
-  }
-
-  // Override with parameters from command line
-  int opt;
+  int opt = 0;
+  int parameter_flag = 0;
   optind = 0; // Reset opt index
   vector<string> models;
+  LOG(INFO) << "parsing flags " << endl;
   while (-1 != (opt = getopt(argc, argv, "a:hj:m:p:t:c:k:v"))) {
+    parameter_flag = 1;
     switch (opt) {
       case 'a':
         address.assign(optarg);
@@ -275,6 +258,33 @@ int AcapRuntime(int argc, char* argv[])
         return EXIT_FAILURE;
     }
   }
+
+  // Skipped if command line parameters are provided.
+  if(parameter_flag == 0 ){
+    LOG(INFO) << "No command line parameters detected, reading parameters from storage" << argv[0] << endl;
+    // Read parameters from parameter storage
+    char *verbose = get_parameter_value(APP_NAME, "Verbose");
+    if (verbose != NULL) {
+      _verbose = strcmp(verbose, "yes") == 0;
+    }
+    char *ip_port = get_parameter_value(APP_NAME, "IpPort");
+    if (ip_port != NULL) {   
+      ipPort = atoi(ip_port);
+    }
+    char *chip_id = get_parameter_value(APP_NAME, "ChipId");
+    if (chip_id != NULL) { 
+      chipId = atoi(chip_id);
+    }
+    char *useTls = get_parameter_value(APP_NAME, "UseTLS");
+    if (useTls != NULL) {
+      if (strcmp(useTls, "yes") == 0) {
+          pem_file.assign(serverCertificatePath);
+          key_file.assign(serverKeyPath);
+      }
+    }
+  }
+
+  
 
   LOG(INFO) << "Start " << argv[0] << endl;
   int ret = RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
