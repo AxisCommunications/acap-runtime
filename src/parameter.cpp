@@ -39,7 +39,7 @@ Status Parameter::GetValues(ServerContext* context,
       if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
         value = parhand_result;
         while ((pos = value.find('"', pos)) != std::string::npos)
-        value = value.erase(pos, 1);
+          value = value.erase(pos, 1);
         parameter_value = value.c_str();
       }
       if (parameter_value != nullptr){

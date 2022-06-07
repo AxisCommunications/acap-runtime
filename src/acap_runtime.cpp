@@ -84,7 +84,7 @@ const char *get_parameter_value(string parameter_name)
     }
     else {
       while ((pos = value.find('"', pos)) != std::string::npos)
-      value = value.erase(pos, 1);
+        value = value.erase(pos, 1);
       parameter_value = value.c_str();
     }
   }
