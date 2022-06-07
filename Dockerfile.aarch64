@@ -61,7 +61,7 @@ WORKDIR /opt
 # Build and install gRPC for the host architecture.
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
-RUN git clone -b v1.45.x https://github.com/grpc/grpc &&\
+RUN git clone -b v1.36.x https://github.com/grpc/grpc &&\
     cd grpc &&\
     git submodule update --init
 
@@ -110,8 +110,8 @@ RUN mkdir -p "/opt/grpc/cmake/build_arm" &&\
     cp -r /opt/grpc/third_party/googletest/googletest/include/gtest $SDKTARGETSYSROOT/usr/include
 
 # Get Tensorflow and Tensorflow Serving
-RUN git clone -b r2.8 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
-RUN git clone -b r2.8 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+RUN git clone -b r1.14 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
+RUN git clone -b r1.14 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 
 ## Setup build structure
 WORKDIR /opt/app
