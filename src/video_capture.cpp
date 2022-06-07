@@ -51,9 +51,7 @@ Status Capture::VdoStreamNew(ServerContext *context,
   TRACELOG << "Creating VDO stream" << endl;
 
   GError *error = nullptr;
-
   const StreamSettings &settings = request->settings();
-
   VdoMap *settings_map = vdo_map_new();
 
   vdo_map_set_uint32(settings_map, "format", settings.format());
@@ -66,17 +64,14 @@ Status Capture::VdoStreamNew(ServerContext *context,
 
   VdoStream *stream = vdo_stream_new(settings_map, nullptr, &error);
   if (!stream) {
-    ERRORLOG << "Stream creation failed";
-    return Status::CANCELLED;
+    return OutputError("Stream creation failed", StatusCode::INTERNAL, error);
   }
-
-  // TODO Fix errors
 
   VdoMap *info = vdo_stream_get_info(stream, &error);
   if (!info) {
     ERRORLOG << "Getting stream info failed";
     g_clear_object(&stream);
-    return Status::CANCELLED;
+    return OutputError("Getting stream info failed", StatusCode::INTERNAL, error);
   }
 
   TRACELOG << "Starting stream:" << vdo_map_get_uint32(info, "width", 0) << 'x'
@@ -89,8 +84,7 @@ Status Capture::VdoStreamNew(ServerContext *context,
   streams.emplace(stream_id, stream);
 
   if (!vdo_stream_start(stream, &error)) {
-    ERRORLOG << "Starting stream failed";
-    return Status::CANCELLED;
+    return OutputError("Starting stream failed", StatusCode::INTERNAL);
   }
 
   response->set_stream_id(stream_id);
@@ -153,19 +147,14 @@ Status Capture::VdoStreamGetFrame(ServerContext *context,
     return OutputError("Get buffer failed", StatusCode::INTERNAL);
   }
 
-  // LOG(INFO) << "After mmap, size: " << size << ", addr: " << addr
-  //           << "buffer_data: " << buffer_data << endl;
-
   memcpy(addr, buffer_data, size);
-
-  // LOG(INFO) << "After memcpy" << endl;
-
-  vdo_stream_buffer_unref(stream, &buffer, &error);
-
-  // LOG(INFO) << "After vdo_stream_buffer_unref" << endl;
 
   response->set_data(buffer_data, size);
   // response->set_file_name(ss.str());
+
+  if (!(vdo_stream_buffer_unref(stream, &buffer, &error))) {
+    return OutputError("Unreferencing buffer failed", StatusCode::INTERNAL, error);
+  }
   
   return Status::OK;
 }
@@ -181,6 +170,8 @@ Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
      << ((nullptr != error) ? (string(" (") + error->message + ")") : "");
 
   ERRORLOG << ss.str() << endl;
+
+  g_clear_error(&error);
 
   return Status(code, ss.str());
 }
