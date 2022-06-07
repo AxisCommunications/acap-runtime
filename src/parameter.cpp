@@ -25,6 +25,7 @@ Status Parameter::GetValues(ServerContext* context,
 
     Request request;
     while (stream->Read(&request)) {
+      size_t pos = 0;
       const char *parameter_value= NULL;
       const char *parhand_cmd = "parhandclient get ";
       const char *parameter_key = request.key().c_str();
@@ -33,10 +34,14 @@ Status Parameter::GetValues(ServerContext* context,
       strcat(str, parameter_key);
 
       FILE *fp = popen(str, "r"); 
+      if (!fp){
+        throw std::runtime_error("popen() failed!");
+      }
       std::string value;
-      while ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
+      if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
         value = parhand_result;
-        std::remove(value.begin(), value.end(), '\"');
+        while ((pos = value.find('"', pos)) != std::string::npos)
+        value = value.erase(pos, 1);
         parameter_value = value.c_str();
       }
       if (parameter_value != nullptr){
@@ -44,7 +49,7 @@ Status Parameter::GetValues(ServerContext* context,
       }
       else {
         parameter_value = "";
-        TRACELOG << request.key().c_str() << ":: " << parameter_value << endl;
+        TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
       }
 
       Response response;

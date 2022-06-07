@@ -25,7 +25,7 @@ SRC_FILES := $(wildcard $(SRC_PATH)/*.cpp $(SRC_PATH)/*.cc)
 TEST_FILES := $(wildcard $(TEST_PATH)/*.cpp $(TEST_PATH)/*.cc)
 
 # Compiler flags
-PKGS = protobuf grpc grpc++ gio-2.0 glib-2.0 axparameter
+PKGS = protobuf grpc grpc++ gio-2.0 glib-2.0 
 PKG_CONFIG_CFLAGS_I := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
 PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
 PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))

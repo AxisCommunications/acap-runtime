@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Edge TPU compiler
 RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
-    curl -k https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &&\
+    curl -k https://packages.cloud.google.com/apt/doc/apt-key.gpg |apt-key add - &&\
     apt-get update && apt-get install -y --no-install-recommends \
     edgetpu-compiler
 
@@ -61,9 +61,9 @@ WORKDIR /opt
 # Build and install gRPC for the host architecture.
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
-RUN git clone -b v1.36.x https://github.com/grpc/grpc &&\
+RUN APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=1 git clone -b v1.36.x https://github.com/grpc/grpc &&\
     cd grpc &&\
-    git submodule update --init
+    git submodule update --init 
 
 # Build and install gRPC for the host architecture.
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
@@ -110,15 +110,8 @@ RUN mkdir -p "/opt/grpc/cmake/build_arm" &&\
     cp -r /opt/grpc/third_party/googletest/googletest/include/gtest $SDKTARGETSYSROOT/usr/include
 
 # Get Tensorflow and Tensorflow Serving
-RUN git clone -b r1.14 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
+RUN git clone -b r1.14 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow 
 RUN git clone -b r1.14 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
-
-# Copy over axparameter from the acap-sdk
-COPY --from=acap-sdk $TARGETSYSROOT/usr/include/axsdk/ax_parameter $TARGETSYSROOT/usr/include/axsdk
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so $TARGETSYSROOT/usr/lib/libaxparameter.so
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so.1 $TARGETSYSROOT/usr/lib/libaxparameter.so.1
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so.1.0 $TARGETSYSROOT/usr/lib/libaxparameter.so.1.0
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/pkgconfig/axparameter.pc $TARGETSYSROOT/usr/lib/pkgconfig/axparameter.pc
 
 ## Setup build structure
 WORKDIR /opt/app
