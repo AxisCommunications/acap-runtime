@@ -87,6 +87,18 @@ docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS stop
 docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS remove
 ```
 
+## Build containerized version
+This section requires access to acap-runtime GitHub repo.
+
+```sh
+# Set your camera architecture and IP address
+export ARCH=<armv7hf or aarch64>
+
+# Build acap-runtime containerized version
+docker build . -f Dockerfile.containerized --tag acap-runtime:$ARCH-containerized --build-arg ARCH=$ARCH
+
+```
+
 ## Program options
 
 > ACAP runtime must be restarted after program options has been changed.
