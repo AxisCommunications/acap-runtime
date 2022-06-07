@@ -91,7 +91,7 @@ docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS remove
 This section requires access to acap-runtime GitHub repo.
 
 ```sh
-# Set your camera architecture and IP address
+# Set your camera architecture
 export ARCH=<armv7hf or aarch64>
 
 # Build acap-runtime containerized version
