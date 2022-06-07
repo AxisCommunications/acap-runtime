@@ -70,11 +70,9 @@ const char *get_parameter_value(string parameter_name)
   char parhand_result[BUFSIZ];
   const char *parameter_value= NULL;
   string parhand_cmd = "parhandclient get root.Acapruntime.";
-  string str_cat = parhand_cmd + parameter_name;
-  char str[str_cat.length() + 1];
-  strcpy(str, str_cat.c_str());
+  string parhandclient_cmd = parhand_cmd + parameter_name;
 
-  FILE *fp = popen(str, "r"); 
+  FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
   if (!fp){
     throw std::runtime_error("popen() failed!");
   }

@@ -29,11 +29,9 @@ Status Parameter::GetValues(ServerContext* context,
       const char *parameter_value= NULL;
       string parhand_cmd = "parhandclient get ";
       string parameter_key = request.key().c_str();
-      string str_cat = parhand_cmd + parameter_key;
-      char str[str_cat.length() + 1];
-      strcpy(str, str_cat.c_str());
+      string parhandclient_cmd = parhand_cmd + parameter_key;
 
-      FILE *fp = popen(str, "r"); 
+      FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
       if (!fp){
         throw std::runtime_error("popen() failed!");
       }
