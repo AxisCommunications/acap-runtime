@@ -27,11 +27,11 @@ Status Parameter::GetValues(ServerContext* context,
     while (stream->Read(&request)) {
       size_t pos = 0;
       const char *parameter_value= NULL;
-      const char *parhand_cmd = "parhandclient get ";
-      const char *parameter_key = request.key().c_str();
-      char *str = new char[strlen(parhand_cmd) + strlen(parameter_key)+ 1];
-      strcpy(str, parhand_cmd);
-      strcat(str, parameter_key);
+      string parhand_cmd = "parhandclient get ";
+      string parameter_key = request.key().c_str();
+      string str_cat = parhand_cmd + parameter_key;
+      char str[str_cat.length() + 1];
+      strcpy(str, str_cat.c_str());
 
       FILE *fp = popen(str, "r"); 
       if (!fp){

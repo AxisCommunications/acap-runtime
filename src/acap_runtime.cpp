@@ -64,15 +64,15 @@ static void init_signals(void)
 *
 * @return The value of the parameter as string if successful, NULL otherwise
 */
-const char *get_parameter_value(const char *parameter_name)
+const char *get_parameter_value(string parameter_name)
 {
   size_t pos = 0;
   char parhand_result[BUFSIZ];
   const char *parameter_value= NULL;
-  const char *parhand_cmd = "parhandclient get root.Acapruntime.";
-  char *str = new char[strlen(parhand_cmd) + strlen(parameter_name)+ 1];
-  strcpy(str, parhand_cmd);
-  strcat(str, parameter_name);
+  string parhand_cmd = "parhandclient get root.Acapruntime.";
+  string str_cat = parhand_cmd + parameter_name;
+  char str[str_cat.length() + 1];
+  strcpy(str, str_cat.c_str());
 
   FILE *fp = popen(str, "r"); 
   if (!fp){
