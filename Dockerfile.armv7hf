@@ -113,13 +113,6 @@ RUN mkdir -p "/opt/grpc/cmake/build_arm" &&\
 RUN git clone -b r1.14 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
 RUN git clone -b r1.14 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 
-# Copy over axparameter from the acap-sdk
-COPY --from=acap-sdk $TARGETSYSROOT/usr/include/axsdk/ax_parameter $TARGETSYSROOT/usr/include/axsdk
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so $TARGETSYSROOT/usr/lib/libaxparameter.so
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so.1 $TARGETSYSROOT/usr/lib/libaxparameter.so.1
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/libaxparameter.so.1.0 $TARGETSYSROOT/usr/lib/libaxparameter.so.1.0
-COPY --from=acap-sdk $TARGETSYSROOT/usr/lib/pkgconfig/axparameter.pc $TARGETSYSROOT/usr/lib/pkgconfig/axparameter.pc
-
 ## Setup build structure
 WORKDIR /opt/app
 COPY . .

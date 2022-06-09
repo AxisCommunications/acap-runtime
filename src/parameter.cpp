@@ -1,6 +1,7 @@
 /* Copyright 2021 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
-#include <axsdk/ax_parameter.h>
+#include <algorithm>
+#include <regex>
 #include "parameter.h"
 
 using namespace std;
@@ -20,31 +21,51 @@ bool Parameter::Init(const bool verbose) {
 // Logic and data behind the server's behavior.
 Status Parameter::GetValues(ServerContext* context,
     ServerReaderWriter<Response, Request>* stream) {
-    GError *error = NULL;
 
-    AXParameter *ax_parameter = ax_parameter_new(APP_NAME, &error);
-    if (ax_parameter == NULL) {
-      ERRORLOG << "Error when creating axparameter: " << error->message << endl;
-      g_clear_error(&error);
-      return Status::CANCELLED;
-    }
+    char parhand_result[BUFSIZ];
 
     Request request;
     while (stream->Read(&request)) {
-      char *parameter_value = NULL;
-      if (!ax_parameter_get(ax_parameter, request.key().c_str(), &parameter_value, &error)) {
-        parameter_value =  g_strdup("");
-      }
+      size_t pos = 0;
+      const char *parameter_value= NULL;
+      string parhand_cmd = "parhandclient get ";
+      string parameter_key = request.key().c_str();
+      const regex pattern("[a-zA-Z0-9.]+");
+      if(regex_match(parameter_key, pattern))
+      {
+        string parhandclient_cmd = parhand_cmd + parameter_key;
 
-      TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
-      Response response;
-      response.set_value(parameter_value);
-      stream->Write(response);
-      free(parameter_value);
+        FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
+        if (!fp){
+          throw std::runtime_error("popen() failed!");
+        }
+        std::string value;
+        if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
+          value = parhand_result;
+          while ((pos = value.find('"', pos)) != std::string::npos)
+            value = value.erase(pos, 1);
+          parameter_value = value.c_str();
+        }
+        if (parameter_value != nullptr){
+          TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
+        }
+        else {
+          parameter_value = "";
+          TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
+        }
+
+        Response response;
+        response.set_value(parameter_value);
+        stream->Write(response);
+        pclose(fp);
+      }
+      else
+      {
+        TRACELOG << "No valid input request" << endl;
+        exit(EXIT_FAILURE);
+      }
     }
 
-    ax_parameter_free(ax_parameter);
-    g_clear_error(&error);
     return Status::OK;
-}
+  }
 }  // namespace acap_runtime

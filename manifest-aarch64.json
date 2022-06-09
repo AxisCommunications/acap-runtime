@@ -27,6 +27,11 @@
                     "type": "string"
                 },
                 {
+                    "name": "IpPort",
+                    "default": "0",
+                    "type": "string"
+                },
+                {
                     "name": "UseTLS",
                     "default": "no",
                     "type": "enum:no|No, yes|Yes"
