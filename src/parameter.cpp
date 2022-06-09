@@ -1,6 +1,7 @@
 /* Copyright 2021 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
 #include <algorithm>
+#include <regex>
 #include "parameter.h"
 
 using namespace std;
@@ -29,31 +30,40 @@ Status Parameter::GetValues(ServerContext* context,
       const char *parameter_value= NULL;
       string parhand_cmd = "parhandclient get ";
       string parameter_key = request.key().c_str();
-      string parhandclient_cmd = parhand_cmd + parameter_key;
+      const regex pattern("[a-zA-Z0-9.]+");
+      if(regex_match(parameter_key, pattern))
+      {
+        string parhandclient_cmd = parhand_cmd + parameter_key;
 
-      FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
-      if (!fp){
-        throw std::runtime_error("popen() failed!");
-      }
-      std::string value;
-      if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
-        value = parhand_result;
-        while ((pos = value.find('"', pos)) != std::string::npos)
-          value = value.erase(pos, 1);
-        parameter_value = value.c_str();
-      }
-      if (parameter_value != nullptr){
-        TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
-      }
-      else {
-        parameter_value = "";
-        TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
-      }
+        FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
+        if (!fp){
+          throw std::runtime_error("popen() failed!");
+        }
+        std::string value;
+        if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
+          value = parhand_result;
+          while ((pos = value.find('"', pos)) != std::string::npos)
+            value = value.erase(pos, 1);
+          parameter_value = value.c_str();
+        }
+        if (parameter_value != nullptr){
+          TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
+        }
+        else {
+          parameter_value = "";
+          TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
+        }
 
-      Response response;
-      response.set_value(parameter_value);
-      stream->Write(response);
-      pclose(fp);
+        Response response;
+        response.set_value(parameter_value);
+        stream->Write(response);
+        pclose(fp);
+      }
+      else
+      {
+        TRACELOG << "No valid input request" << endl;
+        exit(EXIT_FAILURE);
+      }
     }
 
     return Status::OK;
