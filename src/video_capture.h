@@ -17,20 +17,18 @@ class Capture final : public VideoCapture::Service {
   bool Init(const bool verbose);
 
  private:
-  Status GetValues(ServerContext* context,
-                   ServerReaderWriter<videocapture::Response,
-                                      videocapture::Request>* stream);
+  Status NewStream(ServerContext* context,
+                      const NewStreamRequest* request,
+                      NewStreamResponse* response);
 
-  Status VdoStreamNew(ServerContext* context,
-                      const VdoStreamNewRequest* request,
-                      VdoStreamNewResponse* response);
-
-  Status VdoStreamGetFrame(ServerContext* context,
-                           const VdoStreamGetFrameRequest* request,
-                           VdoStreamGetFrameResponse* response);
+  Status GetFrame(ServerContext* context,
+                           const GetFrameRequest* request,
+                           GetFrameResponse* response);
 
   Status OutputError(const char* msg, StatusCode code);
   Status OutputError(const char* msg, StatusCode code, GError* error);
+
+  string GetTypeString(VdoFrame *frame);
 
   bool _verbose;
   map<uint, VdoStream*> streams;

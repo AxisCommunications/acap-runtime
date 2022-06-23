@@ -3,39 +3,21 @@
 
 syntax = "proto3";
 
+// import "google/protobuf/empty.proto";
+
 package videocapture;
 
-// A simple key-value storage service
 service VideoCapture {
-  // Provides a value for each key request
-  rpc GetValues (stream Request) returns (stream Response) {}
-  rpc VdoStreamNew(VdoStreamNewRequest) returns (VdoStreamNewResponse);
-  rpc VdoStreamGetFrame(VdoStreamGetFrameRequest) returns (VdoStreamGetFrameResponse);
+  rpc NewStream(NewStreamRequest) returns (NewStreamResponse);
+  rpc GetFrame(GetFrameRequest) returns (GetFrameResponse);
 }
 
-// The request message containing the key
-message Request {
-  string key = 1;
-}
-
-// The response message containing the value associated with the key
-message Response {
-  string value = 1;
-}
-
-// syntax = "proto3";
-
-import "google/protobuf/empty.proto";
-
-// package videocapture;
-
-// VDO Frame
-message VdoStreamGetFrameRequest {
+message GetFrameRequest {
         uint32 stream_id = 1;
         uint64 timestamp = 2;
 }
 
-message VdoStreamGetFrameResponse {
+message GetFrameResponse {
         // message Data {
         //         uint32 id = 1;
         //         string type = 2;
@@ -53,23 +35,20 @@ message VdoStreamGetFrameResponse {
         // }
         // Data data = 106;
         // string error = 4;
+
         uint64 id = 1;
+        string type = 2;
+        uint32 size = 3;
+        uint64 timestamp = 4;
+        uint64 custom_timestamp = 5;
+        uint32 sequence_nbr = 6;
         oneof frame {
-                bytes data = 2;
-                string file_name = 3;
+                bytes data = 7;
+                string file_name = 8;
         }
-        string error = 4;
+        string error = 9;
 }
 
-message VdoStreamFrameUnrefRequest {
-        uint32 stream_id = 1;
-}
-
-message VdoStreamFrameUnrefResponse {
-        string error = 1;
-}
-
-// VDO Stream
 enum StreamFormat {
      // VDO_FORMAT_NONE  = -1; /* Defined in vdo-types.h, but first element must be 0 */
      VDO_FORMAT_H264  = 0; /**< H.264 */
@@ -121,45 +100,54 @@ message StreamInfo {
         uint32 initialQP = 14;
 }
 
-message VdoStreamNewRequest {
+message NewStreamRequest {
         StreamSettings settings = 1;
 }
 
-message VdoStreamNewResponse {
+message NewStreamResponse {
         string error = 1;
         uint32 stream_id = 2;
 
 }
 
-message VdoStreamDeleteRequest {
-        uint32 stream_id = 1;
-}
 
-message VdoStreamAttachRequest {
-        uint32 stream_id = 1;
-}
+// message VdoStreamFrameUnrefRequest {
+//         uint32 stream_id = 1;
+// }
 
-message VdoStreamAttachResponse {
-        string error = 1;
-}
+// message VdoStreamFrameUnrefResponse {
+//         string error = 1;
+// }
 
-message VdoStreamStartRequest {
-        uint32 stream_id = 1;
-}
+// message VdoStreamDeleteRequest {
+//         uint32 stream_id = 1;
+// }
 
-message VdoStreamStartResponse {
-        string error = 1;
-}
+// message VdoStreamAttachRequest {
+//         uint32 stream_id = 1;
+// }
 
-message VdoStreamGetInfoRequest {
-        uint32 stream_id = 1;
-}
+// message VdoStreamAttachResponse {
+//         string error = 1;
+// }
 
-message VdoStreamGetInfoResponse {
-        string error = 1;
-        StreamInfo info = 2;
+// message VdoStreamStartRequest {
+//         uint32 stream_id = 1;
+// }
 
-}
+// message VdoStreamStartResponse {
+//         string error = 1;
+// }
+
+// message VdoStreamGetInfoRequest {
+//         uint32 stream_id = 1;
+// }
+
+// message VdoStreamGetInfoResponse {
+//         string error = 1;
+//         StreamInfo info = 2;
+
+// }
 
 
 // // gRPC Service

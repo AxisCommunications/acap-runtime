@@ -29,25 +29,9 @@ bool Capture::Init(const bool verbose) {
   return true;
 }
 
-// Logic and data behind the server's behavior.
-Status Capture::GetValues(ServerContext *context,
-                          ServerReaderWriter<Response, Request> *stream) {
-  Request request;
-  while (stream->Read(&request)) {
-    const char *reply = "Hello World!";
-
-    TRACELOG << request.key().c_str() << ": " << reply << endl;
-    Response response;
-    response.set_value(reply);
-    stream->Write(response);
-  }
-
-  return Status::OK;
-}
-
-Status Capture::VdoStreamNew(ServerContext *context,
-                             const VdoStreamNewRequest *request,
-                             VdoStreamNewResponse *response) {
+Status Capture::NewStream(ServerContext *context,
+                             const NewStreamRequest *request,
+                             NewStreamResponse *response) {
   TRACELOG << "Creating VDO stream" << endl;
 
   GError *error = nullptr;
@@ -60,7 +44,6 @@ Status Capture::VdoStreamNew(ServerContext *context,
   vdo_map_set_uint32(settings_map, "width", settings.width());
   vdo_map_set_uint32(settings_map, "height", settings.height());
   vdo_map_set_uint32(settings_map, "framerate", settings.framerate());
-  vdo_map_set_uint16(settings_map, "timestamp.type", settings.timestamp_type());
 
   VdoStream *stream = vdo_stream_new(settings_map, nullptr, &error);
   if (!stream) {
@@ -91,9 +74,9 @@ Status Capture::VdoStreamNew(ServerContext *context,
   return Status::OK;
 }
 
-Status Capture::VdoStreamGetFrame(ServerContext *context,
-                                  const VdoStreamGetFrameRequest *request,
-                                  VdoStreamGetFrameResponse *response) {
+Status Capture::GetFrame(ServerContext *context,
+                                  const GetFrameRequest *request,
+                                  GetFrameResponse *response) {
   (void)context;
   GError *error = nullptr;
 
@@ -147,10 +130,16 @@ Status Capture::VdoStreamGetFrame(ServerContext *context,
     return OutputError("Get buffer failed", StatusCode::INTERNAL);
   }
 
-  memcpy(addr, buffer_data, size);
+  // memcpy(addr, buffer_data, size);
 
   response->set_data(buffer_data, size);
   // response->set_file_name(ss.str());
+
+  response->set_timestamp(vdo_frame_get_timestamp(frame));
+  response->set_custom_timestamp(vdo_frame_get_custom_timestamp(frame));
+  response->set_size(size);
+  response->set_type(GetTypeString(frame));
+  response->set_sequence_nbr(vdo_frame_get_sequence_nbr(frame));
 
   if (!(vdo_stream_buffer_unref(stream, &buffer, &error))) {
     return OutputError("Unreferencing buffer failed", StatusCode::INTERNAL, error);
@@ -174,6 +163,14 @@ Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
   g_clear_error(&error);
 
   return Status(code, ss.str());
+}
+
+string Capture::GetTypeString(VdoFrame *frame) {
+  GEnumClass *cls = reinterpret_cast<GEnumClass *>(
+      g_type_class_ref(vdo_frame_type_get_type()));
+  int type = vdo_frame_get_frame_type(frame);
+
+  return cls->values[type].value_nick;
 }
 
 }  // namespace acap_runtime
