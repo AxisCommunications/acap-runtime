@@ -1,3 +1,5 @@
+*Copyright (C) 2022, Axis Communications AB, Lund, Sweden. All Rights Reserved.*
+
 # BETA - ACAP runtime
 The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and Unix Domain Socket (UDS) for access. This makes service available to clients written in different languages on the same device.
 
