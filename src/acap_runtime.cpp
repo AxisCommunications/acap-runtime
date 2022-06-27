@@ -158,16 +158,6 @@ int RunServer(
  }
  LOG(INFO) << "Server listening on " << server_address.str() << endl;
  
- // Register inference service
- Inference inference;
- if (chipId > 0) {
-   if (!inference.Init(_verbose, chipId, models)) {
-     syslog(LOG_ERR, "Could not Init Inference Service");
-     return EXIT_FAILURE;
-   }
-   builder.RegisterService(&inference);
- }
- 
  // Register parameter service
  Parameter parameter;
  if (!parameter.Init(_verbose)) {
@@ -183,7 +173,17 @@ int RunServer(
    return EXIT_FAILURE;
  }
  builder.RegisterService(&capture);
- 
+
+ // Register inference service
+ Inference inference;
+ if (chipId > 0) {
+   if (!inference.Init(_verbose, chipId, models, capture)) {
+     syslog(LOG_ERR, "Could not Init Inference Service");
+     return EXIT_FAILURE;
+   }
+   builder.RegisterService(&inference);
+ }
+
  // Start server
  unique_ptr<Server> server(builder.BuildAndStart());
  if (!server) {

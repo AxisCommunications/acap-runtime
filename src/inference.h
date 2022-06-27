@@ -16,6 +16,7 @@
 
 #include <larod.h>
 #include "prediction_service.grpc.pb.h"
+#include "video_capture.h"
 
 using namespace std;
 using namespace grpc;
@@ -31,7 +32,8 @@ public:
   bool Init(
     const bool verbose,
     const uint64_t chipId,
-    const vector<string>& models);
+    const vector<string>& models,
+    Capture& capture_service);
   Status Predict(
     ServerContext* context,
     const PredictRequest* request,

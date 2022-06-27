@@ -78,7 +78,9 @@ Inference::~Inference()
 }
 
 // Initialize inference
-bool Inference::Init(const bool verbose, const uint64_t chipId, const vector<string>& models)
+//bool Inference::Init(const bool verbose, const uint64_t chipId, const vector<string>& models)
+bool Inference::Init(const bool verbose, const uint64_t chipId,
+                     const vector<string>& models, Capture& capture_service)
 {
   _verbose = verbose;
   larodError* error = nullptr;
@@ -755,6 +757,9 @@ bool Inference::SetupPreprocessing(
         ERRORLOG << "Can not open shared memory file " << filename << endl;
         return false;
       }
+    } else if (tp.dtype() == tensorflow::DataType::DT_UINT32) {
+      auto stream = tp.uint32_val(0);
+      TRACELOG << "Got stream " << stream << endl;
     }
     else
     {
