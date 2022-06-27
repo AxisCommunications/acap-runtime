@@ -74,6 +74,25 @@ Status Capture::NewStream(ServerContext *context,
   return Status::OK;
 }
 
+bool Capture::GetFileDescFromStream(unsigned int stream, int &fd) {
+  GError *error = nullptr;
+
+  auto currentStream = streams.find(stream);
+  if (currentStream == streams.end()) {
+    return false;
+  }
+  VdoStream *vdo_stream = currentStream->second;
+
+  VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
+  if (buffer == nullptr) {
+    return false;
+  }
+  VdoFrame *frame = vdo_buffer_get_frame(buffer);
+
+  fd = vdo_frame_get_fd(frame);
+  return true;
+}
+
 Status Capture::GetFrame(ServerContext *context,
                                   const GetFrameRequest *request,
                                   GetFrameResponse *response) {
@@ -109,21 +128,21 @@ Status Capture::GetFrame(ServerContext *context,
   ss << "/s" << vdo_stream_get_id(stream) << '-'
      << vdo_frame_get_timestamp(frame);
 
-  // TODO Also support returning the actual data
+  // TRACELOG << "file name: " << ss.str().c_str() << endl;
 
-  TRACELOG << "file name: " << ss.str().c_str() << endl;
+  // int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
+  // if (fd == -1) {
+  //   return OutputError("Unable to to open shared memory file",
+  //   StatusCode::INTERNAL, error);
+  // }
+  // // TODO Don't ignore the return value
+  // (void)(ftruncate(fd, size) + 1);
 
-  int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
-  if (fd == -1) {
-    return OutputError("Unable to to open shared memory file", StatusCode::INTERNAL, error);
-  }
-  // TODO Don't ignore the return value
-  (void)(ftruncate(fd, size) + 1);
-
-  void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  if (addr == MAP_FAILED) {
-    return OutputError("Failed to create memory mapping", StatusCode::INTERNAL);
-  }
+  // void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  // if (addr == MAP_FAILED) {
+  //   return OutputError("Failed to create memory mapping",
+  //   StatusCode::INTERNAL);
+  // }
 
   void *buffer_data = vdo_buffer_get_data(buffer);
   if (nullptr == buffer_data) {

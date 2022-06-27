@@ -1,3 +1,6 @@
+#ifndef VIDEO_CAPTURE_H
+#define VIDEO_CAPTURE_H
+
 /* Copyright 2022 Axis Communications AB. All Rights Reserved.
 ==============================================================================*/
 #include <vdo-buffer.h>
@@ -15,6 +18,7 @@ namespace acap_runtime {
 class Capture final : public VideoCapture::Service {
  public:
   bool Init(const bool verbose);
+  bool GetFileDescFromStream(unsigned int stream, int& fd);
 
  private:
   Status NewStream(ServerContext* context,
@@ -35,3 +39,5 @@ class Capture final : public VideoCapture::Service {
   map<string, VdoBuffer*> buffers;
 };
 }  // namespace acap_runtime
+
+#endif
