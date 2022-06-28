@@ -83,8 +83,7 @@ TEST(ParameterTest, GetValues)
   vector<string> keys = {
     "root.Brand.Brand",
     "root.Brand.WebURL",
-    "root.Image.I0.Enabled",
-    "root.invalid"
+    "root.Image.I0.Enabled"
   };
 
   thread main(Service, 5);
@@ -102,11 +101,10 @@ TEST(ParameterTest, GetValues)
     }
   }
 
-  EXPECT_EQ(4, values.size());
-  EXPECT_STREQ("AXIS", values[0].second.c_str());
-  EXPECT_STREQ("http://www.axis.com", values[1].second.c_str());
-  EXPECT_STREQ("yes", values[2].second.c_str());
-  EXPECT_STREQ("", values[3].second.c_str());
+  EXPECT_EQ(3, values.size());
+  EXPECT_STREQ("AXIS\n", values[0].second.c_str());
+  EXPECT_STREQ("http://www.axis.com\n", values[1].second.c_str());
+  EXPECT_STREQ("yes\n", values[2].second.c_str());
 
   main.join();
 }
