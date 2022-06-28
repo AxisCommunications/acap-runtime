@@ -28,7 +28,7 @@ docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP $PASS install
 docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP $PASS start
 
 # Find the logs in the camera web GUI and select the installed program in the Apps tab
-# Terminate and unistall acap-runtime server
+# Terminate and uninstall acap-runtime server
 docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP $PASS stop
 docker run --rm axisecp/acap-runtime:$ARCH $AXIS_TARGET_IP $PASS remove
 ```
@@ -46,7 +46,7 @@ docker run --rm axisecp/acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS install
 docker run --rm axisecp/acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS start
 
 # Find the logs in the camera web GUI and select the installed program in the Apps tab
-# Terminate and unistall test suite
+# Terminate and uninstall test suite
 docker run --rm axisecp/acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS stop
 docker run --rm axisecp/acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS remove
 ```
@@ -67,7 +67,7 @@ docker run --rm acap-runtime:$ARCH $AXIS_TARGET_IP $PASS install
 docker run --rm acap-runtime:$ARCH $AXIS_TARGET_IP $PASS start
 
 # Find the logs in the camera web GUI and select the installed program in the Apps tab
-# Terminate and unistall acap-runtime server
+# Terminate and uninstall acap-runtime server
 docker run --rm acap-runtime:$ARCH $AXIS_TARGET_IP $PASS stop
 docker run --rm acap-runtime:$ARCH $AXIS_TARGET_IP $PASS remove
 ```
@@ -88,7 +88,7 @@ docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS install
 docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS start
 
 # Find the logs in the camera web GUI and select the installed program in the Apps tab
-# Terminate and unistall test suite
+# Terminate and uninstall test suite
 docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS stop
 docker run --rm acap-runtime:$ARCH-test $AXIS_TARGET_IP $PASS remove
 ```
@@ -116,7 +116,7 @@ This service can be run either unsecured or in TLS mode. TLS mode provides addit
 
 ## Access point
 
-The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and the accesspoint is an Unix Domain Socket (UDS).
+The acap-runtime is a network protocol based service using [gRPC](https://grpc.io/) and the access point is an Unix Domain Socket (UDS).
 
 ```
 acap-runtime.sock
