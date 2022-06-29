@@ -33,7 +33,7 @@ public:
     const bool verbose,
     const uint64_t chipId,
     const vector<string>& models,
-    Capture& capture_service);
+    Capture* captureService);
   Status Predict(
     ServerContext* context,
     const PredictRequest* request,
@@ -88,5 +88,6 @@ private:
   size_t _ppNumOutputs;
   size_t _numInputs;
   size_t _numOutputs;
+  Capture* _captureService;
 };
 }  // namespace acap_runtime

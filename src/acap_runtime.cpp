@@ -177,7 +177,7 @@ int RunServer(
  // Register inference service
  Inference inference;
  if (chipId > 0) {
-   if (!inference.Init(_verbose, chipId, models, capture)) {
+   if (!inference.Init(_verbose, chipId, models, &capture)) {
      syslog(LOG_ERR, "Could not Init Inference Service");
      return EXIT_FAILURE;
    }

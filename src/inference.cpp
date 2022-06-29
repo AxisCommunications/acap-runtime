@@ -80,10 +80,11 @@ Inference::~Inference()
 // Initialize inference
 //bool Inference::Init(const bool verbose, const uint64_t chipId, const vector<string>& models)
 bool Inference::Init(const bool verbose, const uint64_t chipId,
-                     const vector<string>& models, Capture& capture_service)
-{
+                     const vector<string>& models, Capture* captureService) {
   _verbose = verbose;
   larodError* error = nullptr;
+
+  _captureService = captureService;
 
   TRACELOG << "Init chipId=" << chipId << endl;
 
@@ -760,6 +761,33 @@ bool Inference::SetupPreprocessing(
     } else if (tp.dtype() == tensorflow::DataType::DT_UINT32) {
       auto stream = tp.uint32_val(0);
       TRACELOG << "Got stream " << stream << endl;
+
+      // if (!_captureService->GetFileDescFromStream(stream, tmpFd)) {
+      //   TRACELOG << "Could not get file descriptor from stream" << endl;
+      //   return false;
+      // }
+      // TRACELOG << "Got file descriptor " << tmpFd << endl;
+
+      // char buf[20];
+      // int nbrBytes = read(tmpFd, &buf, 10);
+      // TRACELOG << "Bytes read: " << nbrBytes;
+      // TRACELOG << "Errno: " << errno << " " << strerror(errno) << endl;
+
+      size_t size;
+      void* data;
+
+      if (!_captureService->GetImgDataFromStream(stream, &data, size)) {
+        TRACELOG << "Could not get data from stream" << endl;
+        return false;
+      }
+
+      TRACELOG << "Got data of size " << size << endl;
+
+      if (!CreateTmpFile(tmpFile, tmpFd, data, size)) {
+        TRACELOG << "Failed creating tmp file" << size << endl;
+        return false;
+      }
+
     }
     else
     {
@@ -790,10 +818,16 @@ bool Inference::SetupPreprocessing(
     return false;
   }
 
-  if (!larodMapSetStr(_ppMap, "image.input.format", "rgb-interleaved", &error)) {
+  // if (!larodMapSetStr(_ppMap, "image.input.format", "rgb-interleaved",
+  //                     &error)) {
+  //   PrintError("Failed setting preprocessing parameters", error);
+  //   return false;
+  // }
+  if (!larodMapSetStr(_ppMap, "image.input.format", "nv12", &error)) {
     PrintError("Failed setting preprocessing parameters", error);
     return false;
   }
+
   if (!larodMapSetIntArr2(_ppMap, "image.input.size", requestWidth, requestHeight, &error)) {
     PrintError("Failed setting preprocessing parameters", error);
     return false;
