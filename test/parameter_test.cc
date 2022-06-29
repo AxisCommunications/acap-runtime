@@ -73,7 +73,11 @@ vector<pair<string,string>> GetValues(
 
   stream->WritesDone();
   Status status = stream->Finish();
+  if (!status.ok()) {
+    throw std::runtime_error("Error from gRPC: " + status.error_message());        
+  }
   EXPECT_TRUE(status.ok());
+
   return values;
 }
 
@@ -83,7 +87,8 @@ TEST(ParameterTest, GetValues)
   vector<string> keys = {
     "root.Brand.Brand",
     "root.Brand.WebURL",
-    "root.Image.I0.Enabled"
+    "root.Image.I0.Enabled",
+    "root.invalid"
   };
 
   thread main(Service, 5);
@@ -100,11 +105,12 @@ TEST(ParameterTest, GetValues)
       cout << value.first << " : " << value.second << endl;
     }
   }
-
-  EXPECT_EQ(3, values.size());
+  
+  EXPECT_EQ(4, values.size());
   EXPECT_STREQ("AXIS\n", values[0].second.c_str());
   EXPECT_STREQ("http://www.axis.com\n", values[1].second.c_str());
   EXPECT_STREQ("yes\n", values[2].second.c_str());
+  EXPECT_STREQ("",values[3].second.c_str());
 
   main.join();
 }
