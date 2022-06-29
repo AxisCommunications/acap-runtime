@@ -62,7 +62,7 @@ Status Parameter::GetValues(ServerContext* context,
       else
       {
         TRACELOG << "No valid input request" << endl;
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("No valid input request!");
       }
     }
 
