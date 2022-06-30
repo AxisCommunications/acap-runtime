@@ -76,7 +76,7 @@ Status Parameter::GetValues(ServerContext* context,
       else
       {
         TRACELOG << "No valid input request" << endl;
-        exit(EXIT_FAILURE);
+        return Status(StatusCode::INVALID_ARGUMENT, "No valid input request");
       }
     }
 
