@@ -747,10 +747,13 @@ bool Inference::SetupPreprocessing(
     TRACELOG << "Request image size " << requestWidth << "x" << requestHeight << endl;
     TRACELOG << "Model image size " << modelWidth << "x" << modelHeight << endl;
 
+    bool isMemoryMappedFile = tp.dtype() == tensorflow::DataType::DT_STRING;
+    bool isRequestForImageFromStream = tp.dtype() == tensorflow::DataType::DT_UINT32;
+
     // Convert request image to file descriptor
     FILE* tmpFile = nullptr;
     int tmpFd = -1;
-    if (tp.dtype() == tensorflow::DataType::DT_STRING) {
+    if (isMemoryMappedFile) {
       string filename = tp.string_val(0);
       TRACELOG << "Input file: " << filename << endl;
       tmpFd = shm_open(filename.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
@@ -758,24 +761,12 @@ bool Inference::SetupPreprocessing(
         ERRORLOG << "Can not open shared memory file " << filename << endl;
         return false;
       }
-    } else if (tp.dtype() == tensorflow::DataType::DT_UINT32) {
+    } else if (isRequestForImageFromStream) {
       auto stream = tp.uint32_val(0);
       TRACELOG << "Got stream " << stream << endl;
 
-      // if (!_captureService->GetFileDescFromStream(stream, tmpFd)) {
-      //   TRACELOG << "Could not get file descriptor from stream" << endl;
-      //   return false;
-      // }
-      // TRACELOG << "Got file descriptor " << tmpFd << endl;
-
-      // char buf[20];
-      // int nbrBytes = read(tmpFd, &buf, 10);
-      // TRACELOG << "Bytes read: " << nbrBytes;
-      // TRACELOG << "Errno: " << errno << " " << strerror(errno) << endl;
-
       size_t size;
       void* data;
-
       if (!_captureService->GetImgDataFromStream(stream, &data, size)) {
         TRACELOG << "Could not get data from stream" << endl;
         return false;
@@ -787,7 +778,6 @@ bool Inference::SetupPreprocessing(
         TRACELOG << "Failed creating tmp file" << size << endl;
         return false;
       }
-
     }
     else
     {
@@ -818,12 +808,9 @@ bool Inference::SetupPreprocessing(
     return false;
   }
 
-  // if (!larodMapSetStr(_ppMap, "image.input.format", "rgb-interleaved",
-  //                     &error)) {
-  //   PrintError("Failed setting preprocessing parameters", error);
-  //   return false;
-  // }
-  if (!larodMapSetStr(_ppMap, "image.input.format", "nv12", &error)) {
+  const char* inputFormat = isRequestForImageFromStream ? "nv12" : "rgb-interleaved";
+
+  if (!larodMapSetStr(_ppMap, "image.input.format", inputFormat, &error)) {
     PrintError("Failed setting preprocessing parameters", error);
     return false;
   }

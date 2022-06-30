@@ -98,126 +98,110 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void *data,
   return true;
 }
 
-  bool Capture::GetFileDescFromStream(unsigned int stream, int &fd) {
-    GError *error = nullptr;
+Status Capture::GetFrame(ServerContext *context,
+                         const GetFrameRequest *request,
+                         GetFrameResponse *response) {
+  (void)context;
+  GError *error = nullptr;
 
-    auto currentStream = streams.find(stream);
-    if (currentStream == streams.end()) {
-      return false;
-    }
-    VdoStream *vdo_stream = currentStream->second;
+  auto currentStream = streams.find(request->stream_id());
+  if (currentStream == streams.end())
+  {
+    return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
+  }
+  VdoStream *stream = currentStream->second;
 
-    VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
-    if (buffer == nullptr) {
-      return false;
-    }
-    VdoFrame *frame = vdo_buffer_get_frame(buffer);
-    gsize size = vdo_frame_get_size(frame);
-
-    fd = vdo_buffer_get_fd(buffer);
-
-    return true;
+  VdoMap *info = vdo_stream_get_info(stream, &error);
+  if (!info)
+  {
+    return OutputError("Getting stream info failed", StatusCode::INTERNAL,
+                       error);
   }
 
-  Status Capture::GetFrame(ServerContext * context,
-                           const GetFrameRequest *request,
-                           GetFrameResponse *response) {
-    (void)context;
-    GError *error = nullptr;
+  TRACELOG << "Stream info:" << vdo_map_get_uint32(info, "width", 0) << 'x'
+           << vdo_map_get_uint32(info, "height", 0) << ' '
+           << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
 
-    auto currentStream = streams.find(request->stream_id());
-    if (currentStream == streams.end()) {
-      return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
-    }
-    VdoStream *stream = currentStream->second;
+  g_clear_object(&info);
 
-    VdoMap *info = vdo_stream_get_info(stream, &error);
-    if (!info) {
-      return OutputError("Getting stream info failed", StatusCode::INTERNAL,
-                         error);
-    }
+  VdoBuffer *buffer = vdo_stream_get_buffer(stream, &error);
+  if (buffer == nullptr)
+  {
+    return OutputError("Unable to get VDO buffer", StatusCode::INTERNAL,
+                       error);
+  }
+  VdoFrame *frame = vdo_buffer_get_frame(buffer);
+  gsize size = vdo_frame_get_size(frame);
 
-    TRACELOG << "Stream info:" << vdo_map_get_uint32(info, "width", 0) << 'x'
-             << vdo_map_get_uint32(info, "height", 0) << ' '
-             << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
+  stringstream ss;
+  ss << "/s" << vdo_stream_get_id(stream) << '-'
+     << vdo_frame_get_timestamp(frame);
 
-    g_clear_object(&info);
+  // TRACELOG << "file name: " << ss.str().c_str() << endl;
 
-    VdoBuffer *buffer = vdo_stream_get_buffer(stream, &error);
-    if (buffer == nullptr) {
-      return OutputError("Unable to get VDO buffer", StatusCode::INTERNAL,
-                         error);
-    }
-    VdoFrame *frame = vdo_buffer_get_frame(buffer);
-    gsize size = vdo_frame_get_size(frame);
+  // int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
+  // if (fd == -1) {
+  //   return OutputError("Unable to to open shared memory file",
+  //   StatusCode::INTERNAL, error);
+  // }
+  // // TODO Don't ignore the return value
+  // (void)(ftruncate(fd, size) + 1);
 
-    stringstream ss;
-    ss << "/s" << vdo_stream_get_id(stream) << '-'
-       << vdo_frame_get_timestamp(frame);
+  // void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  // if (addr == MAP_FAILED) {
+  //   return OutputError("Failed to create memory mapping",
+  //   StatusCode::INTERNAL);
+  // }
 
-    // TRACELOG << "file name: " << ss.str().c_str() << endl;
-
-    // int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
-    // if (fd == -1) {
-    //   return OutputError("Unable to to open shared memory file",
-    //   StatusCode::INTERNAL, error);
-    // }
-    // // TODO Don't ignore the return value
-    // (void)(ftruncate(fd, size) + 1);
-
-    // void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    // if (addr == MAP_FAILED) {
-    //   return OutputError("Failed to create memory mapping",
-    //   StatusCode::INTERNAL);
-    // }
-
-    void *buffer_data = vdo_buffer_get_data(buffer);
-    if (nullptr == buffer_data) {
-      return OutputError("Get buffer failed", StatusCode::INTERNAL);
-    }
-
-    // memcpy(addr, buffer_data, size);
-
-    response->set_data(buffer_data, size);
-    // response->set_file_name(ss.str());
-
-    response->set_timestamp(vdo_frame_get_timestamp(frame));
-    response->set_custom_timestamp(vdo_frame_get_custom_timestamp(frame));
-    response->set_size(size);
-    response->set_type(GetTypeString(frame));
-    response->set_sequence_nbr(vdo_frame_get_sequence_nbr(frame));
-
-    if (!(vdo_stream_buffer_unref(stream, &buffer, &error))) {
-      return OutputError("Unreferencing buffer failed", StatusCode::INTERNAL,
-                         error);
-    }
-
-    return Status::OK;
+  void *buffer_data = vdo_buffer_get_data(buffer);
+  if (nullptr == buffer_data)
+  {
+    return OutputError("Get buffer failed", StatusCode::INTERNAL);
   }
 
-  Status Capture::OutputError(const char *msg, StatusCode code) {
-    return OutputError(msg, code, nullptr);
+  // memcpy(addr, buffer_data, size);
+
+  response->set_data(buffer_data, size);
+  // response->set_file_name(ss.str());
+
+  response->set_timestamp(vdo_frame_get_timestamp(frame));
+  response->set_custom_timestamp(vdo_frame_get_custom_timestamp(frame));
+  response->set_size(size);
+  response->set_type(GetTypeString(frame));
+  response->set_sequence_nbr(vdo_frame_get_sequence_nbr(frame));
+
+  if (!(vdo_stream_buffer_unref(stream, &buffer, &error)))
+  {
+    return OutputError("Unreferencing buffer failed", StatusCode::INTERNAL,
+                       error);
   }
 
-  Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
-    stringstream ss;
-    ss << " ";
-    ss << msg
-       << ((nullptr != error) ? (string(" (") + error->message + ")") : "");
+  return Status::OK;
+}
 
-    ERRORLOG << ss.str() << endl;
+Status Capture::OutputError(const char *msg, StatusCode code) {
+  return OutputError(msg, code, nullptr);
+}
 
-    g_clear_error(&error);
+Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
+  stringstream ss;
+  ss << " ";
+  ss << msg
+      << ((nullptr != error) ? (string(" (") + error->message + ")") : "");
 
-    return Status(code, ss.str());
-  }
+  ERRORLOG << ss.str() << endl;
 
-  string Capture::GetTypeString(VdoFrame * frame) {
-    GEnumClass *cls = reinterpret_cast<GEnumClass *>(
-        g_type_class_ref(vdo_frame_type_get_type()));
-    int type = vdo_frame_get_frame_type(frame);
+  g_clear_error(&error);
 
-    return cls->values[type].value_nick;
-  }
+  return Status(code, ss.str());
+}
+
+string Capture::GetTypeString(VdoFrame * frame) {
+  GEnumClass *cls = reinterpret_cast<GEnumClass *>(
+      g_type_class_ref(vdo_frame_type_get_type()));
+  int type = vdo_frame_get_frame_type(frame);
+
+  return cls->values[type].value_nick;
+}
 
 }  // namespace acap_runtime
