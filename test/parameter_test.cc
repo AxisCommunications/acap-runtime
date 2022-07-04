@@ -67,8 +67,11 @@ vector<pair<string,string>> GetValues(
 
     // Get the value for the sent key
     Response response;
+    std::string value;
     stream->Read(&response);
-    values.push_back(make_pair(key, response.value()));
+    value = response.value();
+    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+    values.push_back(make_pair(key, value));
   }
 
   stream->WritesDone();
@@ -107,10 +110,10 @@ TEST(ParameterTest, GetValues)
   }
   
   EXPECT_EQ(4, values.size());
-  EXPECT_STREQ("AXIS\n", values[0].second.c_str());
-  EXPECT_STREQ("http://www.axis.com\n", values[1].second.c_str());
-  EXPECT_STREQ("yes\n", values[2].second.c_str());
-  EXPECT_STREQ("",values[3].second.c_str());
+  EXPECT_STREQ("AXIS", values[0].second.c_str());
+  EXPECT_STREQ("http://www.axis.com", values[1].second.c_str());
+  EXPECT_STREQ("yes", values[2].second.c_str());
+  EXPECT_STREQ("", values[3].second.c_str());
 
   main.join();
 }
