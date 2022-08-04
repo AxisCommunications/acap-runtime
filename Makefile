@@ -4,7 +4,7 @@ rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst 
 
 # Paths
 #OUT_PATH ?= $(CURDIR)/build_$(shell $(CXX) -dumpmachine)
-OUT_PATH ?= $(CURDIR)
+OUT_PATH ?= $(CURDIR)/build
 API_PATH := $(CURDIR)/apis
 SRC_PATH := $(CURDIR)/src
 TEST_PATH := $(CURDIR)/test
@@ -51,9 +51,9 @@ $(OUT_PATH)/$(BINARY): $(SRC_FILES) $(PROTOBUF_H) $(PROTOBUF_O) $(PROTOBUF_GRPC_
 $(OUT_PATH)/$(TEST): $(TEST_FILES) $(SRC_FILES) $(PROTOBUF_H) $(PROTOBUF_O) $(PROTOBUF_GRPC_O)
 	$(CXX) -g $(CXXFLAGS) $(LDFLAGS) \
 	-I$(SRC_PATH) \
-	-I$(OUT_PATH)/tensorflow_serving/apis \
 	-I/usr/src/googletest/googletest/include \
 	-I/usr/src/googletest/googlemock/include \
+	-I$(OUT_PATH)/tensorflow_serving/apis \
 	-o $@ $(TEST_FILES) $(SRC_FILES) $(PROTOBUF_O) $(PROTOBUF_GRPC_O) -lgtest_main -lgtest  $(LDLIBS)
 
 # Build directory
@@ -83,7 +83,13 @@ $(OUT_PATH)/%.pb.cc $(OUT_PATH)/%.pb.h: $(API_PATH)/%.proto | $(OUT_PATH)
 
 # install: $(INSTALL_PATH)/$(BINARY) $(INSTALL_PATH)/$(TEST)
 
-install/strip: $(OUT_PATH)/$(BINARY) # $(OUT_PATH)/$(TEST)
+$(BINARY): $(OUT_PATH)/$(BINARY)
+	cp $(OUT_PATH)/$(BINARY) $(CURDIR)
+
+$(TEST): $(OUT_PATH)/$(TEST)
+	cp $(OUT_PATH)/$(TEST) $(CURDIR)
+
+install/strip: $(TEST) $(BINARY)
 	$(STRIP) --strip-unneeded $^
 
 clean:
