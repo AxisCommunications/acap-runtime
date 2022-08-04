@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/acapruntime",
+            "setupCommands": [
+                {
+                    "text": "target extended-remote 192.168.0.13:2159"
+                },
+                {
+                    "text": "directory src"
+                },
+                {
+                    "text": "set remote exec-file /usr/local/packages/acapruntime/acapruntime"
+                },
+                {
+                    "text": "break main",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/usr/bin/gdb-multiarch",
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+        }
+    ]
+}

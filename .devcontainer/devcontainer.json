@@ -1,0 +1,16 @@
+{
+    "name": "ACAP Runtime Debug",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/opt/app_host,type=bind",
+    "workspaceFolder": "/opt/app_host",
+	"postStartCommand": "./.devcontainer/setup.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-vscode.cpptools"
+			]
+		}
+	}
+}
