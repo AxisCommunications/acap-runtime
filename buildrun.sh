@@ -1,15 +1,30 @@
 #!/bin/bash
 
-set -x
-
 cam=192.168.0.13
 port=1234
 
-. /opt/axis/acapsdk/environment-setup-cortexa9hf-neon-poky-linux-gnueabi && acap-build . -m manifest-armv7hf.json
+# Build and install ACAPs
+
+. /opt/axis/acapsdk/environment-setup-cortexa9hf-neon-poky-linux-gnueabi
+set -x
+
+acap-build . -m manifest-armv7hf.json
+
+# eap-install.sh $cam pass install
+
+CXXFLAGS="$CXXFLAGS -g0 -DTEST" acap-build . -m manifest-test.json -a 'testdata/*'
+rm ACAP_Runtime_1_1_0_armv7hf.eap
+eap-install.sh $cam pass install
+
+# Copy binaries to device
 
 sshpass -p pass ssh root@$cam 'killall acapruntime'
+sshpass -p pass ssh root@$cam 'killall acapruntimetest'
 
 sshpass -p pass scp ./acapruntime root@$cam:/usr/local/packages/acapruntime/acapruntime
+sshpass -p pass scp ./acapruntimetest root@$cam:/usr/local/packages/acapruntimetest/acapruntimetest 
+
+# Perform grpcurl tests
 
 sshpass -p pass ssh root@$cam "/usr/local/packages/acapruntime/acapruntime -v -p $port" &
 sleep 2
@@ -29,3 +44,11 @@ apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto -
 apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream'}' $cam:$port videocapture.VideoCapture/GetFrame | tail -c 100
 
 rm ./apis/prediction_service.proto
+
+sshpass -p pass ssh root@$192.168.0.13 "killall acapruntime"
+
+# Run test binary
+
+sshpass -p pass ssh root@$cam "/usr/local/packages/acapruntimetest/acapruntimetest --gtest_color=yes" &
+sleep 2
+
