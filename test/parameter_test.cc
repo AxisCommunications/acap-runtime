@@ -67,13 +67,20 @@ vector<pair<string,string>> GetValues(
 
     // Get the value for the sent key
     Response response;
+    std::string value;
     stream->Read(&response);
-    values.push_back(make_pair(key, response.value()));
+    value = response.value();
+    value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
+    values.push_back(make_pair(key, value));
   }
 
   stream->WritesDone();
   Status status = stream->Finish();
+  if (!status.ok()) {
+    throw std::runtime_error("Error from gRPC: " + status.error_message());        
+  }
   EXPECT_TRUE(status.ok());
+
   return values;
 }
 
@@ -101,7 +108,7 @@ TEST(ParameterTest, GetValues)
       cout << value.first << " : " << value.second << endl;
     }
   }
-
+  
   EXPECT_EQ(4, values.size());
   EXPECT_STREQ("AXIS", values[0].second.c_str());
   EXPECT_STREQ("http://www.axis.com", values[1].second.c_str());
