@@ -73,7 +73,7 @@ Status Capture::NewStream(ServerContext *context,
   return Status::OK;
 }
 
-bool Capture::GetImgDataFromStream(unsigned int stream, void *data,
+bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
                                    size_t& size) {
   GError *error = nullptr;
 
@@ -83,6 +83,18 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void *data,
   }
   VdoStream *vdo_stream = currentStream->second;
 
+  VdoMap *info = vdo_stream_get_info(vdo_stream, &error);
+  if (!info)
+  {
+    return false;
+  }
+
+  TRACELOG << "Stream info:" << vdo_map_get_uint32(info, "width", 0) << 'x'
+           << vdo_map_get_uint32(info, "height", 0) << ' '
+           << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
+
+  g_clear_object(&info);
+
   VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
   if (buffer == nullptr) {
     return false;
@@ -90,8 +102,17 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void *data,
   VdoFrame *frame = vdo_buffer_get_frame(buffer);
   size = vdo_frame_get_size(frame);
 
-  data = vdo_buffer_get_data(buffer);
-  if (nullptr == data) {
+  void* new_data = vdo_buffer_get_data(buffer);
+  if (nullptr == new_data) {
+    return false;
+  }
+
+  *data = malloc(size);
+  // TODO fix the leak
+  memcpy(*data, new_data, size);
+
+  if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error)))
+  {
     return false;
   }
 

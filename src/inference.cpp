@@ -773,6 +773,10 @@ bool Inference::SetupPreprocessing(
       }
 
       TRACELOG << "Got data of size " << size << endl;
+      TRACELOG << "Data: ";
+      for(int i; i < 100; i++) {
+        printf("%i", ((uint8_t*)data)[i]);
+      }
 
       if (!CreateTmpFile(tmpFile, tmpFd, data, size)) {
         TRACELOG << "Failed creating tmp file" << size << endl;

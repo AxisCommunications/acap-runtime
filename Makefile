@@ -89,7 +89,7 @@ $(BINARY): $(OUT_PATH)/$(BINARY)
 $(TEST): $(OUT_PATH)/$(TEST)
 	cp $(OUT_PATH)/$(TEST) $(CURDIR)
 
-install/strip: $(TEST) $(BINARY)
+install/strip: $(BINARY) # $(TEST) 
 	$(STRIP) --strip-unneeded $^
 
 clean:
