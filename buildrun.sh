@@ -56,7 +56,7 @@ apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto -
  | tee /dev/stderr \
  | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \
  | base64 --decode \
- | od --format d1 -A d
+ | od --format u1 -A d 
 
 # | tail -c 100
 
@@ -69,4 +69,3 @@ sshpass -p pass ssh root@$cam "killall acapruntime"
 # sshpass -p pass ssh root@$cam "/usr/local/packages/acapruntimetest/acapruntimetest --gtest_filter='-Inference*'" & #--gtest_color=yes
 
 # sshpass -p pass ssh root@$192.168.0.13 "killall acapruntimetest"
-

@@ -108,7 +108,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   }
 
   *data = malloc(size);
-  // TODO fix the leak
+  // TODO try to avoid the extra copying
   memcpy(*data, new_data, size);
 
   if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error)))
