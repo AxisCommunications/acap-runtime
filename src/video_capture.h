@@ -18,7 +18,11 @@ namespace acap_runtime {
 class Capture final : public VideoCapture::Service {
  public:
   bool Init(const bool verbose);
-  bool GetImgDataFromStream(unsigned int stream, void** data, size_t& size);
+
+  bool GetImgDataFromStream(unsigned int stream, void** data, size_t& size,
+                            void** buffer_obj, void** stream_obj);
+
+  bool FreeBufferObj(void* stream, void* buffer_obj);
 
  private:
   Status NewStream(ServerContext* context,

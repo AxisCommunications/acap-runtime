@@ -767,7 +767,9 @@ bool Inference::SetupPreprocessing(
 
       size_t size;
       void* data;
-      if (!_captureService->GetImgDataFromStream(stream, &data, size)) {
+      void* stream_obj;
+      void* buffer_obj;
+      if (!_captureService->GetImgDataFromStream(stream, &data, size, &stream_obj, &buffer_obj)) {
         TRACELOG << "Could not get data from stream" << endl;
         return false;
       }
@@ -779,7 +781,7 @@ bool Inference::SetupPreprocessing(
         return false;
       }
 
-      free(data);
+      _captureService->FreeBufferObj(stream_obj, buffer_obj);
     }
     else
     {

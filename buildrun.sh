@@ -63,6 +63,7 @@ apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto -
 rm ./apis/prediction_service.proto
 
 sshpass -p pass ssh root@$cam "killall acapruntime"
+sleep 1
 
 # Run test binary
 

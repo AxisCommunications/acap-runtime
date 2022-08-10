@@ -29,8 +29,8 @@ bool Capture::Init(const bool verbose) {
 }
 
 Status Capture::NewStream(ServerContext *context,
-                             const NewStreamRequest *request,
-                             NewStreamResponse *response) {
+                          const NewStreamRequest *request,
+                          NewStreamResponse *response) {
   TRACELOG << "Creating VDO stream" << endl;
 
   GError *error = nullptr;
@@ -51,9 +51,9 @@ Status Capture::NewStream(ServerContext *context,
 
   VdoMap *info = vdo_stream_get_info(stream, &error);
   if (!info) {
-    ERRORLOG << "Getting stream info failed";
     g_clear_object(&stream);
-    return OutputError("Getting stream info failed", StatusCode::INTERNAL, error);
+    return OutputError("Getting stream info failed", StatusCode::INTERNAL,
+                       error);
   }
 
   TRACELOG << "Starting stream:" << vdo_map_get_uint32(info, "width", 0) << 'x'
@@ -74,7 +74,7 @@ Status Capture::NewStream(ServerContext *context,
 }
 
 bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
-                                   size_t& size) {
+                                   size_t &size, void** buffer_obj, void** stream_obj) {
   GError *error = nullptr;
 
   auto currentStream = streams.find(stream);
@@ -84,8 +84,8 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   VdoStream *vdo_stream = currentStream->second;
 
   VdoMap *info = vdo_stream_get_info(vdo_stream, &error);
-  if (!info)
-  {
+  if (!info) {
+    ERRORLOG << "Getting stream info failed" << endl;
     return false;
   }
 
@@ -97,44 +97,53 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
   if (buffer == nullptr) {
+    ERRORLOG << "Unable to get VDO buffer" << endl;
     return false;
   }
   VdoFrame *frame = vdo_buffer_get_frame(buffer);
   size = vdo_frame_get_size(frame);
 
-  void* new_data = vdo_buffer_get_data(buffer);
+  void *new_data = vdo_buffer_get_data(buffer);
   if (nullptr == new_data) {
     return false;
   }
 
-  *data = malloc(size);
-  // TODO try to avoid the extra copying
-  memcpy(*data, new_data, size);
+  *data = new_data;
+  
+  // *data = malloc(size);
+  // // TODO try to avoid the extra copying
+  // memcpy(*data, new_data, size);
 
-  if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error)))
-  {
-    return false;
-  }
+  // TODO: Also do this on errors above
+  // if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
+  //   ERRORLOG << "Unreferencing buffer failed" << endl;
+  //   return false;
+  // }
+
+  *stream_obj = vdo_stream;
+  *buffer_obj = buffer;
 
   return true;
 }
 
-Status Capture::GetFrame(ServerContext *context,
-                         const GetFrameRequest *request,
+bool Capture::FreeBufferObj(void *stream, void *buffer_obj) {
+  return vdo_stream_buffer_unref((VdoStream *)stream, (VdoBuffer **)&buffer_obj,
+                                 nullptr);
+}
+
+Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
                          GetFrameResponse *response) {
   (void)context;
   GError *error = nullptr;
 
   auto currentStream = streams.find(request->stream_id());
-  if (currentStream == streams.end())
-  {
+  if (currentStream == streams.end()) {
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
   VdoStream *stream = currentStream->second;
 
   VdoMap *info = vdo_stream_get_info(stream, &error);
-  if (!info)
-  {
+  if (!info) {
     return OutputError("Getting stream info failed", StatusCode::INTERNAL,
                        error);
   }
@@ -146,10 +155,8 @@ Status Capture::GetFrame(ServerContext *context,
   g_clear_object(&info);
 
   VdoBuffer *buffer = vdo_stream_get_buffer(stream, &error);
-  if (buffer == nullptr)
-  {
-    return OutputError("Unable to get VDO buffer", StatusCode::INTERNAL,
-                       error);
+  if (buffer == nullptr) {
+    return OutputError("Unable to get VDO buffer", StatusCode::INTERNAL, error);
   }
   VdoFrame *frame = vdo_buffer_get_frame(buffer);
   gsize size = vdo_frame_get_size(frame);
@@ -175,8 +182,7 @@ Status Capture::GetFrame(ServerContext *context,
   // }
 
   void *buffer_data = vdo_buffer_get_data(buffer);
-  if (nullptr == buffer_data)
-  {
+  if (nullptr == buffer_data) {
     return OutputError("Get buffer failed", StatusCode::INTERNAL);
   }
 
@@ -191,8 +197,8 @@ Status Capture::GetFrame(ServerContext *context,
   response->set_type(GetTypeString(frame));
   response->set_sequence_nbr(vdo_frame_get_sequence_nbr(frame));
 
-  if (!(vdo_stream_buffer_unref(stream, &buffer, &error)))
-  {
+  // TODO: Also do this on errors above
+  if (!(vdo_stream_buffer_unref(stream, &buffer, &error))) {
     return OutputError("Unreferencing buffer failed", StatusCode::INTERNAL,
                        error);
   }
@@ -208,7 +214,7 @@ Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
   stringstream ss;
   ss << " ";
   ss << msg
-      << ((nullptr != error) ? (string(" (") + error->message + ")") : "");
+     << ((nullptr != error) ? (string(" (") + error->message + ")") : "");
 
   ERRORLOG << ss.str() << endl;
 
@@ -217,7 +223,7 @@ Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
   return Status(code, ss.str());
 }
 
-string Capture::GetTypeString(VdoFrame * frame) {
+string Capture::GetTypeString(VdoFrame *frame) {
   GEnumClass *cls = reinterpret_cast<GEnumClass *>(
       g_type_class_ref(vdo_frame_type_get_type()));
   int type = vdo_frame_get_frame_type(frame);
