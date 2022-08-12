@@ -108,17 +108,16 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
     return false;
   }
 
-  *data = new_data;
+  // *data = new_data;
   
-  // *data = malloc(size);
-  // // TODO try to avoid the extra copying
-  // memcpy(*data, new_data, size);
+  *data = malloc(size);
+  memcpy(*data, new_data, size);
 
   // TODO: Also do this on errors above
-  // if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
-  //   ERRORLOG << "Unreferencing buffer failed" << endl;
-  //   return false;
-  // }
+  if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
+    ERRORLOG << "Unreferencing buffer failed" << endl;
+    return false;
+  }
 
   *stream_obj = vdo_stream;
   *buffer_obj = buffer;

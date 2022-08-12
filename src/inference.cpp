@@ -781,7 +781,7 @@ bool Inference::SetupPreprocessing(
         return false;
       }
 
-      _captureService->FreeBufferObj(stream_obj, buffer_obj);
+      //_captureService->FreeBufferObj(stream_obj, buffer_obj);
     }
     else
     {
