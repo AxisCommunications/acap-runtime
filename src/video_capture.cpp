@@ -105,15 +105,17 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   void *new_data = vdo_buffer_get_data(buffer);
   if (nullptr == new_data) {
+    if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error)))
+      ERRORLOG << "Unreferencing buffer failed" << endl;
     return false;
   }
 
-  // *data = new_data;
-  
-  *data = malloc(size);
-  memcpy(*data, new_data, size);
+  *data = new_data;
 
-  // TODO: Also do this on errors above
+  // *data = malloc(size);
+  // memcpy(*data, new_data, size);
+
+  // Seems to work even if we use the data after calling unref here...
   if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
     ERRORLOG << "Unreferencing buffer failed" << endl;
     return false;
@@ -125,10 +127,11 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   return true;
 }
 
-bool Capture::FreeBufferObj(void *stream, void *buffer_obj) {
-  return vdo_stream_buffer_unref((VdoStream *)stream, (VdoBuffer **)&buffer_obj,
-                                 nullptr);
-}
+// bool Capture::FreeBufferObj(void *stream, void *buffer_obj) {
+//   return vdo_stream_buffer_unref((VdoStream *)stream, (VdoBuffer
+//   **)&buffer_obj,
+//                                  nullptr);
+// }
 
 Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
                          GetFrameResponse *response) {
@@ -196,7 +199,6 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   response->set_type(GetTypeString(frame));
   response->set_sequence_nbr(vdo_frame_get_sequence_nbr(frame));
 
-  // TODO: Also do this on errors above
   if (!(vdo_stream_buffer_unref(stream, &buffer, &error))) {
     return OutputError("Unreferencing buffer failed", StatusCode::INTERNAL,
                        error);

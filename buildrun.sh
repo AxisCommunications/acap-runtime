@@ -50,13 +50,20 @@ rm temp
 # apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream'}' $cam:$port videocapture.VideoCapture/GetFrame \
 #  | jq --raw-output .data | base64 --decode > img.yuv
 
-apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto --plaintext -d \
- '{ "inputs": { "data": { "dtype": 22, "uint32_val": '$stream', "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/models/'$model'"  }  }' \
- $cam:$port tensorflow.serving.PredictionService/Predict \
- | tee /dev/stderr \
- | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \
- | base64 --decode \
- | od --format u1 -A d 
+infer() {
+    apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto --plaintext -d \
+    '{ "inputs": { "data": { "dtype": 22, "uint32_val": '$stream', "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/models/'$model'"  }  }' \
+    $cam:$port tensorflow.serving.PredictionService/Predict \
+    | tee /dev/stderr \
+    | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \
+    | base64 --decode \
+    | od --format u1 -A d 
+}
+
+infer
+infer
+infer
+infer
 
 # | tail -c 100
 
