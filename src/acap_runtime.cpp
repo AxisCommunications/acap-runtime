@@ -217,11 +217,10 @@ int RunServer(
 void Usage(const char* name)
 {
  cerr << "Usage: " << name
-   << " [-v] [-o] [-a address ] [-p port] [-j chip-id]  [-t runtime] [-c certificate-file] [-k key-file] [-m model-file] ... [-m model-file]" << endl
+   << " [-v] [-a address ] [-p port] [-j chip-id]  [-t runtime] [-c certificate-file] [-k key-file] [-m model-file] ... [-m model-file]" << endl
    << "  -v    Verbose" << endl
    << "  -a    IP address of server" << endl
    << "  -p    IP port of server" << endl
-   << "  -o    Do not read parameters from ACAP storage " << endl
    << "  -j    Chip id (see larodChip in larod.h)" << endl
    << "  -t    Runtime in seconds (used for test)" << endl
    << "  -c    Certificate file for TLS authentication, insecure channel if omitted" << endl
@@ -239,17 +238,38 @@ int AcapRuntime(int argc, char* argv[])
  string key_file = "";
  uint64_t chipId = 0;
  int time = 0; // Run time in seconds, 0 => infinity
- bool allow_override = true;
+ 
  openlog(NULL, LOG_PID, LOG_USER);
  
  // Setup signal handling.
  init_signals();
  
- // Read parameters from command line 
+ // Read parameters from parameter storage
+  const char *verbose = get_parameter_value("Verbose");
+  if (verbose != NULL) {
+    _verbose = strcmp(verbose, "yes") == 0;
+  }
+  const char *ip_port = get_parameter_value("IpPort");
+  if (ip_port != NULL) {
+    ipPort = atoi(ip_port);
+  }
+  const char *chip_id = get_parameter_value("ChipId");
+  if (chip_id != NULL) {
+    chipId = atoi(chip_id);
+  }
+  const char *useTls = get_parameter_value("UseTLS");
+  if (useTls != NULL) {
+    if (strcmp(useTls, "yes") == 0) {
+        pem_file.assign(serverCertificatePath);
+        key_file.assign(serverKeyPath);
+    }
+  }
+ 
+  // Override with parameters from command line
  int opt;
  optind = 0; // Reset opt index
  vector<string> models;
- while (-1 != (opt = getopt(argc, argv, "a:hvoj:m:p:t:c:k:"))) {
+ while (-1 != (opt = getopt(argc, argv, "a:hj:m:p:t:c:k:v"))) {
    switch (opt) {
      case 'a':
        address.assign(optarg);
@@ -272,9 +292,6 @@ int AcapRuntime(int argc, char* argv[])
      case 'v':
        _verbose = true;
        break;
-     case 'o':
-       allow_override = false;
-       break;
      case 'c':
        pem_file.assign(optarg);
        break;
@@ -286,31 +303,6 @@ int AcapRuntime(int argc, char* argv[])
        return EXIT_FAILURE;
    }
  }
-  if(allow_override){
-    // Override with parameters from parameter storage
-    const char *verbose = get_parameter_value("Verbose");
-    if (verbose != NULL) {
-      _verbose = strcmp(verbose, "yes") == 0;
-    }
-    const char *ip_port = get_parameter_value("IpPort");
-    if (ip_port != NULL) {
-      ipPort = atoi(ip_port);
-    }
-    const char *chip_id = get_parameter_value("ChipId");
-    if (chip_id != NULL) {
-      chipId = atoi(chip_id);
-    }
-    const char *useTls = get_parameter_value("UseTLS");
-    if (useTls != NULL) {
-      if (strcmp(useTls, "yes") == 0) {
-          pem_file.assign(serverCertificatePath);
-          key_file.assign(serverKeyPath);
-      }
-    }
-  }
-
- 
-
  LOG(INFO) << "Start " << argv[0] << endl;
  int ret = RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
  LOG(INFO) << "Exit " << argv[0] << endl;
