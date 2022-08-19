@@ -221,7 +221,7 @@ void Usage(const char* name)
    << "  -v    Verbose" << endl
    << "  -a    IP address of server" << endl
    << "  -p    IP port of server" << endl
-   << "  -o    Do not read parameters from ACAP storage " << endl
+   << "  -o    Do not read settings from device parameters " << endl
    << "  -j    Chip id (see larodChip in larod.h)" << endl
    << "  -t    Runtime in seconds (used for test)" << endl
    << "  -c    Certificate file for TLS authentication, insecure channel if omitted" << endl
