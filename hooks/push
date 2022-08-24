@@ -3,4 +3,4 @@
 # that the repository does not need a separate Dockerfile for each build
 
 docker push $IMAGE_NAME
-docker push $IMAGE_NAME-test
+docker push $IMAGE_NAME-containerized
