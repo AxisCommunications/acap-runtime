@@ -33,6 +33,8 @@ class Capture final : public VideoCapture::Service {
                            const GetFrameRequest* request,
                            GetFrameResponse* response);
 
+  bool SetResponseFromLastFrame(const uint stream, GetFrameResponse *response);
+
   Status OutputError(const char* msg, StatusCode code);
   Status OutputError(const char* msg, StatusCode code, GError* error);
 
@@ -41,6 +43,9 @@ class Capture final : public VideoCapture::Service {
   bool _verbose;
   map<uint, VdoStream*> streams;
   map<string, VdoBuffer*> buffers;
+
+  size_t lastDataSize;
+  void* lastData;
 };
 }  // namespace acap_runtime
 

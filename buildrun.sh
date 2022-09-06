@@ -61,9 +61,9 @@ infer() {
 }
 
 infer
-infer
-infer
-infer
+# infer
+# infer
+# infer
 
 # | tail -c 100
 

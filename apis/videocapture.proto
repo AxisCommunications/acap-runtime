@@ -15,6 +15,7 @@ service VideoCapture {
 message GetFrameRequest {
         uint32 stream_id = 1;
         uint64 timestamp = 2;
+        bool get_from_last_inference = 3;
 }
 
 message GetFrameResponse {

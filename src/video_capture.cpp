@@ -110,10 +110,10 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
     return false;
   }
 
-  *data = new_data;
+  // *data = new_data;
 
-  // *data = malloc(size);
-  // memcpy(*data, new_data, size);
+  *data = malloc(size);
+  memcpy(*data, new_data, size);
 
   // Seems to work even if we use the data after calling unref here...
   if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
@@ -121,9 +121,12 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
     return false;
   }
 
-  *stream_obj = vdo_stream;
-  *buffer_obj = buffer;
+  // *stream_obj = vdo_stream;
+  // *buffer_obj = buffer;
 
+  lastData = *data;
+  lastDataSize = size;
+  
   return true;
 }
 
@@ -132,6 +135,18 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 //   **)&buffer_obj,
 //                                  nullptr);
 // }
+
+// TODO: finish this
+bool Capture::SetResponseFromLastFrame(const uint stream, GetFrameResponse *response) {
+
+  if (lastDataSize == 0 || lastData == nullptr)
+    return false;
+
+  response->set_size(lastDataSize);
+  response->set_data(lastData, lastDataSize);
+
+  return true;
+}
 
 Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
                          GetFrameResponse *response) {
@@ -143,6 +158,11 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
   VdoStream *stream = currentStream->second;
+
+  if (request->get_from_last_inference()) {
+    SetResponseFromLastFrame(currentStream->first, response);
+    return Status::OK;
+  }
 
   VdoMap *info = vdo_stream_get_info(stream, &error);
   if (!info) {
