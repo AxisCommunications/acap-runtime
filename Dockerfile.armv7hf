@@ -1,10 +1,9 @@
 ARG ARCH=armv7hf
-ARG VERSION=1.1_beta1
-ARG UBUNTU_VERSION=20.04
 ARG REPO=axisecp
+ARG SDK_VERSION=1.1_beta1
+ARG UBUNTU_VERSION=20.04
 
-FROM ${REPO}/acap-sdk:3.4.2-${ARCH}-ubuntu20.04 as acap-sdk
-FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} as acap-native-sdk
+FROM ${REPO}/acap-native-sdk:${SDK_VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} as acap-native-sdk
 FROM acap-native-sdk as build
 
 ARG ARCH
