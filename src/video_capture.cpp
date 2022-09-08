@@ -161,6 +161,7 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
 
   if (request->get_from_last_inference()) {
     SetResponseFromLastFrame(currentStream->first, response);
+    TRACELOG << "Getting frame from last inference call" << endl;
     return Status::OK;
   }
 

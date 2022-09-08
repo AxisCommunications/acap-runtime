@@ -65,7 +65,10 @@ infer
 # infer
 # infer
 
-# | tail -c 100
+
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "get_from_last_inference": true}' $cam:$port videocapture.VideoCapture/GetFrame \
+ | jq --raw-output .data | base64 --decode > img.yuv
+
 
 rm ./apis/prediction_service.proto
 
