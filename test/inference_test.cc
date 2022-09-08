@@ -56,7 +56,8 @@ void Service(
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
     "-t", timeout,
-    "-j", chipId
+    "-j", chipId,
+    "-o"
      };
   const int argc = sizeof(argv) / sizeof(const char*);
   ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
@@ -77,7 +78,8 @@ void ServiceSecurity(
     "-t", timeout,
     "-j", chipId,
     "-c", certificateFile,
-    "-k", keyFile
+    "-k", keyFile,
+    "-o"
      };
   const int argc = sizeof(argv) / sizeof(const char*);
   ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
@@ -96,7 +98,8 @@ void ServiceModel(
     "-p", target_port,
     "-t", timeout,
     "-j", chipId,
-    "-m", modelFile
+    "-m", modelFile,
+    "-o"
      };
   const int argc = sizeof(argv) / sizeof(const char*);
   ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
