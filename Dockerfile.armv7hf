@@ -116,12 +116,15 @@ RUN mkdir -p "/opt/grpc/cmake/build_arm" &&\
 RUN git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
 RUN git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 
-## Setup build structure
+# Setup build structure
 WORKDIR /opt/app
 COPY . .
 RUN cd apis &&\
     ln -fs /opt/tensorflow/tensorflow/tensorflow &&\
     ln -fs /opt/tensorflow/serving/tensorflow_serving
+
+# Patch the Predict call of Tensorflow Serving
+RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
 
 # Building the ACAP application
 ARG TEST

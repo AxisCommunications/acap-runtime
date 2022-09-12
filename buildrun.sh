@@ -77,6 +77,6 @@ sleep 1
 
 # Run test binary
 
-# sshpass -p pass ssh root@$cam "/usr/local/packages/acapruntimetest/acapruntimetest --gtest_filter='-Inference*'" & #--gtest_color=yes
+# sshpass -p pass ssh root@$cam "/usr/local/packages/acapruntimetest/acapruntimetest" # --gtest_filter='-Inference*'" & #--gtest_color=yes
 
 # sshpass -p pass ssh root@$192.168.0.13 "killall acapruntimetest"

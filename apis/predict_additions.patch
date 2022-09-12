@@ -1,0 +1,18 @@
+--- predict.proto	2022-09-12 16:37:10.111663108 +0000
++++ predict.proto.new	2022-09-12 16:31:39.959875393 +0000
+@@ -28,6 +28,8 @@
+   // exception that when none is specified, all tensors specified in the
+   // named signature will be run/fetched and returned.
+   repeated string output_filter = 3;
++
++  uint32 stream = 10;
+ }
+ 
+ // Response for PredictRequest on successful run.
+@@ -37,4 +39,6 @@
+ 
+   // Output tensors.
+   map<string, TensorProto> outputs = 1;
++
++  uint32 frame_reference = 10;
+ }
