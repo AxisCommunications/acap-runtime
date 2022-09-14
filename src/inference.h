@@ -56,11 +56,13 @@ private:
     TensorProto tp,
     larodTensor* tensor,
     vector<pair<FILE*, int>>& inFiles,
+    const u_int32_t stream,
     larodError*& error);
   bool SetupInputTensors(
     larodModel*& model,
     const google::protobuf::Map<string, TensorProto>& inputs,
     vector<pair<FILE*, int>>& inFiles,
+    const u_int32_t stream,
     larodError*& error);
   bool SetupOutputTensors(
     larodModel*& model,

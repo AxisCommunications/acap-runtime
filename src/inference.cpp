@@ -206,6 +206,7 @@ Status Inference::Predict(
     model,
     request->inputs(),
     inFiles,
+    request->stream_id(),
     error)) {
     goto predicterror;
   }
@@ -711,6 +712,7 @@ bool Inference::SetupPreprocessing(
   tensorflow::TensorProto tp,
   larodTensor* tensor,
   vector<pair<FILE*, int>>& inFiles,
+  const u_int32_t stream,
   larodError*& error)
   {
     void* larodInputAddr = MAP_FAILED;
@@ -748,7 +750,8 @@ bool Inference::SetupPreprocessing(
     TRACELOG << "Model image size " << modelWidth << "x" << modelHeight << endl;
 
     bool isMemoryMappedFile = tp.dtype() == tensorflow::DataType::DT_STRING;
-    bool isRequestForImageFromStream = tp.dtype() == tensorflow::DataType::DT_UINT32;
+    //bool isRequestForImageFromStream = tp.dtype() == tensorflow::DataType::DT_UINT32;
+    bool isRequestForImageFromStream = stream != 0;
 
     // Convert request image to file descriptor
     FILE* tmpFile = nullptr;
@@ -762,7 +765,7 @@ bool Inference::SetupPreprocessing(
         return false;
       }
     } else if (isRequestForImageFromStream) {
-      auto stream = tp.uint32_val(0);
+      // auto stream = tp.uint32_val(0);
       TRACELOG << "Got stream " << stream << endl;
 
       size_t size;
@@ -883,6 +886,7 @@ bool Inference::SetupInputTensors(
   const google::protobuf::Map<string,
   TensorProto>& inputs,
   vector<pair<FILE*, int>>& inFiles,
+  const u_int32_t stream,
   larodError*& error)
 {
   // Setup input tensors
@@ -903,7 +907,7 @@ bool Inference::SetupInputTensors(
   for (auto & [input_name, tpa] : inputs) {
     tensorflow::TensorProto tp = tpa;
     TRACELOG << "Input name: " << input_name << endl;
-    if (!SetupPreprocessing(tp, _inputTensors[i], inFiles, error)) {
+    if (!SetupPreprocessing(tp, _inputTensors[i], inFiles, stream, error)) {
         return false;
     }
 

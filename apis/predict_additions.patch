@@ -5,7 +5,7 @@
    // named signature will be run/fetched and returned.
    repeated string output_filter = 3;
 +
-+  uint32 stream = 10;
++  uint32 stream_id = 10;
  }
  
  // Response for PredictRequest on successful run.

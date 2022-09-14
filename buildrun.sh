@@ -52,7 +52,7 @@ rm temp
 
 infer() {
     apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto --plaintext -d \
-    '{ "inputs": { "data": { "dtype": 22, "uint32_val": '$stream', "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/models/'$model'"  }  }' \
+    '{ "stream_id":'$stream', "inputs": { "data": { "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/models/'$model'"  }  }' \
     $cam:$port tensorflow.serving.PredictionService/Predict \
     | tee /dev/stderr \
     | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \
