@@ -26,7 +26,7 @@ acap-build . -m manifest-armv7hf.json
 # Copy binaries to device
 
 sshpass -p pass ssh root@$cam 'killall acapruntime'
-sshpass -p pass ssh root@$cam 'killall acapruntimetest'
+# sshpass -p pass ssh root@$cam 'killall acapruntimetest'
 
 sshpass -p pass scp ./acapruntime root@$cam:/usr/local/packages/acapruntime/acapruntime
 # sshpass -p pass scp ./acapruntimetest root@$cam:/usr/local/packages/acapruntimetest/acapruntimetest 

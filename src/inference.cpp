@@ -750,7 +750,9 @@ bool Inference::SetupPreprocessing(
     TRACELOG << "Model image size " << modelWidth << "x" << modelHeight << endl;
 
     bool isMemoryMappedFile = tp.dtype() == tensorflow::DataType::DT_STRING;
-    //bool isRequestForImageFromStream = tp.dtype() == tensorflow::DataType::DT_UINT32;
+    // bool isRequestForImageFromStream = tp.dtype() ==
+    // tensorflow::DataType::DT_UINT32;
+    //  Assume a valid stream id is never 0
     bool isRequestForImageFromStream = stream != 0;
 
     // Convert request image to file descriptor
