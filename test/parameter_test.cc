@@ -9,6 +9,7 @@
 #include "memory_use.h"
 #include "milli_seconds.h"
 #include "testdata.h"
+#include "verbose_setting.h"
 
 int AcapRuntime(int argc, char* argv[]);
 
@@ -41,7 +42,7 @@ void Service(int seconds)
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
@@ -86,7 +87,7 @@ vector<pair<string,string>> GetValues(
 
 TEST(ParameterTest, GetValues)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   vector<string> keys = {
     "root.Brand.Brand",
     "root.Brand.WebURL",

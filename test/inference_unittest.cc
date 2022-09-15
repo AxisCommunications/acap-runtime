@@ -7,6 +7,7 @@
 #include "inference.h"
 #include "bitmap.h"
 #include "testdata.h"
+#include "verbose_setting.h"
 
 using namespace ::testing;
 using namespace std;
@@ -305,7 +306,7 @@ void PredictModel3(
 
 TEST(InferenceUnittest, InitCpu)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   if (verbose) {
 #ifdef __arm32__
     cout << "Defined: __arm32__" << endl;
@@ -343,7 +344,7 @@ TEST(InferenceUnittest, InitCpu)
 
 TEST(InferenceUnittest, Init_Fail)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { cpuModel1, "invalid" };
 
   Inference inference;
@@ -352,7 +353,7 @@ TEST(InferenceUnittest, Init_Fail)
 
 TEST(InferenceUnittest, PredictCpuModel1Preload)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { cpuModel1 };
   shm_unlink(sharedFile);
 
@@ -375,7 +376,7 @@ TEST(InferenceUnittest, PredictCpuModel1Preload)
 
 TEST(InferenceUnittest, PredictCpuModel1)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -398,7 +399,7 @@ TEST(InferenceUnittest, PredictCpuModel1)
 
 TEST(InferenceUnittest, PredictCpuModel2)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -427,7 +428,7 @@ TEST(InferenceUnittest, PredictCpuModel2)
 
 TEST(InferenceUnittest, PredictCpuModel3)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -456,7 +457,7 @@ TEST(InferenceUnittest, PredictCpuModel3)
 
 TEST(InferenceUnittest, PredictCpuModelMix)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -487,7 +488,7 @@ TEST(InferenceUnittest, PredictCpuModelMix)
 #ifdef __arm64__
 TEST(InferenceUnittest, InitDlpu)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { cpuModel1 };
 
   Inference inference;
@@ -496,7 +497,7 @@ TEST(InferenceUnittest, InitDlpu)
 
 TEST(InferenceUnittest, PredictDlpuModel1Preload)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { cpuModel1 };
   shm_unlink(sharedFile);
 
@@ -516,7 +517,7 @@ TEST(InferenceUnittest, PredictDlpuModel1Preload)
 
 TEST(InferenceUnittest, PredictDlpuModel1)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -531,7 +532,7 @@ TEST(InferenceUnittest, PredictDlpuModel1)
 
 TEST(InferenceUnittest, PredictDlpuModel2)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -548,7 +549,7 @@ TEST(InferenceUnittest, DISABLED_PredictDlpuModel3)
 // ERROR in Inference: Failed to load model efficientnet-edgetpu-M_quant.tflite
 // (Could not load model: Asynchronous connection has been closed)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -563,7 +564,7 @@ TEST(InferenceUnittest, DISABLED_PredictDlpuModel3)
 #elif __arm__
 TEST(InferenceUnittest, InitTpu)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { tpuModel1 };
 
   Inference inference;
@@ -572,7 +573,7 @@ TEST(InferenceUnittest, InitTpu)
 
 TEST(InferenceUnittest, PredictTpuModel1Preload)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { tpuModel1 };
   shm_unlink(sharedFile);
 
@@ -592,7 +593,7 @@ TEST(InferenceUnittest, PredictTpuModel1Preload)
 
 TEST(InferenceUnittest, PredictTpuModel1)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -607,7 +608,7 @@ TEST(InferenceUnittest, PredictTpuModel1)
 
 TEST(InferenceUnittest, PredictTpuModel2)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 
@@ -622,7 +623,7 @@ TEST(InferenceUnittest, PredictTpuModel2)
 
 TEST(InferenceUnittest, PredictTpuModel3)
 {
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   const vector<string> models = { };
   shm_unlink(sharedFile);
 

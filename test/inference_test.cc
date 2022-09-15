@@ -11,6 +11,7 @@
 #include "read_text.h"
 #include "bitmap.h"
 #include "testdata.h"
+#include "verbose_setting.h"
 
 int AcapRuntime(int argc, char* argv[]);
 
@@ -51,7 +52,7 @@ void Service(
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
@@ -71,7 +72,7 @@ void ServiceSecurity(
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
@@ -92,7 +93,7 @@ void ServiceModel(
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,

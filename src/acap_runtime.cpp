@@ -78,37 +78,34 @@ static void init_signals(void)
 *
 * @return The value of the parameter as string if successful, NULL otherwise
 */
-const char *get_parameter_value(string parameter_name)
-{
+const char *get_parameter_value(string parameter_name, string app_name = "Acapruntime")
+{ 
   size_t pos = 0;
   char parhand_result[BUFSIZ];
   const char *parameter_value= NULL;
-  string parhand_cmd = "parhandclient get root.Acapruntime.";
+  string parhand_cmd = "parhandclient get root." + app_name + ".";
   string parhandclient_cmd = parhand_cmd + parameter_name;
 
   FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
-  if (!fp){
-    throw std::runtime_error("popen() failed!");
+  if (!fp) {
+    throw runtime_error("popen() failed!");
   }
-  std::string value;
+
+  string value;
   if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
+    // remove trailing newline, or else strcmp of the return value will always fail.
+    parhand_result[strcspn(parhand_result, "\r\n")] = 0;
     value.assign(parhand_result);
-    if (value.find("yes") == 1){
-    parameter_value = "yes";
+    while ((pos = value.find('"', pos)) != string::npos) {
+      value = value.erase(pos, 1);
     }
-    else {
-      while ((pos = value.find('"', pos)) != std::string::npos)
-        value = value.erase(pos, 1);
-      parameter_value = value.c_str();
-    }
+    parameter_value = value.c_str();
   }
-  if (parameter_value != nullptr){
-    LOG(INFO) << parameter_name << ": " << parameter_value << endl;
-  }
-  else {
+  if (parameter_value == nullptr) {
     parameter_value = "";
-    LOG(INFO) << parameter_name << ": " << parameter_value << endl;
   }
+  LOG(INFO) << parameter_name << ": " << parameter_value << endl;
+  
   pclose(fp);
   return parameter_value; 
 }
