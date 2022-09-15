@@ -20,7 +20,7 @@ class Capture final : public VideoCapture::Service {
   bool Init(const bool verbose);
 
   bool GetImgDataFromStream(unsigned int stream, void** data, size_t& size,
-                            void** buffer_obj, void** stream_obj);
+                            uint32_t& frame_ref);
 
   // bool FreeBufferObj(void* stream, void* buffer_obj);
 

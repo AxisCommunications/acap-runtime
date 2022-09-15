@@ -74,7 +74,7 @@ Status Capture::NewStream(ServerContext *context,
 }
 
 bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
-                                   size_t &size, void** buffer_obj, void** stream_obj) {
+                                   size_t &size, uint32_t &frame_ref) {
   GError *error = nullptr;
 
   auto currentStream = streams.find(stream);
@@ -126,7 +126,9 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   lastData = *data;
   lastDataSize = size;
-  
+
+  frame_ref = 123;  // TODO
+
   return true;
 }
 

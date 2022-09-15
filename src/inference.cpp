@@ -144,6 +144,7 @@ Status Inference::Predict(
   uint64_t larodTime;
   vector<pair<FILE*, int>> inFiles;
   vector<pair<FILE*, int>> outFiles;
+  uint32_t frame_ref;
   (void) context;
 
   // Validate parameters
@@ -207,9 +208,12 @@ Status Inference::Predict(
     request->inputs(),
     inFiles,
     request->stream_id(),
+    frame_ref,
     error)) {
     goto predicterror;
   }
+
+  response->set_frame_reference(frame_ref);
 
   // Setup output tensors
   if (!SetupOutputTensors(
@@ -713,6 +717,7 @@ bool Inference::SetupPreprocessing(
   larodTensor* tensor,
   vector<pair<FILE*, int>>& inFiles,
   const u_int32_t stream,
+  uint32_t& frame_ref,
   larodError*& error)
   {
     void* larodInputAddr = MAP_FAILED;
@@ -772,9 +777,8 @@ bool Inference::SetupPreprocessing(
 
       size_t size;
       void* data;
-      void* stream_obj;
-      void* buffer_obj;
-      if (!_captureService->GetImgDataFromStream(stream, &data, size, &stream_obj, &buffer_obj)) {
+      if (!_captureService->GetImgDataFromStream(stream, &data, size,
+                                                 frame_ref)) {
         TRACELOG << "Could not get data from stream" << endl;
         return false;
       }
@@ -889,6 +893,7 @@ bool Inference::SetupInputTensors(
   TensorProto>& inputs,
   vector<pair<FILE*, int>>& inFiles,
   const u_int32_t stream,
+  uint32_t& frame_ref,
   larodError*& error)
 {
   // Setup input tensors
@@ -909,7 +914,7 @@ bool Inference::SetupInputTensors(
   for (auto & [input_name, tpa] : inputs) {
     tensorflow::TensorProto tp = tpa;
     TRACELOG << "Input name: " << input_name << endl;
-    if (!SetupPreprocessing(tp, _inputTensors[i], inFiles, stream, error)) {
+    if (!SetupPreprocessing(tp, _inputTensors[i], inFiles, stream, frame_ref, error)) {
         return false;
     }
 
