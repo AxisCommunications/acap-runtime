@@ -14,21 +14,6 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
-#include "verbose_setting.h"
-#include "util.h"
-
-using namespace ::testing;
 using namespace std;
 
-/**
-* @brief Checks if either the app setting "Verbose" or the gtest_color flag
-*   is set to "yes".
-*
-* @return True if either "input" is set, False otherwise.
-*/
-bool get_verbose_status(){
-    return 
-        (FLAGS_gtest_color == "yes") ||
-        ((strcmp(get_parameter_value("Verbose","Acapruntimetest"),"yes")) == 0);
-}
+const char *get_parameter_value(string parameter_name, string app_name="Acapruntime");

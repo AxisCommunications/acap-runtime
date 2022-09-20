@@ -24,6 +24,7 @@
 #include "read_text.h"
 #include "inference.h"
 #include "parameter.h"
+#include "util.h"
  
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
 #define INSTALLDIR "/usr/local/packages/acapruntime/"
@@ -72,44 +73,7 @@ static void init_signals(void)
  sigaction(SIGTERM, &sa, NULL);
  sigaction(SIGQUIT, &sa, NULL);
 }
- 
-/**
-* @brief Fetch the value of the parameter as a string
-*
-* @return The value of the parameter as string if successful, NULL otherwise
-*/
-const char *get_parameter_value(string parameter_name, string app_name = "Acapruntime")
-{ 
-  size_t pos = 0;
-  char parhand_result[BUFSIZ];
-  const char *parameter_value= NULL;
-  string parhand_cmd = "parhandclient get root." + app_name + ".";
-  string parhandclient_cmd = parhand_cmd + parameter_name;
 
-  FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
-  if (!fp) {
-    throw runtime_error("popen() failed!");
-  }
-
-  string value;
-  if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
-    // remove trailing newline, or else strcmp of the return value will always fail.
-    parhand_result[strcspn(parhand_result, "\r\n")] = 0;
-    value.assign(parhand_result);
-    while ((pos = value.find('"', pos)) != string::npos) {
-      value = value.erase(pos, 1);
-    }
-    parameter_value = value.c_str();
-  }
-  if (parameter_value == nullptr) {
-    parameter_value = "";
-  }
-  LOG(INFO) << parameter_name << ": " << parameter_value << endl;
-  
-  pclose(fp);
-  return parameter_value; 
-}
- 
 // Initialize acap-runtime and start gRPC service
 int RunServer(
  const string& address,
@@ -285,6 +249,7 @@ int AcapRuntime(int argc, char* argv[])
  }
   if(allow_override){
     // Override with parameters from parameter storage
+
     const char *verbose = get_parameter_value("Verbose");
     if (verbose != NULL) {
       _verbose = strcmp(verbose, "yes") == 0;
@@ -294,14 +259,14 @@ int AcapRuntime(int argc, char* argv[])
       ipPort = atoi(ip_port);
     }
     const char *chip_id = get_parameter_value("ChipId");
-    if (chip_id != NULL) {
+    if (ip_port != NULL) {
       chipId = atoi(chip_id);
     }
     const char *useTls = get_parameter_value("UseTLS");
     if (useTls != NULL) {
       if (strcmp(useTls, "yes") == 0) {
-          pem_file.assign(serverCertificatePath);
-          key_file.assign(serverKeyPath);
+        pem_file.assign(serverCertificatePath);
+        key_file.assign(serverKeyPath);
       }
     }
   }

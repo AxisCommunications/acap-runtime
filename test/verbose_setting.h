@@ -14,10 +14,4 @@
  * limitations under the License.
  */
 
-#include <string>
-
-using namespace std;
-
 bool get_verbose_status();
-// get_parameter_value is implemented in acap_runtime.cpp
-char *get_parameter_value(string parameter_name, string app_name);
