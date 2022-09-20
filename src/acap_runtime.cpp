@@ -259,7 +259,7 @@ int AcapRuntime(int argc, char* argv[])
       ipPort = atoi(ip_port);
     }
     const char *chip_id = get_parameter_value("ChipId");
-    if (ip_port != NULL) {
+    if (chip_id != NULL) {
       chipId = atoi(chip_id);
     }
     const char *useTls = get_parameter_value("UseTLS");
