@@ -11,6 +11,7 @@
 #include "read_text.h"
 #include "bitmap.h"
 #include "testdata.h"
+#include "verbose_setting.h"
 
 int AcapRuntime(int argc, char* argv[]);
 
@@ -51,12 +52,13 @@ void Service(
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
     "-t", timeout,
-    "-j", chipId
+    "-j", chipId,
+    "-o"
      };
   const int argc = sizeof(argv) / sizeof(const char*);
   ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
@@ -70,14 +72,15 @@ void ServiceSecurity(
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
     "-t", timeout,
     "-j", chipId,
     "-c", certificateFile,
-    "-k", keyFile
+    "-k", keyFile,
+    "-o"
      };
   const int argc = sizeof(argv) / sizeof(const char*);
   ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));
@@ -90,13 +93,14 @@ void ServiceModel(
 {
   char timeout[10];
   sprintf(timeout, "%d", seconds);
-  const bool verbose = FLAGS_gtest_color == "yes";
+  const bool verbose = get_verbose_status();
   char const * argv[] = {
     "acapruntime", verbose ? "-v" : "",
     "-p", target_port,
     "-t", timeout,
     "-j", chipId,
-    "-m", modelFile
+    "-m", modelFile,
+    "-o"
      };
   const int argc = sizeof(argv) / sizeof(const char*);
   ASSERT_EQ(0, AcapRuntime(argc, (char**)argv));

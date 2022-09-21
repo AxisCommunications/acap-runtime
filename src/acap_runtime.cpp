@@ -24,6 +24,7 @@
 #include "read_text.h"
 #include "inference.h"
 #include "parameter.h"
+#include "util.h"
  
 #define LOG(level) if (_verbose || #level == "ERROR") std::cerr << #level << " in acapruntime: "
 #define INSTALLDIR "/usr/local/packages/acapruntime/"
@@ -72,47 +73,7 @@ static void init_signals(void)
  sigaction(SIGTERM, &sa, NULL);
  sigaction(SIGQUIT, &sa, NULL);
 }
- 
-/**
-* @brief Fetch the value of the parameter as a string
-*
-* @return The value of the parameter as string if successful, NULL otherwise
-*/
-const char *get_parameter_value(string parameter_name)
-{
-  size_t pos = 0;
-  char parhand_result[BUFSIZ];
-  const char *parameter_value= NULL;
-  string parhand_cmd = "parhandclient get root.Acapruntime.";
-  string parhandclient_cmd = parhand_cmd + parameter_name;
 
-  FILE *fp = popen(parhandclient_cmd.c_str(), "r"); 
-  if (!fp){
-    throw std::runtime_error("popen() failed!");
-  }
-  std::string value;
-  if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
-    value.assign(parhand_result);
-    if (value.find("yes") == 1){
-    parameter_value = "yes";
-    }
-    else {
-      while ((pos = value.find('"', pos)) != std::string::npos)
-        value = value.erase(pos, 1);
-      parameter_value = value.c_str();
-    }
-  }
-  if (parameter_value != nullptr){
-    LOG(INFO) << parameter_name << ": " << parameter_value << endl;
-  }
-  else {
-    parameter_value = "";
-    LOG(INFO) << parameter_name << ": " << parameter_value << endl;
-  }
-  pclose(fp);
-  return parameter_value; 
-}
- 
 // Initialize acap-runtime and start gRPC service
 int RunServer(
  const string& address,
@@ -288,6 +249,7 @@ int AcapRuntime(int argc, char* argv[])
  }
   if(allow_override){
     // Override with parameters from parameter storage
+
     const char *verbose = get_parameter_value("Verbose");
     if (verbose != NULL) {
       _verbose = strcmp(verbose, "yes") == 0;
@@ -303,8 +265,8 @@ int AcapRuntime(int argc, char* argv[])
     const char *useTls = get_parameter_value("UseTLS");
     if (useTls != NULL) {
       if (strcmp(useTls, "yes") == 0) {
-          pem_file.assign(serverCertificatePath);
-          key_file.assign(serverKeyPath);
+        pem_file.assign(serverCertificatePath);
+        key_file.assign(serverKeyPath);
       }
     }
   }
