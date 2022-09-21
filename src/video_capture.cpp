@@ -121,13 +121,13 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
     return false;
   }
 
-  // *stream_obj = vdo_stream;
-  // *buffer_obj = buffer;
+  // // TODO save the buffer instead to avoid the memcpy
+  // lastData = *data;
+  // lastDataSize = size;
+  
+  // frame_ref = 123;  // TODO
 
-  lastData = *data;
-  lastDataSize = size;
-
-  frame_ref = 123;  // TODO
+  frame_ref = SaveFrame(*data, size);
 
   return true;
 }
@@ -138,17 +138,34 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 //                                  nullptr);
 // }
 
-// TODO: finish this
-bool Capture::SetResponseFromLastFrame(const uint stream, GetFrameResponse *response) {
+uint32_t Capture::SaveFrame(void* data, size_t size) {
+  lastData = data;
+  lastDataSize = size;
 
-  if (lastDataSize == 0 || lastData == nullptr)
-    return false;
+  return 123;
+}
+
+bool Capture::SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response) {
+
+  if (lastDataSize == 0 || lastData == nullptr) return false;
 
   response->set_size(lastDataSize);
   response->set_data(lastData, lastDataSize);
 
   return true;
 }
+
+// // TODO: Use saved buffers instead
+// bool Capture::SetResponseFromLastFrame(const uint stream, GetFrameResponse *response) {
+
+//   if (lastDataSize == 0 || lastData == nullptr)
+//     return false;
+
+//   response->set_size(lastDataSize);
+//   response->set_data(lastData, lastDataSize);
+
+//   return true;
+// }
 
 Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
                          GetFrameResponse *response) {
@@ -161,9 +178,11 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   }
   VdoStream *stream = currentStream->second;
 
-  if (request->get_from_last_inference()) {
-    SetResponseFromLastFrame(currentStream->first, response);
-    TRACELOG << "Getting frame from last inference call" << endl;
+  uint32_t frame_ref = request->frame_reference();
+  if (frame_ref > 0) {
+    // SetResponseFromLastFrame(currentStream->first, response);
+    SetResponseToSavedFrame(frame_ref, response);
+    TRACELOG << "Getting frame " << frame_ref << " from last inference call" << endl;
     return Status::OK;
   }
 

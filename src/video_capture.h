@@ -33,7 +33,10 @@ class Capture final : public VideoCapture::Service {
                            const GetFrameRequest* request,
                            GetFrameResponse* response);
 
-  bool SetResponseFromLastFrame(const uint stream, GetFrameResponse *response);
+  // bool SetResponseFromLastFrame(const uint stream, GetFrameResponse *response);
+
+  uint32_t SaveFrame(void* data, size_t size);
+  bool SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response);
 
   Status OutputError(const char* msg, StatusCode code);
   Status OutputError(const char* msg, StatusCode code, GError* error);

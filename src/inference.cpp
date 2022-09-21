@@ -755,10 +755,22 @@ bool Inference::SetupPreprocessing(
     TRACELOG << "Model image size " << modelWidth << "x" << modelHeight << endl;
 
     bool isMemoryMappedFile = tp.dtype() == tensorflow::DataType::DT_STRING;
-    // bool isRequestForImageFromStream = tp.dtype() ==
-    // tensorflow::DataType::DT_UINT32;
-    //  Assume a valid stream id is never 0
-    bool isRequestForImageFromStream = stream != 0;
+
+    // TODO remove option of getting the stream from the uint32_val
+    bool isRequestForImageFromStream = false;
+    uint32_t requestStream = 0;
+    if (stream != 0) {
+      isRequestForImageFromStream = true;
+      requestStream = stream;
+    } else if (tp.dtype() == tensorflow::DataType::DT_UINT32) {
+      isRequestForImageFromStream = true;
+      requestStream = tp.uint32_val(0);
+    }
+
+    // bool isRequestForImageFromStream =
+    //     tp.dtype() == tensorflow::DataType::DT_UINT32;
+    ////  Assume a valid stream id is never 0
+    // bool isRequestForImageFromStream = stream != 0;
 
     // Convert request image to file descriptor
     FILE* tmpFile = nullptr;
@@ -773,11 +785,11 @@ bool Inference::SetupPreprocessing(
       }
     } else if (isRequestForImageFromStream) {
       // auto stream = tp.uint32_val(0);
-      TRACELOG << "Got stream " << stream << endl;
+      TRACELOG << "Got stream " << requestStream << endl;
 
       size_t size;
       void* data;
-      if (!_captureService->GetImgDataFromStream(stream, &data, size,
+      if (!_captureService->GetImgDataFromStream(requestStream, &data, size,
                                                  frame_ref)) {
         TRACELOG << "Could not get data from stream" << endl;
         return false;
@@ -785,6 +797,7 @@ bool Inference::SetupPreprocessing(
 
       TRACELOG << "Got data of size " << size << endl;
 
+      // TODO: Try to set tmpFd directly to the fd from the vdo_buffer
       if (!CreateTmpFile(tmpFile, tmpFd, data, size)) {
         TRACELOG << "Failed creating tmp file" << size << endl;
         return false;
@@ -821,6 +834,7 @@ bool Inference::SetupPreprocessing(
     return false;
   }
 
+  // TODO: We should perhaps allow for other formats in the stream?
   const char* inputFormat = isRequestForImageFromStream ? "nv12" : "rgb-interleaved";
 
   if (!larodMapSetStr(_ppMap, "image.input.format", inputFormat, &error)) {
