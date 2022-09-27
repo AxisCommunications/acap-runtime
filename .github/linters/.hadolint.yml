@@ -1,0 +1,18 @@
+failure-threshold: error
+ignored:
+# Add code(s) to ignore
+
+# TODO: Currently with Failure-threshold set to error currently the following codes are reported
+# but not handled. Fix the ones we want to fix and set the others to ignore. Then reset to threshold level
+
+# Codes with Warning level
+#  - DL3003 # Use WORKDIR to switch to a directory.
+#  - DL3008 # Pin versions in apt get install.
+#  - DL4006 # Set the SHELL option -o pipefail before RUN with a pipe in
+#  - SC2010 # Don't use ls | grep. Use a glob or a for loop with a condition to allow non-alphanumeric filenames.
+#  - SC2226 # This ln has no destination. Check the arguments, or specify . explicitly.
+
+# Codes with Info level
+#  - DL3059 # Multiple consecutive RUN instructions. Consider consolidation.
+#  - SC2035 # Use ./*glob* or -- *glob* so names with dashes won't become options.
+#  - SC2086 # Double quote to prevent globbing and word splitting.
