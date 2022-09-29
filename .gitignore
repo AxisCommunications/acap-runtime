@@ -1,6 +1,12 @@
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
 .devcontainer/
 larod/
 build_x86_64-linux-gnu/
 tensorflow/
 build/
+apis/
+!apis/keyvaluestore.proto
+super-linter.log
+*.conf

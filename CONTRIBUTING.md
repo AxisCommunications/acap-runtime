@@ -1,9 +1,8 @@
 <!-- omit in toc -->
 # Regarding contributions
 
-- [ ] TODO: Once all TODOs are ticked off, remove them before commiting this file
+- [ ] TODO: Once all TODOs are ticked off, remove them before committing this file
 - [ ] TODO: Should there be links to [discussions][discussions]? Should it be in this repo?
-- [ ] TODO: Add section on linters
 
 All types of contributions are encouraged and valued. See the [Table of contents](#table-of-contents) for different ways to help and details about how this project handles them. Please make sure to read the relevant section before making your contribution. It will make it a lot easier for us maintainers and smooth out the experience for all involved. We look forward to your contributions.
 
@@ -26,6 +25,10 @@ All types of contributions are encouraged and valued. See the [Table of contents
     - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
     - [How do I submit a good enhancement suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
   - [Your first code contribution](#your-first-code-contribution)
+  - [Lint of code base](#lint-of-code-base)
+    - [Linters in GitHub Action](#linters-in-github-action)
+    - [Run super-linter locally](#run-super-linter-locally)
+    - [Run super-linter interactively](#run-super-linter-interactively)
 
 ## I have a question
 
@@ -126,11 +129,81 @@ git push origin <branch name>
 Before opening a Pull Request (PR), please consider the following guidelines:
 
 - Please make sure that the code builds perfectly fine on your local system.
-- Make sure that all linters pass.
+- Make sure that all linters pass, see [Lint of code base](#lint-of-code-base)
 - The PR will have to meet the code standard already available in the repository.
 - Explanatory comments related to code functions are required. Please write code comments for a better understanding of the code for other developers.
 
 And finally when you are satisfied with your changes, open a new PR.
+
+### Lint of code base
+
+A set of different linters test the code base and these must pass in order to
+get a pull request approved.
+
+#### Linters in GitHub Action
+
+When you create a pull request, a set of linters will run syntax and format
+checks on different file types in GitHub actions by making use of a tool called
+[super-linter][super-linter]. If any of the linters
+gives an error, this will be shown in the action connected to the pull request.
+
+In order to speed up development, it's possible to run linters as part of your
+local development environment.
+
+#### Run super-linter locally
+
+Since super-linter is using a Docker image in GitHub Actions, users of other
+editors may run it locally to lint the code base. For complete instructions and
+guidance, see super-linter page for [running locally][super-linter-local].
+
+To run a number of linters on the code base from command line:
+
+```sh
+docker run --rm \
+  -v $PWD:/tmp/lint \
+  -e RUN_LOCAL=true \
+  -e VALIDATE_BASH=true \
+  -e VALIDATE_DOCKERFILE_HADOLINT=true \
+  -e VALIDATE_MARKDOWN=true \
+  -e VALIDATE_SHELL_SHFMT=true \
+  -e VALIDATE_YAML=true \
+  github/super-linter:slim-v4
+```
+
+See [`.github/workflows/linter.yml`](.github/workflows/linter.yml) for the exact setup used by this project.
+
+#### Run super-linter interactively
+
+It might be more convenient to run super-linter interactively. Run container and
+enter command line:
+
+```sh
+docker run --rm \
+  -v $PWD:/tmp/lint \
+  -w /tmp/lint \
+  --entrypoint /bin/bash \
+  -it github/super-linter:slim-v4
+```
+
+Then from the container terminal, the following commands can lint the the code
+base for different file types:
+
+```sh
+# Lint Dockerfile files
+hadolint $(find -type f -name "Dockerfile*")
+
+# Lint Markdown files
+markdownlint .
+
+# Lint YAML files
+yamllint .
+
+# Lint shell script files
+shellcheck $(shfmt -f .)
+shfmt -d .
+```
+
+To lint only a specific file, replace `.` or `$(COMMAND)` with the file path.
 
 <!-- markdownlint-disable MD034 -->
 [issues]: https://github.com/AxisCommunications/acap-runtime/issues
@@ -138,4 +211,6 @@ And finally when you are satisfied with your changes, open a new PR.
 [issues_bugs]: https://github.com/AxisCommunications/acap-runtime/issues?q=label%3Abug
 [discussions]: https://github.com/AxisCommunications/acap-runtime/discussions
 [discussions_new]: https://github.com/AxisCommunications/acap-runtime/discussions/new
+[super-linter]: https://github.com/github/super-linter
+[super-linter-local]: https://github.com/github/super-linter/blob/main/docs/run-linter-locally.md
 <!-- markdownlint-enable MD034 -->
