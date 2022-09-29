@@ -9,6 +9,7 @@
 - [ ] TODO: Once all TODOs are ticked off, remove them before committing this file
 
 - [ ] TODO: Link to https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime
+- [ ] Fix workflow badges
 
 ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix Domain Socket (UDS) for access. This makes the service available to clients written in different languages on the same device.
 
@@ -18,13 +19,11 @@ ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix Do
 - [Overview](#overview)
   - [Requirements](#requirements)
   - [APIs](#apis)
-  - [Access point](#access-point)
+  - [gRPC access point](#grpc-access-point)
   - [TLS](#tls)
 - [Installation and usage](#installation-and-usage)
   - [As an ACAP application](#as-an-acap-application)
-    - [Examples](#examples)
   - [As containerized version](#as-containerized-version)
-    - [Examples](#examples-1)
   - [Settings](#settings)
 - [Building ACAP runtime](#building-acap-runtime)
   - [Building as an ACAP application](#building-as-an-acap-application)
@@ -63,7 +62,7 @@ The ACAP runtime service includes the following APIs:
 - Inference API - An implementation of [Tensorflow Serving][tensorflow].
 - Parameter API - Provides gRPC read access to the parameters of an Axis device that otherwise would be read out via [VAPIX][vapix]. There are usage examples available for the parameter API in [Python][parameter-api-python] and [C++][paramter-api-cpp].
 
-### Access point
+### gRPC access point
 
 When started (with default settings) the ACAP runtime service provides an Unix Domain Socket (UDS) access point:
 
@@ -99,15 +98,15 @@ To install ACAP runtime on a device the following command can be run from the ho
 
 ```sh
 # Install the latest prebuilt image
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device ip> <device password> install
+docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> install
 ```
 
-Where `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture, `<device ip>` is the ip address of the device and `<device password>` is the password for the root user.
+Where `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture, `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
 
 The application can then be started either in the device GUI **Apps** tab or by running:
 
 ```sh
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device ip> <device password> start
+docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> start
 ```
 
 The application log can be found by clicking on the "***App log***" in the application drop down menu in the device GUI, or directly at:
@@ -119,10 +118,10 @@ http://<device_ip>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
 The application can be stopped and uninstalled by using the device GUI, or by running:
 
 ```sh
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device ip> <device password> stop
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device ip> <device password> remove
+docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> stop
+docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> remove
 ```
-<!-- omit in toc -->
+
 <!-- markdownlint-disable MD024 -->
 #### Examples
 
@@ -153,7 +152,6 @@ services:
     <any other apps>
 ```
 
-<!-- omit in toc -->
 <!-- markdownlint-disable MD024 -->
 #### Examples
 
@@ -169,8 +167,8 @@ When starting the ACAP runtime service from command line, as is done with the co
 ```text
 -v              Verbose, enable extended logging,
 -o              Do not read settings from device parameters. See note1,
--a <ip address> IP address of gRPC server, default 0.0.0.0. See note2,
--p <ip port>    IP port of gRPC server, default 0. See note2,
+-a <IP address> IP address of gRPC server, default 0.0.0.0. See note2,
+-p <IP port>    IP port of gRPC server, default 0. See note2,
 -t <seconds>    Runtime in seconds (used for test),
 -c <file name>  Certificate file for TLS authentication. See note3,
 -k <file name>  Private key file for TLS authentication. See note3,
@@ -181,14 +179,14 @@ When starting the ACAP runtime service from command line, as is done with the co
 There are also device parameters that can be controlled from the application drop down menu in the device GUI when ACAP runtime is installed as an ACAP application.
 
 ```text
-Verbose     Enable extended logging, default No,
-IpPort      Ip port of gRPC server. See note2,
+Verbose     Enable extended logging, default 'No',
+IpPort      IP port of gRPC server. See note2,
 Use TLS     Enable SSL/TLS, default No. See note3,
 ChipId      Chip id used by Inference API server. See note4
 ```
 
 - note1 - Setting the *-o* flag makes sure that command line settings are not overwritten by the device parameters
-- note2 - The gRPC server can be set up with either a unix-socket (default) or a network socket. To set up as network socket the ip port should be set to a non-zero value. The ip address is only used when set up as a network socket.
+- note2 - The gRPC server can be set up with either a unix-socket (default) or a network socket. To set up as network socket the IP port should be set to a non-zero value. The IP address is only used when set up as a network socket.
 - note3 - To use TLS a certificate file and a corresponding private key file must be supplied. If either is omitted, or if the device setting Use TLS is set to *No*, TLS is not used.
 - note4 - When using the Inference API the chip Id corresponding to the device must be given. See the table below for valid values. If the value is set to 0 (LAROD_CHIP_INVALID) the Inference API server will not be started.
   
@@ -238,15 +236,15 @@ To install the latest prebuilt test suite image on a device run:
 
 ```sh
 # Install the latest prebuilt image
-docker run --rm axisecp/acap-runtime:latest-<ARCH>-test <device ip> <device password> install
+docker run --rm axisecp/acap-runtime:latest-<ARCH>-test <device IP> <device password> install
 ```
 
-where `<ARCH>` is either `armv7hf` or `aarch64` and `<device ip>` and `<device password>` are the Ip and root password of the device in use.
+where `<ARCH>` is either `armv7hf` or `aarch64` and `<device IP>` and `<device password>` are the IP and root password of the device in use.
 
 The application can be started, stopped and eventually uninstalled in the **Apps** tab in the device GUI or by running:
 
 ```sh
-docker run --rm axisecp/acap-runtime:latest-<ARCH>-test <device ip> <device password> start|stop|remove
+docker run --rm axisecp/acap-runtime:latest-<ARCH>-test <device IP> <device password> start|stop|remove
 ```
 
 To see the test run output, check the application log either by clicking on the **App log** link in the device GUI, or directly at:
