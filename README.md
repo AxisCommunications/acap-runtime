@@ -13,6 +13,8 @@
 
 ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix Domain Socket (UDS) for access. This makes the service available to clients written in different languages on the same device.
 
+If you are new to the world of ACAPs take a moment and check out [What is ACAP?][acap-documentation] in the ACAP documentation.
+
 <!-- omit in toc -->
 ## Table of contents
 
@@ -36,11 +38,16 @@ ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix Do
 
 - [ ] TODO: Describe the benefits of gRPC support for ACAP
 
-ACAP runtime can either be used as an installed ACAP application or as a containerized version.
+ACAP runtime provides a network protocol based service, using [gRPC][gRPC] to expose a number of [APIs](#apis) for client usage. It is available both as an ACAP application and as a containerized version. The ACAP application is mainly suitable for use together with the [ACAP Native SDK][acap-documentation-native], whereas the containerized version is aimed to be used together with the [ACAP Computer Vision SDK][acap-documentation-cv].
+
+> Please note!
+>
+> ACAP runtime can run either with TLS authenticated or without.
+> Be aware that running without TLS authentication is extremely insecure and we strongly recommend against this.
+> See [TLS](#tls) for information on how to generate certificates for TLS authentication when using ACAP runtime.
 
 ### Requirements
 
-- [ ] TODO: Is there a template for this?
 - [ ] TODO: Check if min versions are correct
 
 The following requirements need to be met.
@@ -57,12 +64,14 @@ The following requirements need to be met.
 
 - [ ] TODO: Should the APIs be further described?
 
-The ACAP runtime service includes the following APIs:
+The ACAP runtime service provides the following APIs:
 
 - Inference API - An implementation of [Tensorflow Serving][tensorflow].
 - Parameter API - Provides gRPC read access to the parameters of an Axis device that otherwise would be read out via [VAPIX][vapix]. There are usage examples available for the parameter API in [Python][parameter-api-python] and [C++][paramter-api-cpp].
 
 ### gRPC access point
+
+- [ ] TODO: Describe better? Add network socket info? Move/remove?
 
 When started (with default settings) the ACAP runtime service provides an Unix Domain Socket (UDS) access point:
 
@@ -72,29 +81,43 @@ unix:///tmp/acap-runtime.sock
 
 ### TLS
 
-- [ ] TODO: Describe or link to how to generate certificates
-- [ ] TODO: # Generate TSL/SSL test certificate
-RUN openssl req -x509 -batch -subj '/CN=localhost' -days 10000 -newkey rsa:4096 -nodes -out server.pem -keyout server.key
+- [ ] TODO: Describe how to handler the cert files for containerized as well
+- [ ] TODO: Possibly add reference link to https://grpc.io/docs/guides/auth/
 
-This service can be run either unsecured or in TLS mode. TLS mode provides additional security and encryption on the gRPC channel. There is a "Use TLS" dropdown in the web interface to switch between the two different modes. Note that the service has to be restarted every time TLS is activated or deactivated. TLS requires certificate and key file to work, which are listed below. For more information on how to generate these files, please see the [Parameter API][parameter-api-python] example.
+The ACAP runtime service can be run either in TLS authenticated or unsecured mode. TLS authenticated mode provides additional security and encryption on the gRPC channel and is the recommended (and default) mode. The service requires a certificate file and a key file to run in TLS authenticated mode. By default these should be placed in the root folder of the installed application, e.g.:
 
 ```sh
 /usr/local/packages/acapruntime/server.pem
 /usr/local/packages/acapruntime/server.key
 ```
-  
+
+One way to generate the certificates is to use the [`openssl req`][openssl-req] command, e.g.:
+
+```sh
+# generate the files
+openssl req -x509 -batch -subj '/CN=localhost' -days <days valid> -newkey rsa:4096 -nodes -out server.pem -keyout server.key
+```
+
+Where `<days valid>` is the number of days you want the certificate to be valid.
+
+When using the service as an ACAP application, you generate the files on your host computer and then transfer them to the device:
+
+```sh
+# copy the files to the device
+scp server.pem server.key root@<device IP>:/usr/local/packages/acapruntime
+# set correct ownership of the files on the device
+ssh root@<device IP> 'chown sdk /usr/local/packages/acapruntime/server.*'
+```
+
+Where `<device IP>` is the IP address of the device.
+
 ## Installation and usage
+
+The recommended way to use ACAP runtime, either as an ACAP application or the containerized version, is to use the respective pre-built image that is available on [Docker Hub][docker-hub-acap-runtime]. For information on how to build locally see [Building ACAP runtime](#building-acap-runtime).
 
 ### As an ACAP application
 
-- [ ] TODO: What is the correct tag for the image(s)?
-
-The recommended way to install and run ACAP runtime is to use the pre-built
-[Docker Hub][docker-hub-acap-runtime] image. For information on how to build locally see [Building ACAP runtime](#building-acap-runtime).
-
-When the Docker image is run, this installs ACAP runtime as an ACAP application on the device, where it can be controlled in the device GUI **Apps** tab.
-
-To install ACAP runtime on a device the following command can be run from the host computer:
+To install ACAP runtime as an ACAP application use any image with the tag on the form `<version>-<ARCH>`, e.g. `latest-armv7hf`. Running the image installs ACAP runtime as an ACAP application on the device, where it can be controlled in the device GUI **Apps** tab.
 
 ```sh
 # Install the latest prebuilt image
@@ -135,7 +158,7 @@ The following examples use the Parameter API with ACAP runtime as an ACAP applic
 Whereas the standard ACAP runtime Docker image will install the service as an ACAP application, the containerized version allows to run it in a container on the device. This requires that [Docker ACAP][docker-acap] is installed and running on the device.
 
 Pre-built containerized images are available on [axisecp/acap-runtime][docker-hub-acap-runtime] with tags on the form `<version>-<ARCH>-containerized`.
-To include the containerized ACAP runtime server in a project for an `armv7hf` device, it can e.g. be included in a `docker-compose.yml` file:
+To include the containerized ACAP runtime server in a project for an `armv7hf` device, it can be included in a `docker-compose.yml` file. The following is an illustrative example of how the service can be set up with docker-compose. For a full description see one of the working project examples below.
 
 ```yml
 version: '3.3'
@@ -165,32 +188,32 @@ The following examples use the Inference API with ACAP runtime in the containeri
 When starting the ACAP runtime service from command line, as is done with the containerized version, it accepts the following settings:
 
 ```text
--v              Verbose, enable extended logging,
--o              Do not read settings from device parameters. See note1,
--a <IP address> IP address of gRPC server, default 0.0.0.0. See note2,
--p <IP port>    IP port of gRPC server, default 0. See note2,
--t <seconds>    Runtime in seconds (used for test),
--c <file name>  Certificate file for TLS authentication. See note3,
--k <file name>  Private key file for TLS authentication. See note3,
--j <chip id>    Chip id used by Inference API server. See note4,
--m <file name>  Larod model file used by Inference API server
+-v                Verbose, enable extended logging,
+-o                Do not read settings from device parameters. See note1,
+-a <IP address>   IP address of gRPC server, default 0.0.0.0. See note2,
+-p <IP port>      IP port of gRPC server, default 0. See note2,
+-t <seconds>      Runtime in seconds (used for test),
+-c <file name>    Certificate file for TLS authentication. See note3,
+-k <file name>    Private key file for TLS authentication. See note3,
+-j <chip id>      Chip id used by Inference API server. See note4,
+-m <file name>    Larod model file used by Inference API server
 ```
 
 There are also device parameters that can be controlled from the application drop down menu in the device GUI when ACAP runtime is installed as an ACAP application.
 
 ```text
-Verbose     Enable extended logging, default 'No',
-IpPort      IP port of gRPC server. See note2,
-Use TLS     Enable SSL/TLS, default No. See note3,
-ChipId      Chip id used by Inference API server. See note4
+Verbose     Enable extended logging, default 'No'. Corresponds to the '-v' flag,
+IpPort      IP port of gRPC server.Corresponds to the '-i' settings.  See note2,
+Use TLS     Enable SSL/TLS, default 'Yes'. Corresponds to the '-c' and '-k' settings. See note3,
+ChipId      Chip id used by Inference API server. Corresponds to the '-j' setting.  See note4.
 ```
 
-- note1 - Setting the *-o* flag makes sure that command line settings are not overwritten by the device parameters
+- note1 - Setting the `-o` flag makes sure that command line settings are not overwritten by the device parameters.
 - note2 - The gRPC server can be set up with either a unix-socket (default) or a network socket. To set up as network socket the IP port should be set to a non-zero value. The IP address is only used when set up as a network socket.
 - note3 - To use TLS a certificate file and a corresponding private key file must be supplied. If either is omitted, or if the device setting Use TLS is set to *No*, TLS is not used.
-- note4 - When using the Inference API the chip Id corresponding to the device must be given. See the table below for valid values. If the value is set to 0 (LAROD_CHIP_INVALID) the Inference API server will not be started.
-  
-  | Chip Id | Name                          | Description                                |
+- note4 - When using the Inference API the chip Id corresponding to the device must be given. See the table below for valid values. If the value is set to 0 (LAROD_CHIP_INVALID) the Inference API server will not be started. when using the ACAP runtime ACAP application the correct chip id is set as default in the ChipId device parameter.
+
+  | Chip id | Name                          | Description                                |
   |---------|-------------------------------|--------------------------------------------|
   |0        | LAROD_CHIP_INVALID            | Set to not start Inference API server      |
   |4        | LAROD_CHIP_TPU                | Use for device with *armv7hf* architecture |
@@ -272,6 +295,9 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 <!-- Links to external references -->
 <!-- markdownlint-disable MD034 -->
+[acap-documentation]: https://axiscommunications.github.io/acap-documentation/docs/introduction/what-is-acap.html
+[acap-documentation-native]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-native-sdk
+[acap-documentation-cv]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-computer-vision-sdk
 [gRPC]: https://grpc.io/
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
@@ -286,5 +312,6 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [docker-hub-acap-runtime]: https://hub.docker.com/r/axisecp/acap-runtime
 [docker-hub-acap-native-sdk]: https://hub.docker.com/repository/docker/axisecp/acap-native-sdk
 [docker-hub-acap-native-sdk-1.4_beta1-armv7hf-ubuntu22.04]: https://hub.docker.com/layers/axisecp/acap-native-sdk/1.4_beta1-armv7hf-ubuntu22.04/images/sha256-07ed766f7a68033a2717b1334c8fdee29b1a55386b37d67924e5401c91ed9ecd?context=repo
+[openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
 
 <!-- markdownlint-enable MD034 -->
