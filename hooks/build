@@ -3,5 +3,5 @@
 # that the repository does not need a separate Dockerfile for each build
 
 export RUNTIME_VERSION=$(echo $IMAGE_NAME | sed 's/.*\:\(.*\)-a.*/\1/')
-docker build . -f ${DOCKERFILE_PATH} -t $IMAGE_NAME
-docker build . -f ${DOCKERFILE_PATH}-containerized -t $IMAGE_NAME-containerized --build-arg RUNTIME_VERSION
+DOCKER_BUILDKIT=1 docker build . -f ${DOCKERFILE_PATH} -t $IMAGE_NAME
+DOCKER_BUILDKIT=1 docker build . -f ${DOCKERFILE_PATH}-containerized -t $IMAGE_NAME-containerized --build-arg RUNTIME_VERSION

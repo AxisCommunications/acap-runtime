@@ -1,12 +1,12 @@
 ARG ARCH=armv7hf
 ARG REPO=axisecp
-ARG RUNTIME_VERSION=1.1.1
-ARG RUNTIME_UBUNTU_VERSION=20.04
+ARG RUNTIME_VERSION=1.1.2
+ARG RUNTIME_UBUNTU_VERSION=22.04
 
-FROM arm64v8/ubuntu:${RUNTIME_UBUNTU_VERSION} as runtime-image-${ARCH}
+FROM arm32v7/ubuntu:${RUNTIME_UBUNTU_VERSION} as runtime-image-armv7hf
 FROM $REPO/acap-runtime:${RUNTIME_VERSION}-${ARCH} as runtime-base
 
-FROM runtime-image-${ARCH}
+FROM runtime-image-armv7hf
 WORKDIR /opt/app/
 COPY --from=runtime-base /opt/app/*.eap ./
 RUN mkdir -p acap_runtime
