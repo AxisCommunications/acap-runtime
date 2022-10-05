@@ -6,6 +6,9 @@
 #include <vdo-buffer.h>
 #include <vdo-stream.h>
 
+#include <map>
+#include <queue>
+
 #include "videocapture.grpc.pb.h"
 
 using namespace std;
@@ -13,6 +16,11 @@ using namespace grpc;
 using namespace videocapture;
 
 namespace acap_runtime {
+
+typedef struct {
+  size_t size;
+  void* data;
+} frame;
 
 // Logic and data behind the server's behavior.
 class Capture final : public VideoCapture::Service {
@@ -47,8 +55,11 @@ class Capture final : public VideoCapture::Service {
   map<uint, VdoStream*> streams;
   map<string, VdoBuffer*> buffers;
 
-  size_t lastDataSize;
-  void* lastData;
+  map<uint32_t, frame> frame_map;
+  queue<uint32_t> frame_queue;
+  const uint32_t MAX_NBR_SAVED_FRAMES = 10;
+
+  pthread_mutex_t mutex;
 };
 }  // namespace acap_runtime
 

@@ -66,8 +66,8 @@ infer
 # infer
 
 
-apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 123}' $cam:$port videocapture.VideoCapture/GetFrame \
- | jq --raw-output .data | base64 --decode > img.yuv
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 1}' $cam:$port videocapture.VideoCapture/GetFrame \
+| jq --raw-output .data | base64 --decode > img.yuv
 
 
 rm ./apis/prediction_service.proto

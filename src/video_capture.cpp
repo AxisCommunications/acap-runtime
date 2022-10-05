@@ -121,12 +121,6 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
     return false;
   }
 
-  // // TODO save the buffer instead to avoid the memcpy
-  // lastData = *data;
-  // lastDataSize = size;
-  
-  // frame_ref = 123;  // TODO
-
   frame_ref = SaveFrame(*data, size);
 
   return true;
@@ -139,33 +133,39 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 // }
 
 uint32_t Capture::SaveFrame(void* data, size_t size) {
-  lastData = data;
-  lastDataSize = size;
+  // TODO lock
 
-  return 123;
+  /* We use a map AND a queue in order to acheive fast lookup while keeping
+   * track of the oldest frame */
+
+  // Increment the reference number or set it to one if we have no previous
+  // frame
+  uint32_t frame_ref = frame_queue.empty() ? 1 : frame_queue.back() + 1;
+
+  frame_map.insert(make_pair(frame_ref, frame{size, data}));
+  frame_queue.push(frame_ref);
+
+  if (frame_queue.size() > MAX_NBR_SAVED_FRAMES) {
+    uint32_t first_elem = frame_queue.front();
+    frame_queue.pop();
+    frame_map.erase(first_elem);
+  }
+
+  return frame_ref;
 }
 
-bool Capture::SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response) {
+bool Capture::SetResponseToSavedFrame(uint32_t frame_ref,
+                                      GetFrameResponse *response) {
+  // Check if the reference exists among saved ones
+  if (frame_map.count(frame_ref) < 1) return false;
 
-  if (lastDataSize == 0 || lastData == nullptr) return false;
+  auto frame = frame_map[frame_ref];
 
-  response->set_size(lastDataSize);
-  response->set_data(lastData, lastDataSize);
+  response->set_size(frame.size);
+  response->set_data(frame.data, frame.size);
 
   return true;
 }
-
-// // TODO: Use saved buffers instead
-// bool Capture::SetResponseFromLastFrame(const uint stream, GetFrameResponse *response) {
-
-//   if (lastDataSize == 0 || lastData == nullptr)
-//     return false;
-
-//   response->set_size(lastDataSize);
-//   response->set_data(lastData, lastDataSize);
-
-//   return true;
-// }
 
 Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
                          GetFrameResponse *response) {
@@ -180,10 +180,14 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
 
   uint32_t frame_ref = request->frame_reference();
   if (frame_ref > 0) {
-    // SetResponseFromLastFrame(currentStream->first, response);
-    SetResponseToSavedFrame(frame_ref, response);
-    TRACELOG << "Getting frame " << frame_ref << " from last inference call" << endl;
-    return Status::OK;
+    if (!SetResponseToSavedFrame(frame_ref, response)) {
+      return OutputError("Getting frame from previous inference call failed",
+                         StatusCode::NOT_FOUND, error);
+    } else {
+      TRACELOG << "Getting frame " << frame_ref
+               << " from previous inference call" << endl;
+      return Status::OK;
+    }
   }
 
   VdoMap *info = vdo_stream_get_info(stream, &error);
