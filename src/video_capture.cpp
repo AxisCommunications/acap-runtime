@@ -156,6 +156,11 @@ uint32_t Capture::SaveFrame(void* data, size_t size) {
   if (frame_queue.size() > MAX_NBR_SAVED_FRAMES) {
     uint32_t first_elem = frame_queue.front();
     frame_queue.pop();
+
+    // Free the data from the frame about to be deleted
+    auto frame = frame_map[first_elem];
+    free(frame.data);
+
     frame_map.erase(first_elem);
   }
 
