@@ -25,6 +25,12 @@ namespace acap_runtime {
 bool Capture::Init(const bool verbose) {
   _verbose = verbose;
   TRACELOG << "Init" << endl;
+
+  if (pthread_mutex_init(&mutex, NULL) != 0) {
+    ERRORLOG << "Init mutex failed" << endl;
+    return false;
+  }
+
   return true;
 }
 
@@ -135,6 +141,8 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 uint32_t Capture::SaveFrame(void* data, size_t size) {
   // TODO lock
 
+  pthread_mutex_lock(&mutex);
+
   /* We use a map AND a queue in order to acheive fast lookup while keeping
    * track of the oldest frame */
 
@@ -151,18 +159,27 @@ uint32_t Capture::SaveFrame(void* data, size_t size) {
     frame_map.erase(first_elem);
   }
 
+  pthread_mutex_unlock(&mutex);
+
   return frame_ref;
 }
 
 bool Capture::SetResponseToSavedFrame(uint32_t frame_ref,
                                       GetFrameResponse *response) {
+  pthread_mutex_lock(&mutex);
+
   // Check if the reference exists among saved ones
-  if (frame_map.count(frame_ref) < 1) return false;
+  if (frame_map.count(frame_ref) < 1) {
+    pthread_mutex_unlock(&mutex);
+    return false;
+  };
 
   auto frame = frame_map[frame_ref];
 
   response->set_size(frame.size);
   response->set_data(frame.data, frame.size);
+
+  pthread_mutex_unlock(&mutex);
 
   return true;
 }
