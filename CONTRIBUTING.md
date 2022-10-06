@@ -1,9 +1,6 @@
 <!-- omit in toc -->
 # Regarding contributions
 
-- [ ] TODO: Once all TODOs are ticked off, remove them before committing this file
-- [ ] TODO: Should there be links to [discussions][discussions]? Should it be in this repo?
-
 All types of contributions are encouraged and valued. See the [Table of contents](#table-of-contents) for different ways to help and details about how this project handles them. Please make sure to read the relevant section before making your contribution. It will make it a lot easier for us maintainers and smooth out the experience for all involved. We look forward to your contributions.
 
 > And if you like the project, but just don't have time to contribute, that's fine. There are other easy ways to support the project and show your appreciation, which we would also be very happy about:
