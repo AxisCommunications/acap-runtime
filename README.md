@@ -6,16 +6,11 @@
 [![GitHub Super-Linter](https://github.com/AxisCommunications/acap-runtime/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
 [![Build docker-image application](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker-image.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker-image.yml)
 
-- [ ] TODO: Once all TODOs are ticked off, remove them before committing this file
-
-- [ ] TODO: Link to <https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime>
-- [ ] Fix workflow badges
-
 ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix
 Domain Socket (UDS) for access. This makes the service available to clients
 written in different languages on the same device.
 
-If you are new to the world of ACAPs take a moment and check out
+If you are new to the world of ACAPs take a moment to check out
  [What is ACAP?][acap-documentation] in the ACAP documentation.
 
 <!-- omit in toc -->
@@ -39,8 +34,6 @@ If you are new to the world of ACAPs take a moment and check out
 
 ## Overview
 
-- [ ] TODO: Describe the benefits of gRPC support for ACAP
-
 ACAP runtime provides a network protocol based service, using gRPC to
 expose a number of [APIs](#apis). Once started, ACAP runtime runs a gRPC server
 that can be accessed by a client app, written in any gRPC compatible language.
@@ -59,7 +52,7 @@ containerized version provides more configuration options. This is further
 described in the respective Configuration sub sections in the
 [Installation and usage](#installation-and-usage) section.
 
-> Please note!
+> **Note**
 >
 > The ACAP runtime service can run either with TLS authenticated or without.
 > Be aware that running without TLS authentication is extremely insecure and we
@@ -68,8 +61,6 @@ strongly recommend against this.
 authentication when using ACAP runtime.
 
 ### Requirements
-
-- [ ] TODO: Check if min versions are correct
 
 The following requirements need to be met.
 
@@ -87,8 +78,6 @@ The following requirements need to be met.
 
 ### APIs
 
-- [ ] TODO: Should the APIs be further described?
-
 The ACAP runtime service provides the following APIs:
 
 - Inference API - An implementation of [Tensorflow Serving][tensorflow].
@@ -98,8 +87,6 @@ available for the parameter API in [Python][parameter-api-python] and
 [C++][paramter-api-cpp].
 
 ### gRPC access point
-
-- [ ] TODO: Describe better? Add network socket info? Move/remove?
 
 By default the ACAP runtime service will set up an Unix Domain Socket (UDS)
 access point with the address:
@@ -113,9 +100,6 @@ Configuration sub sections in the [Installation and usage](#installation-and-usa
 section.
 
 ### TLS
-
-- [ ] TODO: Describe how to handler the cert files for containerized as well
-- [ ] TODO: Possibly add reference link to <https://grpc.io/docs/guides/auth/>
 
 The ACAP runtime service can be run either in TLS authenticated or unsecured mode.
 TLS authenticated mode provides additional security and encryption on the gRPC
@@ -202,6 +186,7 @@ docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password>
 
 <!-- markdownlint-disable MD024 -->
 #### Configuration
+<!-- markdownlint-enable MD024 -->
 
 To change the configuration of the ACAP runtime service, use the settings in the
  application drop down menu in the device GUI. Note that the application need to
@@ -235,6 +220,7 @@ value is set according to the architecture selected when the application was bui
 ```
 <!-- markdownlint-disable MD024 -->
 #### Examples
+<!-- markdownlint-enable MD024 -->
 
 The following examples use the Parameter API with ACAP runtime as an ACAP application:
 
@@ -272,6 +258,7 @@ services:
 
 <!-- markdownlint-disable MD024 -->
 ### Configuration
+<!-- markdownlint-enable MD024 -->
 
 When starting the ACAP runtime service from command line, as is done with the
 containerized version, it accepts the following settings:
@@ -312,6 +299,7 @@ usage and should not be used in production.
 
 <!-- markdownlint-disable MD024 -->
 #### Examples
+<!-- markdownlint-enable MD024 -->
 
 The following examples use the ACAP runtime containerized version to run the
 Inference API server:
