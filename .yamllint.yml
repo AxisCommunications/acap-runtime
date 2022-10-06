@@ -3,6 +3,10 @@
 
 extends: default
 
+ignore: |
+  .*.yaml
+  .*.yml
+
 rules:
   document-start: disable
   line-length: disable
