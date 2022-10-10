@@ -11,7 +11,7 @@ Domain Socket (UDS) for access. This makes the service available to clients
 written in different languages on the same device.
 
 If you are new to the world of ACAPs take a moment to check out
- [What is ACAP?][acap-documentation] in the ACAP documentation.
+[What is ACAP?][acap-documentation].
 
 <!-- omit in toc -->
 ## Table of contents
@@ -19,12 +19,9 @@ If you are new to the world of ACAPs take a moment to check out
 - [Overview](#overview)
   - [Requirements](#requirements)
   - [APIs](#apis)
-  - [gRPC access point](#grpc-access-point)
-  - [TLS](#tls)
 - [Installation and usage](#installation-and-usage)
-  - [As an ACAP application](#as-an-acap-application)
-  - [As containerized version](#as-containerized-version)
-  - [Configuration](#configuration)
+  - [Installation](#installation)
+  - [Examples](#examples)
 - [Building ACAP runtime](#building-acap-runtime)
   - [Building as an ACAP application](#building-as-an-acap-application)
   - [Building as a containerized version](#building-as-a-containerized-version)
@@ -92,7 +89,7 @@ available for the parameter API in [Python][parameter-api-python] and
 ### Installation
 
 Both variants of ACAP runtime, the native ACAP application and the containerized
-version are available as pre-built images on [Docker Hub][docker-hub-acap-runtime].
+version, are available as pre-built images on [Docker Hub][docker-hub-acap-runtime].
 These images are the recommended way to install and use ACAP runtime.
 
 #### Native ACAP application
@@ -177,6 +174,7 @@ IpPort      IP port of gRPC server. See note1,
 Use TLS     Enable SSL/TLS, default 'Yes'. See note2,
 ChipId      Chip id used by Inference API server. See note3.
 ```
+
 Notes.
 
 **(1)** The gRPC server can be set up with either a unix-socket (default) or a
@@ -208,6 +206,7 @@ containerized version, it accepts the following settings:
 -m <file name>    Larod model file used by Inference API server,
 -o                Override settings from device parameters. See note4,
 ```
+
 Notes.
 
 **(1)** The gRPC server can be set up with either a unix-socket (default) or a
