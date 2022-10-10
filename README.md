@@ -48,7 +48,7 @@ used together with the [ACAP Computer Vision SDK][acap-documentation-cv] and
 requires that [Docker ACAP][docker-acap] is installed on the device. The
 containerized version provides more configuration options. This is further
 described in the respective Configuration sub sections in the
-[Installation and usage](#installation-and-usage) section.
+[Installation and usage](#installation-and-usage).
 
 > **Note**
 >
