@@ -1,4 +1,4 @@
-name: Lint Code Base
+name: Lint codebase
 
 on:
   push:
@@ -6,16 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Lint Code Base
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Lint Code Base
+      - name: Lint codebase
         uses: github/super-linter/slim@v4
         env:
           VALIDATE_ALL_CODEBASE: true
