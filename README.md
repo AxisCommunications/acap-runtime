@@ -3,7 +3,7 @@
 <!-- omit in toc -->
 # BETA - ACAP runtime
 
-[![GitHub Super-Linter](https://github.com/AxisCommunications/acap-runtime/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![Lint codebase](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml)
 [![Build docker-image application](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker-image.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker-image.yml)
 
 ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix
