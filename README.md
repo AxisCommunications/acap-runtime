@@ -52,7 +52,7 @@ described in the respective Configuration sub sections in the
 
 > **Note**
 >
-> The ACAP runtime service can run either with TLS authenticated or without.
+> The ACAP runtime service can run with TLS authentication or without.
 > Be aware that running without TLS authentication is extremely insecure and we
 strongly recommend against this.
 > See [TLS](#tls) for information on how to generate certificates for TLS
