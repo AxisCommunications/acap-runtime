@@ -33,7 +33,7 @@ If you are new to the world of ACAPs take a moment to check out
 
 ACAP runtime provides a network protocol based service, using gRPC to
 expose a number of [APIs](#apis). Once started, ACAP runtime runs a gRPC server
-that can be accessed by a client app, written in any gRPC compatible language.
+that can be accessed by a client application, written in any gRPC compatible language.
 For further information on the gRPC protocol and how to write gRPC clients see
 [https://grpc.io/][gRPC].
 
