@@ -118,7 +118,7 @@ The application log can be found by clicking on the **App log** in the
 application drop down menu in the device GUI, or directly at:
 
 ```sh
-http://<device_ip>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
+http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
 ```
 
 The application can be stopped and uninstalled by using the device GUI, or by running:
@@ -390,7 +390,7 @@ To see the test run output, check the application log either by clicking on the
 **App log** link in the device GUI, or directly at:
 
 ```sh
-http://<device_ip>/axis-cgi/admin/systemlog.cgi?appname=acapruntimetest
+http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntimetest
 ```
 
 If the tests pass the log should end with \[  PASSED  ]. If any test fails, it
