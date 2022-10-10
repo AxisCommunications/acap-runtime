@@ -399,7 +399,7 @@ will be listed.
 The test suite can be built locally as well, so that any local changes to ACAP
 runtime are also tested. Build it by running:
 
-```s
+```sh
 # Build ACAP runtime test suite image
 docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes .
 ```
