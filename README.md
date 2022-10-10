@@ -11,7 +11,7 @@ Domain Socket (UDS) for access. This makes the service available to clients
 written in different languages on the same device.
 
 If you are new to the world of ACAPs take a moment to check out
-[What is ACAP?][acap-documentation].
+[What is ACAP?][acap-documentation]
 
 <!-- omit in toc -->
 ## Table of contents
