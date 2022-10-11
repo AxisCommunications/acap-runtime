@@ -23,7 +23,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LINTER_RULES_PATH: /
           IGNORE_GITIGNORED_FILES: true
-          # VALIDATE_BASH: true      # scripts in /hooks - skip for now
+          VALIDATE_BASH: true
           VALIDATE_DOCKERFILE_HADOLINT: true
           VALIDATE_MARKDOWN: true
           VALIDATE_SHELL_SHFMT: true
