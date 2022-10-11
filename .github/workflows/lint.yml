@@ -20,6 +20,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINTER_RULES_PATH: /
           IGNORE_GITIGNORED_FILES: true
           # VALIDATE_BASH: true      # scripts in /hooks - skip for now
           VALIDATE_DOCKERFILE_HADOLINT: true

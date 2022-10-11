@@ -159,6 +159,7 @@ To run a number of linters on the code base from command line:
 docker run --rm \
   -v $PWD:/tmp/lint \
   -e RUN_LOCAL=true \
+  -e LINTER_RULES_PATH=/ \
   -e VALIDATE_BASH=true \
   -e VALIDATE_DOCKERFILE_HADOLINT=true \
   -e VALIDATE_MARKDOWN=true \
