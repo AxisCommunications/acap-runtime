@@ -149,7 +149,7 @@ To include the containerized ACAP runtime server in a project, add the image in
 the projects `docker-compose.yml` file. The following is an illustrative
 example of how the service can be set up with docker-compose. Here we use the
 image for `armv7hf`architecture. For a complete description
-see one of the working project [examples](#examples-1).
+see one of the working project [examples](#examples).
 
 ```yml
 version: '3.3'
@@ -166,9 +166,11 @@ services:
     <any other apps>
 ```
 
-#### Configuration
+### Configuration
 
+<!-- markdownlint-disable MD024 -->
 #### Native ACAP application
+<!-- markdownlint-enable MD024 -->
 
 To change the configuration of the ACAP runtime service, use the settings in the
 application drop down menu in the device GUI. Note that the application need to
@@ -193,12 +195,14 @@ See [gRPC](#grpc-socket) for more information.
 **(2)** To use TLS a certificate file and a corresponding private key file must
 be supplied. If either is omitted, or if the device setting Use TLS is set to 'No',
 TLS is not used.
-See [TLS](#tls-1) for more information.
+See [TLS](#tls) for more information.
 
 **(3)** When using the Inference API, the chip Id corresponding to the device must
 be given. See [Chip id](#chip-id) for more information.
 
+<!-- markdownlint-disable MD024 -->
 #### Containerized version
+<!-- markdownlint-enable MD024 -->
 
 When starting the ACAP runtime service from command line, as is done with the
 containerized version, it accepts the following settings:
@@ -224,7 +228,7 @@ See [gRPC](#grpc-socket) for more information.
 
 **(2)** To use TLS a certificate file and a corresponding private key file must
 be supplied. If either is omitted TLS is not used.
-See [TLS](#tls-1) for more information.
+See [TLS](#tls) for more information.
 
 **(3)** When using the Inference API the chip Id corresponding to the device must
 be given. See [Chip id](#chip-id) for more information.

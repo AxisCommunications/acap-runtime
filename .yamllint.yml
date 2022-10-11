@@ -1,11 +1,8 @@
+---
 # Extends the default conf from
 # https://yamllint.readthedocs.io/en/stable/configuration.html#default-configuration
 
 extends: default
-
-ignore: |
-  .*.yaml
-  .*.yml
 
 rules:
   document-start: disable
