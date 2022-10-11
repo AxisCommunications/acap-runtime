@@ -207,8 +207,8 @@ To lint only a specific file, replace `.` or `$(COMMAND)` with the file path.
 [issues]: https://github.com/AxisCommunications/acap-runtime/issues
 [issues_new]: https://github.com/AxisCommunications/acap-runtime/issues/new
 [issues_bugs]: https://github.com/AxisCommunications/acap-runtime/issues?q=label%3Abug
-[discussions]: https://github.com/AxisCommunications/acap-runtime/discussions
-[discussions_new]: https://github.com/AxisCommunications/acap-runtime/discussions/new
+[discussions]: https://github.com/orgs/AxisCommunications/discussions/categories/acap
+[discussions_new]: https://github.com/orgs/AxisCommunications/discussions/new?category=acap
 [super-linter]: https://github.com/github/super-linter
 [super-linter-local]: https://github.com/github/super-linter/blob/main/docs/run-linter-locally.md
 <!-- markdownlint-enable MD034 -->

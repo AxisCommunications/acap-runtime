@@ -4,4 +4,3 @@
 
 docker push "$IMAGE_NAME"
 docker push "$IMAGE_NAME-containerized"
-docker push "$IMAGE_NAME-test"

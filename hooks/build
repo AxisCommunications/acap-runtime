@@ -8,4 +8,3 @@ export RUNTIME_VERSION
 
 docker build . -f "${DOCKERFILE_PATH}" -t "$IMAGE_NAME"
 docker build . -f "${DOCKERFILE_PATH}-containerized" -t "$IMAGE_NAME-containerized" --build-arg RUNTIME_VERSION
-docker build . -f "${DOCKERFILE_PATH}" -t "$IMAGE_NAME-test" --build-arg TEST=yes

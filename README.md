@@ -23,7 +23,7 @@ If you are new to the world of ACAPs take a moment to check out
   - [Installation](#installation)
     - [Native ACAP application](#native-acap-application)
     - [Containerized version](#containerized-version)
-    - [Configuration](#configuration)
+  - [Configuration](#configuration)
     - [Native ACAP application](#native-acap-application-1)
     - [Containerized version](#containerized-version-1)
     - [Chip id](#chip-id)
@@ -31,8 +31,8 @@ If you are new to the world of ACAPs take a moment to check out
     - [gRPC socket](#grpc-socket)
   - [Examples](#examples)
 - [Building ACAP runtime](#building-acap-runtime)
-  - [Building as an ACAP application](#building-as-an-acap-application)
-  - [Building as a containerized version](#building-as-a-containerized-version)
+  - [Native ACAP application](#native-acap-application-2)
+  - [Containerized version](#containerized-version-2)
 - [Test suite](#test-suite)
 - [Contributing](#contributing)
 - [License](#license)
@@ -103,23 +103,23 @@ These images are the recommended way to install and use ACAP runtime.
 #### Native ACAP application
 
 To install use any image from [axisecp/acap-runtime][docker-hub-acap-runtime] with
-a tag on the form `<version>-<ARCH>`, e.g. `latest-armv7hf`.
+a tag on the form `<version>-<ARCH>`, where `<version>` is the acap-runtime release
+version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
+E.g. `1.1.2-armv7hf`.
 Running the image installs ACAP runtime as an ACAP application on the device,
 where it can be controlled in the device GUI **Apps** tab.
 
 ```sh
-# Install the latest prebuilt image
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> install
+# Install a prebuilt image
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> install
 ```
 
-Where `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture,
-`<device IP>` is the IP address of the device and `<device password>` is the
-password for the root user.
+Where `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
 
 The application can then be started either in the device GUI **Apps** tab or by running:
 
 ```sh
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> start
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> start
 ```
 
 The application log can be found by clicking on the **App log** in the
@@ -132,8 +132,8 @@ http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
 The application can be stopped and uninstalled by using the device GUI, or by running:
 
 ```sh
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> stop
-docker run --rm axisecp/acap-runtime:latest-<ARCH> <device IP> <device password> remove
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
 ```
 
 #### Containerized version
@@ -155,7 +155,7 @@ see one of the working project [examples](#examples).
 version: '3.3'
 services:
     acap-runtime-server:
-      image: axisecp/acap-runtime:latest-armv7hf-containerized
+      image: axisecp/acap-runtime:1.1.2-armv7hf-containerized
       entrypoint: ["/opt/app/acap_runtime/acapruntime", "-o", "-j", "4"]
 
     acap-runtime-client:
@@ -337,10 +337,11 @@ Inference API server:
 
 This repo provides Dockerfiles to be used to build ACAP runtime.
 
-### Building as an ACAP application
+<!-- markdownlint-disable MD024 -->
+### Native ACAP application
+<!-- markdownlint-enable MD024 -->
 
-For the ACAP application use either the Dockerfile `Dockerfile.armv7hf` or
-`Dockerfile.aarch64`. Select the one that matches the architecture of your device:
+To build as a native ACAP application use either the Dockerfile `Dockerfile.armv7hf` or `Dockerfile.aarch64`. Select the one that matches the architecture of your device:
 
 ```sh
 # Build ACAP runtime image
@@ -359,7 +360,9 @@ build arguments `VERSION` and `UBUNTU_VERSION` to select a specific tag of the
 docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
 ```
 
-### Building as a containerized version
+<!-- markdownlint-disable MD024 -->
+### Containerized version
+<!-- markdownlint-enable MD024 -->
 
 To build the containerized version, use either `Dockerfile.armv7hf-containerized`
 or `Dockerfile.aarch64-containerized`:
@@ -379,13 +382,16 @@ sdk image.
 ## Test suite
 
 The repo contains a test suite project to verify that ACAP runtime works as expected
-on a supported device.
+on a supported device. It builds and is executed as a standalone ACAP application
+called `Acapruntimetest`.
 
-To install the latest prebuilt test suite image on a device run:
+Build and install it by running:
 
 ```sh
-# Install the latest prebuilt image
-docker run --rm axisecp/acap-runtime:latest-<ARCH>-test <device IP> <device password> install
+# Build ACAP runtime test suite image
+docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes .
+
+docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> install
 ```
 
 where `<ARCH>` is either `armv7hf` or `aarch64` and `<device IP>` and `<device password>`
@@ -395,7 +401,7 @@ The application can be started, stopped and eventually uninstalled in the **Apps
 tab in the device GUI or by running:
 
 ```sh
-docker run --rm axisecp/acap-runtime:latest-<ARCH>-test <device IP> <device password> start|stop|remove
+docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> start|stop|remove
 ```
 
 To see the test run output, check the application log either by clicking on the
@@ -407,14 +413,6 @@ http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntimetest
 
 If the tests pass the log should end with \[  PASSED  ]. If any test fails, it
 will be listed.
-
-The test suite can be built locally as well, so that any local changes to ACAP
-runtime are also tested. Build it by running:
-
-```sh
-# Build ACAP runtime test suite image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes .
-```
 
 ## Contributing
 
