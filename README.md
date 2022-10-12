@@ -4,11 +4,10 @@
 # BETA - ACAP runtime
 
 [![Lint codebase](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml)
-[![Build docker-image application](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker-image.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker-image.yml)
 
-ACAP runtime is a network protocol based service, using [gRPC][gRPC] and Unix
-Domain Socket (UDS) for access. This makes the service available to clients
-written in different languages on the same device.
+ACAP runtime is a network protocol based service, using [gRPC][gRPC].
+This makes the service available to clients written in different languages on
+the same device. ACAP runtime is also described in the [ACAP documentation][acap-documentation-acap-runtime].
 
 If you are new to the world of ACAPs take a moment to check out
 [What is ACAP?][acap-documentation]
@@ -86,11 +85,12 @@ The following requirements need to be met.
 
 The ACAP runtime service provides the following APIs:
 
-- Inference API - An implementation of [Tensorflow Serving][tensorflow].
-- Parameter API - Provides gRPC read access to the parameters of an Axis device
-that otherwise would be read out via [VAPIX][vapix]. There are usage examples
-available for the parameter API in [Python][parameter-api-python] and
-[C++][paramter-api-cpp].
+- Inference API - An implementation of [Tensorflow Serving][tensorflow]. There
+  are usage examples available for the Inference API written in
+  [Python][minimal-ml-inference] and [C++][object-detector-cpp].
+- Parameter API - Provides gRPC read access to the parameters of an Axis device.
+  There are usage examples available for the Parameter API written in
+  [Python][parameter-api-python] and [C++][paramter-api-cpp].
 
 ## Installation and usage
 
@@ -173,7 +173,7 @@ services:
 <!-- markdownlint-enable MD024 -->
 
 To change the configuration of the ACAP runtime service, use the settings in the
-application drop down menu in the device GUI. Note that the application need to
+application drop down menu in the device GUI. Note that the application needs to
 be restarted for any changes to take effect.
 
 The available settings are:
@@ -243,10 +243,11 @@ usage and should not be used in production.
 
 The Inference API uses [larod][acap-documentation-native-ml] for image processing
 and to set it up the correct chip id for the device needs to be selected.
-Note that there is no direct corelation between architecture and chip but for
-convenience the pre-built images for the ACAP runtime native application sets the
-default value for ChipId to 4 for `armv7hf` architecture and 12 for `aarch64`
-architecture. See the table below for a full list of supported values.
+Note that there is no direct corelation between chip id and architecture.
+For convenience the pre-built images for the ACAP runtime native application sets
+the default value for ChipId to 4 for `armv7hf` and 12 for `aarch64`, since those
+are currently the most common ids for the respective architectures.
+See the table below for a full list of supported values.
 
 If the value is set to 0 (LAROD_CHIP_INVALID) the Inference API server will not
 be started.
@@ -428,6 +429,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [acap-documentation-native]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-native-sdk
 [acap-documentation-native-ml]: https://axiscommunications.github.io/acap-documentation/docs/api/native-sdk-api.html#machine-learning-api
 [acap-documentation-cv]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-computer-vision-sdk
+[acap-documentation-acap-runtime]: https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
 [docker-hub-acap-runtime]: https://hub.docker.com/r/axisecp/acap-runtime
@@ -442,6 +444,5 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [parameter-api-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-python
 [paramter-api-cpp]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-cpp
 [tensorflow]: https://github.com/tensorflow/serving
-[vapix]: https://www.axis.com/vapix-library/subjects/t10175981/section/t10036014/display?section=t10036014-t10036014
 
 <!-- markdownlint-enable MD034 -->

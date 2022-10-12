@@ -29,15 +29,10 @@ All types of contributions are encouraged and valued. See the [Table of contents
 
 ## I have a question
 
-Before you ask a question, it is best to search for existing [issues][issues] and [discussions][discussions] that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
+Before you ask a question, it is best to search for existing [issues][issues] that might help you. In case you have found a suitable issue and still need clarification, you can write your question in this issue. It is also advisable to search the internet for answers first.
 
-If you then still feel the need to ask a question and need clarification, we recommend the following:
-
-- Create a [discussion][discussions_new].
-- Provide as much context as you can about what you're running into.
-- Provide project and platform versions, depending on what seems relevant.
-
-We will then take care of the discussion as soon as possible.
+If you then still feel the need to ask a question and need clarification, please
+follow the steps in [Reporting bugs](#reporting-bugs).
 
 ## I want to contribute
 
@@ -207,8 +202,6 @@ To lint only a specific file, replace `.` or `$(COMMAND)` with the file path.
 [issues]: https://github.com/AxisCommunications/acap-runtime/issues
 [issues_new]: https://github.com/AxisCommunications/acap-runtime/issues/new
 [issues_bugs]: https://github.com/AxisCommunications/acap-runtime/issues?q=label%3Abug
-[discussions]: https://github.com/orgs/AxisCommunications/discussions/categories/acap
-[discussions_new]: https://github.com/orgs/AxisCommunications/discussions/new?category=acap
 [super-linter]: https://github.com/github/super-linter
 [super-linter-local]: https://github.com/github/super-linter/blob/main/docs/run-linter-locally.md
 <!-- markdownlint-enable MD034 -->
