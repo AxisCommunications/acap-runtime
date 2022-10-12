@@ -182,7 +182,7 @@ void Usage(const char* name)
    << "  -v    Verbose" << endl
    << "  -a    IP address of server" << endl
    << "  -p    IP port of server" << endl
-   << "  -o    Do not read settings from device parameters " << endl
+   << "  -o    Read settings from device parameters" << endl
    << "  -j    Chip id (see larodChip in larod.h)" << endl
    << "  -t    Runtime in seconds (used for test)" << endl
    << "  -c    Certificate file for TLS authentication, insecure channel if omitted" << endl
@@ -200,7 +200,7 @@ int AcapRuntime(int argc, char* argv[])
  string key_file = "";
  uint64_t chipId = 0;
  int time = 0; // Run time in seconds, 0 => infinity
- bool allow_override = true;
+ bool allow_override = false;
  openlog(NULL, LOG_PID, LOG_USER);
  
  // Setup signal handling.
@@ -234,7 +234,7 @@ int AcapRuntime(int argc, char* argv[])
        _verbose = true;
        break;
      case 'o':
-       allow_override = false;
+       allow_override = true;
        break;
      case 'c':
        pem_file.assign(optarg);
@@ -249,7 +249,6 @@ int AcapRuntime(int argc, char* argv[])
  }
   if(allow_override){
     // Override with parameters from parameter storage
-
     const char *verbose = get_parameter_value("Verbose");
     if (verbose != NULL) {
       _verbose = strcmp(verbose, "yes") == 0;
