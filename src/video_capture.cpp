@@ -83,11 +83,11 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
                                    size_t &size, uint32_t &frame_ref) {
   GError *error = nullptr;
 
-  auto currentStream = streams.find(stream);
-  if (currentStream == streams.end()) {
+  auto current_stream = streams.find(stream);
+  if (current_stream == streams.end()) {
     return false;
   }
-  VdoStream *vdo_stream = currentStream->second;
+  VdoStream *vdo_stream = current_stream->second;
 
   VdoMap *info = vdo_stream_get_info(vdo_stream, &error);
   if (!info) {
@@ -103,7 +103,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
   if (buffer == nullptr) {
-    ERRORLOG << "Unable to get VDO buffer" << endl;
+    ERRORLOG << "Unable to get VDO buffer. Stream: " << stream << endl;
     return false;
   }
   VdoFrame *frame = vdo_buffer_get_frame(buffer);
@@ -118,16 +118,16 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   // *data = new_data;
 
-  *data = malloc(size);
-  memcpy(*data, new_data, size);
+  // *data = malloc(size);
+  // memcpy(*data, new_data, size);
 
-  // Seems to work even if we use the data after calling unref here...
-  if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
-    ERRORLOG << "Unreferencing buffer failed" << endl;
-    return false;
-  }
+  // // Seems to work even if we use the data after calling unref here...
+  // if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
+  //   ERRORLOG << "Unreferencing buffer failed" << endl;
+  //   return false;
+  // }
 
-  frame_ref = SaveFrame(*data, size);
+  frame_ref = SaveFrame(vdo_stream, buffer, size);
 
   return true;
 }
@@ -138,9 +138,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 //                                  nullptr);
 // }
 
-uint32_t Capture::SaveFrame(void* data, size_t size) {
-  // TODO lock
-
+uint32_t Capture::SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size) {
   pthread_mutex_lock(&mutex);
 
   /* We use a map AND a queue in order to acheive fast lookup while keeping
@@ -150,16 +148,24 @@ uint32_t Capture::SaveFrame(void* data, size_t size) {
   // frame
   uint32_t frame_ref = frame_queue.empty() ? 1 : frame_queue.back() + 1;
 
-  frame_map.insert(make_pair(frame_ref, frame{size, data}));
+  frame_map.insert(make_pair(frame_ref, frame{stream, buffer, size}));
   frame_queue.push(frame_ref);
+  TRACELOG << "Queue size: " << frame_queue.size() << endl;
 
-  if (frame_queue.size() > MAX_NBR_SAVED_FRAMES) {
+  if (frame_queue.size() >= MAX_NBR_SAVED_FRAMES) {
     uint32_t first_elem = frame_queue.front();
+    TRACELOG << "Unreferencing buffer: " << first_elem << endl;
+
     frame_queue.pop();
 
     // Free the data from the frame about to be deleted
     auto frame = frame_map[first_elem];
-    free(frame.data);
+
+    if (!(vdo_stream_buffer_unref(frame.vdo_stream, &frame.vdo_buffer, NULL))) {
+      ERRORLOG << "Unreferencing buffer failed" << endl;
+    }
+
+    //free(frame.data);
 
     frame_map.erase(first_elem);
   }
@@ -180,9 +186,16 @@ bool Capture::SetResponseToSavedFrame(uint32_t frame_ref,
   };
 
   auto frame = frame_map[frame_ref];
+  TRACELOG << "Found saved vdo buffer. ID: " << vdo_buffer_get_id(frame.vdo_buffer) << endl;
 
+  auto data = vdo_buffer_get_data(frame.vdo_buffer);
+  if (nullptr == data) {
+    ERRORLOG << "Unreferencing buffer failed" << endl;
+    return false;
+  }
+
+  response->set_data(data, frame.size);
   response->set_size(frame.size);
-  response->set_data(frame.data, frame.size);
 
   pthread_mutex_unlock(&mutex);
 
@@ -194,11 +207,11 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   (void)context;
   GError *error = nullptr;
 
-  auto currentStream = streams.find(request->stream_id());
-  if (currentStream == streams.end()) {
+  auto current_stream = streams.find(request->stream_id());
+  if (current_stream == streams.end()) {
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
-  VdoStream *stream = currentStream->second;
+  VdoStream *stream = current_stream->second;
 
   uint32_t frame_ref = request->frame_reference();
   if (frame_ref > 0) {

@@ -18,8 +18,10 @@ using namespace videocapture;
 namespace acap_runtime {
 
 typedef struct {
+  VdoStream* vdo_stream;
+  VdoBuffer* vdo_buffer;
   size_t size;
-  void* data;
+  //void* data;
 } frame;
 
 // Logic and data behind the server's behavior.
@@ -43,7 +45,7 @@ class Capture final : public VideoCapture::Service {
 
   // bool SetResponseFromLastFrame(const uint stream, GetFrameResponse *response);
 
-  uint32_t SaveFrame(void* data, size_t size);
+  uint32_t SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size);
   bool SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response);
 
   Status OutputError(const char* msg, StatusCode code);
@@ -57,7 +59,7 @@ class Capture final : public VideoCapture::Service {
 
   map<uint32_t, frame> frame_map;
   queue<uint32_t> frame_queue;
-  const uint32_t MAX_NBR_SAVED_FRAMES = 10;
+  const uint32_t MAX_NBR_SAVED_FRAMES = 3;
 
   pthread_mutex_t mutex;
 };
