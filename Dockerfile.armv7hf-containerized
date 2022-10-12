@@ -8,8 +8,10 @@ FROM $REPO/acap-runtime:${RUNTIME_VERSION}-${ARCH} as runtime-base
 
 FROM runtime-image-armv7hf
 WORKDIR /opt/app/
+
 COPY --from=runtime-base /opt/app/*.eap ./
-RUN mkdir -p acap_runtime
-RUN tar xzf $(ls | grep .eap) -C acap_runtime/
+RUN mkdir -p acap_runtime &&\
+    for f in *.eap; \
+    do tar -xzf "$f" -C acap_runtime ; done
 
 ENTRYPOINT [ "/opt/app/acap_runtime/acapruntime" ]
