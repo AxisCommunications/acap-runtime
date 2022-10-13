@@ -767,11 +767,6 @@ bool Inference::SetupPreprocessing(
       requestStream = tp.uint32_val(0);
     }
 
-    // bool isRequestForImageFromStream =
-    //     tp.dtype() == tensorflow::DataType::DT_UINT32;
-    ////  Assume a valid stream id is never 0
-    // bool isRequestForImageFromStream = stream != 0;
-
     // Convert request image to file descriptor
     FILE* tmpFile = nullptr;
     int tmpFd = -1;
@@ -802,8 +797,6 @@ bool Inference::SetupPreprocessing(
         TRACELOG << "Failed creating tmp file" << size << endl;
         return false;
       }
-
-      //_captureService->FreeBufferObj(stream_obj, buffer_obj);
     }
     else
     {

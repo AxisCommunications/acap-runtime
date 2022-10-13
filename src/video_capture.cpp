@@ -132,17 +132,14 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   return true;
 }
 
-// bool Capture::FreeBufferObj(void *stream, void *buffer_obj) {
-//   return vdo_stream_buffer_unref((VdoStream *)stream, (VdoBuffer
-//   **)&buffer_obj,
-//                                  nullptr);
-// }
-
 uint32_t Capture::SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size) {
   pthread_mutex_lock(&mutex);
 
   /* We use a map AND a queue in order to acheive fast lookup while keeping
    * track of the oldest frame */
+
+  // TODO: It seems that very few buffers can be used at a time, so this is overkill.
+  // A simple linear search would suffice.
 
   // Increment the reference number or set it to one if we have no previous
   // frame
