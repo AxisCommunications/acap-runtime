@@ -69,6 +69,7 @@
       "TRACELOG",
       "unpadded",
       "VAPIX",
-      "videostream"
+      "videostream",
+      "WORKDIR"
     ]
 }

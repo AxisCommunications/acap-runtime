@@ -1,2 +1,4 @@
 ---
-failure-threshold: warning
+ignored:
+  - DL3003 # Use WORKDIR to switch to a directory
+  - DL3008 # Pin versions in apt get install
