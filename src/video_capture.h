@@ -44,6 +44,8 @@ class Capture final : public VideoCapture::Service {
 
   bool SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response);
 
+  void MaybeUnrefOldestFrame();
+
   Status OutputError(const char* msg, StatusCode code);
   Status OutputError(const char* msg, StatusCode code, GError* error);
 

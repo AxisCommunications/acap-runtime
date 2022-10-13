@@ -71,7 +71,7 @@ apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plain
 
 infer
 
-apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 4}' $cam:$port videocapture.VideoCapture/GetFrame \
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 3}' $cam:$port videocapture.VideoCapture/GetFrame \
 | jq --raw-output .data | base64 --decode > img.yuv
 
 

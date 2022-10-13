@@ -101,6 +101,8 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   g_clear_object(&info);
 
+  MaybeUnrefOldestFrame();
+
   VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
   if (buffer == nullptr) {
     ERRORLOG << "Unable to get VDO buffer. Stream: " << stream << endl;
@@ -149,6 +151,14 @@ uint32_t Capture::SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size) {
   frame_queue.push(frame_ref);
   TRACELOG << "Queue size: " << frame_queue.size() << endl;
 
+  pthread_mutex_unlock(&mutex);
+
+  return frame_ref;
+}
+
+void Capture::MaybeUnrefOldestFrame() {
+  pthread_mutex_lock(&mutex);
+
   if (frame_queue.size() >= MAX_NBR_SAVED_FRAMES) {
     uint32_t first_elem = frame_queue.front();
     TRACELOG << "Unreferencing buffer: " << first_elem << endl;
@@ -162,14 +172,10 @@ uint32_t Capture::SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size) {
       ERRORLOG << "Unreferencing buffer failed" << endl;
     }
 
-    //free(frame.data);
-
     frame_map.erase(first_elem);
   }
 
   pthread_mutex_unlock(&mutex);
-
-  return frame_ref;
 }
 
 bool Capture::SetResponseToSavedFrame(uint32_t frame_ref,
