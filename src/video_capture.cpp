@@ -116,7 +116,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
     return false;
   }
 
-  // *data = new_data;
+  *data = new_data;
 
   // *data = malloc(size);
   // memcpy(*data, new_data, size);
