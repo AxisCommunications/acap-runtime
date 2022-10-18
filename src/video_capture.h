@@ -13,7 +13,7 @@
 
 using namespace std;
 using namespace grpc;
-using namespace videocapture;
+using namespace videocapture::v1;
 
 namespace acap_runtime {
 

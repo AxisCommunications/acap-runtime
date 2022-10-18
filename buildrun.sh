@@ -43,7 +43,7 @@ cp apis/tensorflow_serving/apis/prediction_service.proto ./apis
 
 # # Format 2 is jpg, format 3 is yuv
 apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{"settings": { "format": "3", "width": '$width', "height": '$height', "framerate": 10, "timestamp_type": "1" }}' \
- $cam:$port videocapture.VideoCapture/NewStream | jq --raw-output .streamId > temp
+ $cam:$port videocapture.v1.VideoCapture/NewStream | jq --raw-output .streamId > temp
 
 stream=$(cat temp)
 rm temp
@@ -69,12 +69,12 @@ infer
 infer
 
 
-apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 4}' $cam:$port videocapture.VideoCapture/GetFrame \
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 4}' $cam:$port videocapture.v1.VideoCapture/GetFrame \
 | jq --raw-output .data | base64 --decode > img.yuv
 
 infer
 
-apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 3}' $cam:$port videocapture.VideoCapture/GetFrame \
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 3}' $cam:$port videocapture.v1.VideoCapture/GetFrame \
 | jq --raw-output .data | base64 --decode > img.yuv
 
 

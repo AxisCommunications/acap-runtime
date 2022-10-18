@@ -5,7 +5,7 @@ syntax = "proto3";
 
 // import "google/protobuf/empty.proto";
 
-package videocapture;
+package videocapture.v1;
 
 service VideoCapture {
   rpc NewStream(NewStreamRequest) returns (NewStreamResponse);
