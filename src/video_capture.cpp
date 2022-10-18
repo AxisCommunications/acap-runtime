@@ -79,6 +79,22 @@ Status Capture::NewStream(ServerContext *context,
   return Status::OK;
 }
 
+// Status Capture::NewStream(ServerContext *context,
+//                           const DeleteStreamRequest *request,
+//                           DeleteStreamResponse *response) {
+//   TRACELOG << "Deleting VDO stream: " << request->stream_id() << endl;
+
+//   auto current_stream = streams.find(request->stream_id());
+//   if (current_stream == streams.end()) {
+//     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
+//   }
+//   VdoStream *stream = current_stream->second;
+
+//   // TODO
+
+//   return Status::OK;
+// }
+
 bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
                                    size_t &size, uint32_t &frame_ref) {
   GError *error = nullptr;

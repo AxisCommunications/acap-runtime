@@ -9,6 +9,9 @@ model=mobilenet_v2_1.0_224_quant_edgetpu.tflite
 width=224
 height=224
 
+# Upload the model
+wget -P /tmp https://github.com/google-coral/edgetpu/raw/master/test_data/mobilenet_v2_1.0_224_quant_edgetpu.tflite
+sshpass -p pass scp /tmp/mobilenet_v2_1.0_224_quant_edgetpu.tflite root@$cam:/var/spool/storage/SD_DISK
 
 # Build and install ACAPs
 
@@ -52,7 +55,7 @@ rm temp
 
 infer() {
     apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto --plaintext -d \
-    '{ "stream_id":'$stream', "inputs": { "data": { "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/models/'$model'"  }  }' \
+    '{ "stream_id":'$stream', "inputs": { "data": { "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/'$model'"  }  }' \
     $cam:$port tensorflow.serving.PredictionService/Predict \
     | tee /dev/stderr \
     | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \

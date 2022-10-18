@@ -9,6 +9,7 @@ package videocapture;
 
 service VideoCapture {
   rpc NewStream(NewStreamRequest) returns (NewStreamResponse);
+  rpc DeleteStream(DeleteStreamRequest) returns (DeleteStreamResponse);
   rpc GetFrame(GetFrameRequest) returns (GetFrameResponse);
 }
 
@@ -24,10 +25,6 @@ message GetFrameResponse {
         uint64 timestamp = 4;
         uint64 custom_timestamp = 5;
         uint32 sequence_nbr = 6;
-        // oneof frame {
-        //         bytes data = 7;
-        //         string file_name = 8;
-        // }
         bytes data = 7;
         string error = 9;
 }
@@ -38,10 +35,6 @@ enum StreamFormat {
      VDO_FORMAT_H265  = 1; /**< H.265 */
      VDO_FORMAT_JPEG  = 2; /**< JPEG */
      VDO_FORMAT_YUV   = 3; /**< YUV */
-     VDO_FORMAT_BAYER = 4; /**< Deprecated */
-     VDO_FORMAT_IVS   = 5; /**< Deprecated */
-     VDO_FORMAT_RAW   = 6; /**< Raw (Restricted) */
-     VDO_FORMAT_RGBA  = 7; /**< RGBA */
      VDO_FORMAT_RGB   = 8; /**< RGB */
      VDO_FORMAT_PLANAR_RGB = 9;
 }
@@ -75,12 +68,13 @@ message NewStreamResponse {
         uint32 stream_id = 2;
 }
 
+message DeleteStreamRequest {
+        uint32 stream_id = 1;
+}
 
-
-
-
-
-
+message DeleteStreamResponse {
+        string error = 1;
+}
 
 
 
