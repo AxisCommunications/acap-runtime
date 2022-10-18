@@ -12,6 +12,7 @@
             },
             "vendorUrl": "https://www.axis.com",
             "runMode": "once",
+            "runOptions": "-o",
             "version": "1.1.2"
         },
         "configuration": {
