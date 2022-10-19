@@ -1,0 +1,91 @@
+---
+name: 'Docker build/push action'
+description: 'A local composite action for building and pushing docker images.
+              Uses docker/login-action, docker/setup-buildx-action, docker/build-push-action
+              and  the local metadata-action.'
+inputs:
+  dockerfile:
+    description: 'The Dockerfile to use for building the image.'
+    required: true
+  suffix:
+    description: 'The suffix to use when constructing the tag(s) for the docker image.'
+    required: false
+    default: ''
+  build-args:
+    description: 'List of build arguments to use when building the docker image.'
+    required: false
+    default: ''
+  push:
+    description: 'Set to push the built image to a remote repository. Default true.'
+    required: false
+    default: 'true'
+  use_qemu:
+    description: 'Set to use QEMU when building the image. Default false.'
+    required: false
+    default: 'false'
+  latest:
+    description: 'Set to alow creation of latest tags. Default auto.'
+    required: false
+    default: 'auto'
+  repository:
+    description: 'Name of the repository of the image to build.'
+    required: true
+  registry:
+    description: 'Name of the remote registry to push the image to. Default docker.io'
+    required: false
+    default: 'docker.io'
+  registry_user:
+    description: 'Username for a user on the remote registry'
+    required: true
+  registry_token:
+    description: 'Token/password for the user on the the remote registry'
+    required: true
+  get_version:
+    description: 'Set to true if the action should return the tag of the built image. Default false'
+    required: false
+    default: 'false'
+
+outputs:
+  version:
+    description: 'Version tag of the built image if get_version is set to true'
+    value: ${{ steps.meta.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    -
+      name: Checkout repo
+      uses: actions/checkout@v3
+    -
+      name: Log in to the GITHub Container registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry_user }}
+        password: ${{ inputs.registry_token }}
+    - name: Create metadata for docker image
+      id: meta
+      uses: ./.github/actions/metadata-action
+      with:
+          suffix: ${{ inputs.suffix }}
+          latest: ${{ inputs.latest }}
+          repository: ${{ inputs.repository }}
+          registry: ${{ inputs.registry }}
+          get_version: ${{ inputs.get_version }}
+    -
+      name: Set up Docker buildx
+      uses: docker/setup-buildx-action@v2
+    -
+      name: Set up QEMU
+      if: ${{ inputs.use_qemu == 'true'}}
+      uses: docker/setup-qemu-action@v2
+    -
+      name: Build and push Docker image to registry
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        push: ${{ inputs.push }}
+        file: ${{ inputs.dockerfile }}
+        build-args: ${{ inputs.build-args }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
