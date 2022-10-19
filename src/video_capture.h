@@ -28,18 +28,20 @@ class Capture final : public VideoCapture::Service {
  public:
   bool Init(const bool verbose);
 
+  Status NewStream(ServerContext* context, const NewStreamRequest* request,
+                   NewStreamResponse* response);
+
+  Status DeleteStream(ServerContext* context,
+                      const DeleteStreamRequest* request,
+                      DeleteStreamResponse* response);
+
+  Status GetFrame(ServerContext* context, const GetFrameRequest* request,
+                  GetFrameResponse* response);
+
   bool GetImgDataFromStream(unsigned int stream, void** data, size_t& size,
                             uint32_t& frame_ref);
 
  private:
-  Status NewStream(ServerContext* context,
-                      const NewStreamRequest* request,
-                      NewStreamResponse* response);
-
-  Status GetFrame(ServerContext* context,
-                           const GetFrameRequest* request,
-                           GetFrameResponse* response);
-
   uint32_t SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size);
 
   bool SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response);
