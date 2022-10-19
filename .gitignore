@@ -1,6 +1,10 @@
-.vscode/
 .devcontainer/
-larod/
-build_x86_64-linux-gnu/
-tensorflow/
+apis/
+!apis/keyvaluestore.proto
 build/
+build_x86_64-linux-gnu/
+larod/
+tensorflow/
+super-linter.log
+*.conf
+*.log

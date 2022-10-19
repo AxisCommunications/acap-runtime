@@ -1,3 +1,19 @@
+/**
+ * Copyright (C) 2022 Axis Communications AB, Lund, Sweden
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -9,7 +25,7 @@
 #define BITS_PER_PIXEL_OFFSET 0x001C
 #define HEADER_SIZE 14
 #define INFO_HEADER_SIZE 40
-#define NO_COMPRESION 0
+#define NO_COMPRESSION 0
 #define MAX_NUMBER_OF_COLORS 0
 #define ALL_COLORS_REQUIRED 0
 
@@ -144,7 +160,7 @@ void WriteImage(const char *fileName, uchar *pixels, int width, int height, int 
         int16_t bitsPerPixel = bytesPerPixel * 8;
         fwrite(&bitsPerPixel, 2, 1, outputFile);
         //write compression
-        int32_t compression = NO_COMPRESION;
+        int32_t compression = NO_COMPRESSION;
         fwrite(&compression, 4, 1, outputFile);
         //write image size (in bytes)
         int32_t imageSize = width*height*bytesPerPixel;
@@ -171,15 +187,3 @@ void WriteImage(const char *fileName, uchar *pixels, int width, int height, int 
         }
         fclose(outputFile);
 }
-
-//int main()
-//{
-//        byte *pixels;
-//        int32_t width;
-//        int32_t height;
-//        int32_t bytesPerPixel;
-//        ReadImage("img.bmp", &pixels, &width, &height,&bytesPerPixel);
-//        WriteImage("img2.bmp", pixels, width, height, bytesPerPixel);
-//        free(pixels);
-//        return 0;
-//}

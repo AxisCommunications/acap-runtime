@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl
 
 # Install Edge TPU compiler
-RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" \
+    | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
     curl -k https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &&\
     apt-get update && apt-get install -y --no-install-recommends \
     edgetpu-compiler
@@ -42,7 +44,7 @@ ADD https://github.com/google-coral/edgetpu/raw/master/test_data/mobilenet_v2_1.
 ADD https://github.com/google-coral/edgetpu/raw/master/test_data/imagenet_labels.txt .
 RUN cd tmp &&\
     tar -xvf mobilenet_v2_1.0_224_quant.tgz &&\
-    mv *.tflite .. &&\
+    mv ./*.tflite .. &&\
     cd .. && rm -rf tmp
 
 # Get EfficientNet-EdgeTpu (M)
@@ -65,14 +67,15 @@ RUN git clone -b v1.46.3 https://github.com/grpc/grpc &&\
     git submodule update --init
 
 #Quick patch security warning
-RUN sed -i 's/gpr_log(GPR_INFO, __func__);/gpr_log(GPR_INFO, "%s", __func__);/g' /opt/grpc/src/core/ext/transport/binder/transport/binder_transport.cc /opt/grpc/src/core/ext/transport/binder/wire_format/wire_reader_impl.cc 
+RUN sed -i 's/gpr_log(GPR_INFO, __func__);/gpr_log(GPR_INFO, "%s", __func__);/g' \
+    /opt/grpc/src/core/ext/transport/binder/transport/binder_transport.cc \
+    /opt/grpc/src/core/ext/transport/binder/wire_format/wire_reader_impl.cc
 
 # Build and install gRPC for the host architecture.
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
-RUN mkdir -p "/opt/grpc/cmake/build" &&\
-    cd "/opt/grpc/cmake/build" &&\
-    cmake \
+WORKDIR /opt/grpc/cmake/build
+RUN cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DgRPC_INSTALL=ON \
         -DgRPC_BUILD_TESTS=OFF \
@@ -80,6 +83,8 @@ RUN mkdir -p "/opt/grpc/cmake/build" &&\
         ../.. &&\
     make -j4 install
 
+# return to build dir
+WORKDIR /opt
 # Build for ARM
 
 # Clone openssl and extract source code
@@ -96,31 +101,31 @@ RUN mkdir -p openssl-1.1.1l/build &&\
 # This build will use the host architecture copies of protoc and
 # grpc_cpp_plugin that we built earlier because we installed them
 # to a location in our PATH (/usr/local/bin).
-RUN mkdir -p "/opt/grpc/cmake/build_arm" &&\
-    cd "/opt/grpc/cmake/build_arm" &&\
-    . /opt/axis/acapsdk/environment-setup* &&\
+WORKDIR /opt/grpc/cmake/build_arm
+RUN . /opt/axis/acapsdk/environment-setup* &&\
     CXXFLAGS="$CXXFLAGS -g0" cmake \
         -DCMAKE_SYSTEM_NAME=Linux \
         -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-        -DCMAKE_INSTALL_PREFIX=$SDKTARGETSYSROOT/usr \
-        -DCMAKE_FIND_ROOT_PATH=$SDKTARGETSYSROOT/usr \
+        -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
+        -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
         -DgRPC_INSTALL=ON \
         -DgRPC_SSL_PROVIDER=package \
         -DCMAKE_BUILD_TYPE=Release \
         ../.. &&\
     make -j4 install/strip &&\
-    cp -r /opt/grpc/third_party/googletest/googletest/include/gtest $SDKTARGETSYSROOT/usr/include
+    cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
+        "$SDKTARGETSYSROOT"/usr/include
 
 # Get Tensorflow and Tensorflow Serving
-RUN git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
-RUN git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+RUN git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow &&\
+    git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 
 ## Setup build structure
 WORKDIR /opt/app
 COPY . .
 RUN cd apis &&\
-    ln -fs /opt/tensorflow/tensorflow/tensorflow &&\
-    ln -fs /opt/tensorflow/serving/tensorflow_serving
+    ln -fs /opt/tensorflow/tensorflow/tensorflow . &&\
+    ln -fs /opt/tensorflow/serving/tensorflow_serving .
 
 # Building the ACAP application
 ARG TEST

@@ -34,7 +34,7 @@
                 },
                 {
                     "name": "UseTLS",
-                    "default": "no",
+                    "default": "yes",
                     "type": "enum:no|No, yes|Yes"
                 }
             ]

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Axis Communications AB, Lund, Sweden
+ * Copyright (C) 2022 Axis Communications AB, Lund, Sweden
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include <unistd.h>
 #include "inference.h"
 
-//#define USE_MEMFD_CREATE
 #define ERRORLOG std::cerr << "ERROR in Inference: "
 #define TRACELOG if (_verbose) std::cout << "TRACE in Inference: "
 
@@ -149,11 +148,11 @@ Status Inference::Predict(
     return Status::CANCELLED;
   }
   if (nullptr == request) {
-    ERRORLOG << "Unexpected NULL request inparameter" << endl;
+    ERRORLOG << "Unexpected NULL request in parameter" << endl;
     return Status::CANCELLED;
   }
   if (nullptr == response) {
-    ERRORLOG << "Unexpected NULL response inparameter" << endl;
+    ERRORLOG << "Unexpected NULL response in parameter" << endl;
     return Status::CANCELLED;
   }
 
@@ -204,7 +203,7 @@ Status Inference::Predict(
     request->inputs(),
     inFiles,
     error)) {
-    goto predicterror;
+    goto predict_error;
   }
 
   // Setup output tensors
@@ -212,7 +211,7 @@ Status Inference::Predict(
     model,
     outFiles,
     error)) {
-    goto predicterror;
+    goto predict_error;
   }
 
   if (_verbose) {
@@ -241,13 +240,13 @@ Status Inference::Predict(
       &error);
     if (!ppJobReq) {
         PrintError("Failed creating preprocessing job request", error);
-        goto predicterror;
+        goto predict_error;
     }
     ret = larodRunJob(_conn, ppJobReq, &error);
     larodDestroyJobRequest(&ppJobReq);
     if (!ret) {
       PrintError("Preprocessing request failed", error);
-      goto predicterror;
+      goto predict_error;
     }
   }
 
@@ -263,13 +262,13 @@ Status Inference::Predict(
     &error);
   if (nullptr == jobReq) {
     PrintError("Failed to create inference request", error);
-    goto predicterror;
+    goto predict_error;
   }
   ret = larodRunJob(_conn, jobReq, &error);
   larodDestroyJobRequest(&jobReq);
   if (!ret) {
     PrintError("Inference request failed", error);
-    goto predicterror;
+    goto predict_error;
   }
 
   if (_verbose) {
@@ -284,10 +283,10 @@ Status Inference::Predict(
     model,
     outFiles,
     error)) {
-    goto predicterror;
+    goto predict_error;
   }
 
-  // Print infrence time
+  // Print inference time
   if (_verbose) {
     totalTime = duration_cast< milliseconds >(
       system_clock::now().time_since_epoch()).count() - totalTime;
@@ -302,8 +301,8 @@ Status Inference::Predict(
   }
   status = Status::OK;
 
-predicterror:
-  // Clenup
+predict_error:
+  // Cleanup
   larodClearError(&error);
   larodDestroyTensors(&_ppInputTensors, _ppNumInputs);
   larodDestroyTensors(&_ppOutputTensors, _ppNumOutputs);
@@ -518,10 +517,10 @@ void Inference::PrintTensorProtoDebug(const TensorProto& tp)
     cout << endl;
   }
   if (0 < tp.resource_handle_val_size()) {
-    cout << tp.float_val_size() << " resource_handl_vals" << endl;
+    cout << tp.float_val_size() << " resource_handle_vals" << endl;
   }
   if (0 < tp.variant_val_size()) {
-    cout << tp.float_val_size() << " resource_handl_vals" << endl;
+    cout << tp.float_val_size() << " resource_handle_vals" << endl;
   }
   if (0 < tp.uint32_val_size()) {
     cout << tp.uint32_val_size() << " uint32_vals:" << endl << " ";

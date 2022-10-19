@@ -156,7 +156,7 @@ int RunServer(
    }
  }
  
- // Wait for gRPC sercice termination
+ // Wait for gRPC service termination
  if (time > 0) {
    LOG(INFO) << "Server run time (s): " << time << endl;
    sleep(time);
