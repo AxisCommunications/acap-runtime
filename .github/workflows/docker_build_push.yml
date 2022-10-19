@@ -1,0 +1,121 @@
+# yamllint disable rule:line-length
+---
+name: docker build and push
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  build_push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [armv7hf, aarch64]
+    env:
+      repository: axis-ecp/acap-runtime
+      suffix: -${{ matrix.arch }}
+      containerized: "containerized"
+      containerized_suffix: '-${{ matrix.arch }}-${{ containerized }}'
+    steps:
+      -
+        name: Checkout repo
+        uses: actions/checkout@v3
+      -
+        name: Create metadata for base image
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.repository }}
+          flavor: suffix=${{ env.suffix }}, onlatest=true
+          tags: |
+            type=ref, event=branch
+            type=semver, pattern={{version}}, event=tag
+            type=ref, event=pr
+      -
+        name: Create metadata for containerized image
+        id: meta-containerized
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.repository }}
+          flavor: suffix=${{ env.containerized_suffix }}, onlatest=true
+          tags: |
+            type=ref, event=branch
+            type=semver, pattern={{version}}, event=tag
+            type=ref, event=pr
+      -
+        name: Get base version from tag
+        id: base_version
+        if: (github.event_name != 'pull_request')
+        shell: bash
+        run: |
+          TMP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          BASE:VERSION=$(echo $TMP_VERSION | sed -e "s/${{ env.suffix }}$//")
+          echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
+      -
+        name: Update manifest file with version
+        if: (github.ref_type == 'tag')
+        shell: bash
+        run: |
+          tmp_file=$(mktemp)
+          manifest_file=./manifest-${{ matrix.name }}.json
+          cp "$manifest_file" "$tmp_file"
+          jq --arg new_val "${{ steps.base_version.outputs.base_version }}" \
+          '.conf.setup.version |= $new_val' "$tmp_file" > "$manifest_file"
+          rm -f "$tmp_file"
+      -
+        name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      -
+        name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build docker test image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.name }}
+          build-args: TEST=true
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}-test
+# TODO: Replace with a proper test run
+#      -
+#        name: Run docker test image
+#        run: |
+#          docker run --rm ${{ fromJSON(steps.meta.outputs.json.tags[0]) }}-test
+      -
+        name: Build and push base image
+        uses: docker/build-push-action@v3
+        if: (github.event_name != 'pull_request')
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.name }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Setup QEMU
+        uses: docker/setup-qemu-action@v2
+        if: (github.event_name != 'pull_request')
+      -
+        name: Build and push containerized image
+        uses: docker/build-push-action@v3
+        if: (github.event_name != 'pull_request')
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.name }}-${{ env.containerized }}
+          build-args: |
+            NAME=${{ matrix.name }}
+            VERSION=${{ steps.base_version.outputs.base_version }}
+          push: true
+          tags: ${{ steps.meta-containerized.outputs.tags }}
+          labels: ${{ steps.meta-containerized.outputs.labels }}
