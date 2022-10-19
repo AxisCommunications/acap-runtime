@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           TMP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
-          BASE:VERSION=$(echo $TMP_VERSION | sed -e "s/${{ env.suffix }}$//")
+          BASE_VERSION=$(echo $TMP_VERSION | sed -e "s/${{ env.suffix }}$//")
           echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
       -
         name: Update manifest file with version
@@ -91,7 +91,7 @@ jobs:
 #      -
 #        name: Run docker test image
 #        run: |
-#          docker run --rm ${{ fromJSON(steps.meta.outputs.json.tags[0]) }}-test
+#          docker run --rm ${{ fromJSON(steps.meta.outputs).json.tags[0] }}-test
       -
         name: Build and push base image
         uses: docker/build-push-action@v3
