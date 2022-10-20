@@ -17,16 +17,16 @@ using namespace videocapture::v1;
 
 namespace acap_runtime {
 
-typedef struct {
+struct Buffer {
   uint32_t id;
   VdoBuffer* buffer;
   size_t size;
-} Buffer;
+};
 
-typedef struct {
+struct StreamAndBuffers {
   VdoStream* vdo_stream;
   deque<Buffer> buffers;
-} StreamAndBuffers;
+};
 
 class Capture final : public VideoCapture::Service {
  public:

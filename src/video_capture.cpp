@@ -143,12 +143,6 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   // *data = malloc(size);
   // memcpy(*data, new_data, size);
 
-  // // Seems to work even if we use the data after calling unref here...
-  // if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error))) {
-  //   ERRORLOG << "Unreferencing buffer failed" << endl;
-  //   return false;
-  // }
-
   frameRef = SaveFrame(currentStream->second, buffer, size);
 
   return true;
