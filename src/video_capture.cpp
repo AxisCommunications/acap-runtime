@@ -69,7 +69,8 @@ Status Capture::NewStream(ServerContext *context,
   g_clear_object(&info);
 
   uint streamId = vdo_stream_get_id(stream);
-  streams.emplace(streamId, stream);
+  streams.emplace(streamId, StreamAndBuffers{stream, deque<Buffer>{}});
+  // streams.emplace(streamId, stream);
 
   if (!vdo_stream_start(stream, &error)) {
     return OutputError("Starting stream failed", StatusCode::INTERNAL);
@@ -89,7 +90,7 @@ Status Capture::DeleteStream(ServerContext *context,
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
 
-  VdoStream *stream = currentStream->second;
+  VdoStream *stream = currentStream->second.vdo_stream;
 
   streams.erase(currentStream);
   vdo_stream_stop(stream);
@@ -106,7 +107,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   if (currentStream == streams.end()) {
     return false;
   }
-  VdoStream *vdoStream = currentStream->second;
+  VdoStream *vdoStream = currentStream->second.vdo_stream;
 
   VdoMap *info = vdo_stream_get_info(vdoStream, &error);
   if (!info) {
@@ -120,7 +121,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   g_clear_object(&info);
 
-  MaybeUnrefOldestFrame();
+  MaybeUnrefOldestFrame(currentStream->second);
 
   VdoBuffer *buffer = vdo_stream_get_buffer(vdoStream, &error);
   if (buffer == nullptr) {
@@ -148,76 +149,69 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   //   return false;
   // }
 
-  frameRef = SaveFrame(vdoStream, buffer, size);
+  frameRef = SaveFrame(currentStream->second, buffer, size);
 
   return true;
 }
 
-uint32_t Capture::SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size) {
+uint32_t Capture::SaveFrame(StreamAndBuffers &stream, VdoBuffer *vdoBuffer,
+                            size_t size) {
   pthread_mutex_lock(&mutex);
 
-  /* We use a map AND a queue in order to acheive fast lookup while keeping
-   * track of the oldest frame */
+  // Increment frame reference by 1 or start at 1
+  uint32_t frameRef = stream.buffers.empty() ? 1 : stream.buffers.back().id + 1;
 
-  // TODO: It seems that very few buffers can be used at a time, so this is overkill.
-  // A simple linear search would suffice.
+  // Add to saved buffers
+  stream.buffers.push_back(Buffer{frameRef, vdoBuffer, size});
 
-  // Increment the reference number or set it to one if we have no previous
-  // frame
-  uint32_t frameRef = frameQueue.empty() ? 1 : frameQueue.back() + 1;
-
-  frameMap.insert(make_pair(frameRef, frame{stream, buffer, size}));
-  frameQueue.push(frameRef);
-  TRACELOG << "Queue size: " << frameQueue.size() << endl;
+  TRACELOG << "Queue size: " << stream.buffers.size() << endl;
+  TRACELOG << "Last frame reference: " << stream.buffers.back().id << endl;
 
   pthread_mutex_unlock(&mutex);
 
   return frameRef;
 }
 
-void Capture::MaybeUnrefOldestFrame() {
+void Capture::MaybeUnrefOldestFrame(StreamAndBuffers &stream) {
   pthread_mutex_lock(&mutex);
 
-  if (frameQueue.size() >= MAX_NBR_SAVED_FRAMES) {
-    uint32_t firstElem = frameQueue.front();
-    TRACELOG << "Unreferencing buffer: " << firstElem << endl;
+  if (stream.buffers.size() >= MAX_NBR_SAVED_FRAMES) {
+    auto firstElem = stream.buffers.front();
+    TRACELOG << "Unreferencing buffer: " << firstElem.id << endl;
+    stream.buffers.pop_front();
 
-    frameQueue.pop();
-
-    // Free the data from the frame about to be deleted
-    auto frame = frameMap[firstElem];
-
-    if (!(vdo_stream_buffer_unref(frame.vdo_stream, &frame.vdo_buffer, NULL))) {
+    // Free the buffer
+    if (!(vdo_stream_buffer_unref(stream.vdo_stream, &firstElem.buffer,
+                                  NULL))) {
       ERRORLOG << "Unreferencing buffer failed" << endl;
     }
-
-    frameMap.erase(firstElem);
   }
 
   pthread_mutex_unlock(&mutex);
 }
 
-bool Capture::SetResponseToSavedFrame(uint32_t frameRef,
+bool Capture::SetResponseToSavedFrame(StreamAndBuffers &stream,
+                                      uint32_t frameRef,
                                       GetFrameResponse *response) {
   pthread_mutex_lock(&mutex);
 
-  // Check if the reference exists among saved ones
-  if (frameMap.count(frameRef) < 1) {
-    pthread_mutex_unlock(&mutex);
+  // Find the buffer
+  auto buffer = find_if(stream.buffers.begin(), stream.buffers.end(),
+                        [&](const Buffer &buf) { return buf.id == frameRef; });
+  if (buffer == stream.buffers.end()) {
     return false;
-  };
+  }
 
-  auto frame = frameMap[frameRef];
-  TRACELOG << "Found saved vdo buffer. ID: " << vdo_buffer_get_id(frame.vdo_buffer) << endl;
+  TRACELOG << "Found saved vdo buffer. ID: " << buffer->id << endl;
 
-  auto data = vdo_buffer_get_data(frame.vdo_buffer);
+  auto data = vdo_buffer_get_data(buffer->buffer);
   if (nullptr == data) {
     ERRORLOG << "Unreferencing buffer failed" << endl;
     return false;
   }
 
-  response->set_data(data, frame.size);
-  response->set_size(frame.size);
+  response->set_data(data, buffer->size);
+  response->set_size(buffer->size);
 
   pthread_mutex_unlock(&mutex);
 
@@ -233,15 +227,15 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   if (currentStream == streams.end()) {
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
-  VdoStream *stream = currentStream->second;
+  VdoStream *stream = currentStream->second.vdo_stream;
 
-  uint32_t frame_ref = request->frame_reference();
-  if (frame_ref > 0) {
-    if (!SetResponseToSavedFrame(frame_ref, response)) {
+  uint32_t frameRef = request->frame_reference();
+  if (frameRef > 0) {
+    if (!SetResponseToSavedFrame(currentStream->second, frameRef, response)) {
       return OutputError("Getting frame from previous inference call failed",
                          StatusCode::NOT_FOUND, error);
     } else {
-      TRACELOG << "Getting frame " << frame_ref
+      TRACELOG << "Getting frame " << frameRef
                << " from previous inference call" << endl;
       return Status::OK;
     }

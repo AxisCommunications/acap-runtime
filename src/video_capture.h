@@ -6,8 +6,8 @@
 #include <vdo-buffer.h>
 #include <vdo-stream.h>
 
+#include <deque>
 #include <map>
-#include <queue>
 
 #include "videocapture.grpc.pb.h"
 
@@ -18,10 +18,15 @@ using namespace videocapture::v1;
 namespace acap_runtime {
 
 typedef struct {
-  VdoStream* vdo_stream;
-  VdoBuffer* vdo_buffer;
+  uint32_t id;
+  VdoBuffer* buffer;
   size_t size;
-} frame;
+} Buffer;
+
+typedef struct {
+  VdoStream* vdo_stream;
+  deque<Buffer> buffers;
+} StreamAndBuffers;
 
 class Capture final : public VideoCapture::Service {
  public:
@@ -41,11 +46,13 @@ class Capture final : public VideoCapture::Service {
                             uint32_t& frameRef);
 
  private:
-  uint32_t SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size);
+  uint32_t SaveFrame(StreamAndBuffers& stream, VdoBuffer* vdoBuffer,
+                     size_t size);
 
-  bool SetResponseToSavedFrame(uint32_t frameRef, GetFrameResponse* response);
+  bool SetResponseToSavedFrame(StreamAndBuffers& stream, uint32_t frameRef,
+                               GetFrameResponse* response);
 
-  void MaybeUnrefOldestFrame();
+  void MaybeUnrefOldestFrame(StreamAndBuffers& stream);
 
   Status OutputError(const char* msg, StatusCode code);
   Status OutputError(const char* msg, StatusCode code, GError* error);
@@ -53,10 +60,7 @@ class Capture final : public VideoCapture::Service {
   string GetTypeString(VdoFrame *frame);
 
   bool _verbose;
-  map<uint, VdoStream*> streams;
-  map<string, VdoBuffer*> buffers;
-  map<uint32_t, frame> frameMap;
-  queue<uint32_t> frameQueue;
+  map<uint, StreamAndBuffers> streams;
   const uint32_t MAX_NBR_SAVED_FRAMES = 3;
   pthread_mutex_t mutex;
 };

@@ -29,6 +29,7 @@ acap-build . -m manifest-armv7hf.json
 # Copy binaries to device
 
 sshpass -p pass ssh root@$cam 'killall acapruntime'
+sleep 1
 # sshpass -p pass ssh root@$cam 'killall acapruntimetest'
 
 sshpass -p pass scp ./acapruntime root@$cam:/usr/local/packages/acapruntime/acapruntime
@@ -57,23 +58,28 @@ infer() {
     apis/grpcurl --import-path /opt/app_host/apis --proto prediction_service.proto --plaintext -d \
     '{ "stream_id":'$stream', "inputs": { "data": { "tensor_shape": { "dim": [{"size": 1}, {"size": '$width'}, {"size": '$height'}, {"size": 2}] } }  }, "model_spec": { "name": "/var/spool/storage/SD_DISK/'$model'"  }  }' \
     $cam:$port tensorflow.serving.PredictionService/Predict \
-    | tee /dev/stderr \
-    | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \
-    | base64 --decode \
-    | od --format u1 -A d 
+    | jq --raw-output '.frameReference' > temp
+    # | tee /dev/stderr \
+    # | jq --raw-output '.outputs."MobilenetV2/Predictions/Softmax".tensorContent' \
+    # | base64 --decode \
+    # | od --format u1 -A d 
+
+    frameref=$(cat temp)
 }
 
 infer
 infer
-# infer
-# infer
+infer
+infer
 
-# apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 4}' $cam:$port videocapture.v1.VideoCapture/GetFrame \
-# | jq --raw-output .data | base64 --decode > img.yuv
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 4}' $cam:$port videocapture.v1.VideoCapture/GetFrame \
+| jq --raw-output .data | base64 --decode > img.yuv
 
-# infer
+infer
 
-apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": 2}' $cam:$port videocapture.v1.VideoCapture/GetFrame \
+frameref=$(expr $frameref - 2)
+
+apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream', "frame_reference": '$frameref'}' $cam:$port videocapture.v1.VideoCapture/GetFrame \
 | jq --raw-output .data | base64 --decode > img.yuv
 
 apis/grpcurl --import-path /opt/app_host/apis --proto videocapture.proto --plaintext -d '{ "stream_id": '$stream' }' \
