@@ -41,16 +41,16 @@ Status Capture::NewStream(ServerContext *context,
 
   GError *error = nullptr;
   const StreamSettings &settings = request->settings();
-  VdoMap *settings_map = vdo_map_new();
+  VdoMap *settingsMap = vdo_map_new();
 
-  vdo_map_set_uint32(settings_map, "format", settings.format());
-  vdo_map_set_uint32(settings_map, "buffer.strategy",
+  vdo_map_set_uint32(settingsMap, "format", settings.format());
+  vdo_map_set_uint32(settingsMap, "buffer.strategy",
                      VDO_BUFFER_STRATEGY_INFINITE);
-  vdo_map_set_uint32(settings_map, "width", settings.width());
-  vdo_map_set_uint32(settings_map, "height", settings.height());
-  vdo_map_set_uint32(settings_map, "framerate", settings.framerate());
+  vdo_map_set_uint32(settingsMap, "width", settings.width());
+  vdo_map_set_uint32(settingsMap, "height", settings.height());
+  vdo_map_set_uint32(settingsMap, "framerate", settings.framerate());
 
-  VdoStream *stream = vdo_stream_new(settings_map, nullptr, &error);
+  VdoStream *stream = vdo_stream_new(settingsMap, nullptr, &error);
   if (!stream) {
     return OutputError("Stream creation failed", StatusCode::INTERNAL, error);
   }
@@ -68,14 +68,14 @@ Status Capture::NewStream(ServerContext *context,
 
   g_clear_object(&info);
 
-  uint stream_id = vdo_stream_get_id(stream);
-  streams.emplace(stream_id, stream);
+  uint streamId = vdo_stream_get_id(stream);
+  streams.emplace(streamId, stream);
 
   if (!vdo_stream_start(stream, &error)) {
     return OutputError("Starting stream failed", StatusCode::INTERNAL);
   }
 
-  response->set_stream_id(stream_id);
+  response->set_stream_id(streamId);
   return Status::OK;
 }
 
@@ -84,14 +84,14 @@ Status Capture::DeleteStream(ServerContext *context,
                              DeleteStreamResponse *response) {
   TRACELOG << "Deleting VDO stream: " << request->stream_id() << endl;
 
-  auto current_stream = streams.find(request->stream_id());
-  if (current_stream == streams.end()) {
+  auto currentStream = streams.find(request->stream_id());
+  if (currentStream == streams.end()) {
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
 
-  VdoStream *stream = current_stream->second;
+  VdoStream *stream = currentStream->second;
 
-  streams.erase(current_stream);
+  streams.erase(currentStream);
   vdo_stream_stop(stream);
   g_object_unref(stream);
 
@@ -99,16 +99,16 @@ Status Capture::DeleteStream(ServerContext *context,
 }
 
 bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
-                                   size_t &size, uint32_t &frame_ref) {
+                                   size_t &size, uint32_t &frameRef) {
   GError *error = nullptr;
 
-  auto current_stream = streams.find(stream);
-  if (current_stream == streams.end()) {
+  auto currentStream = streams.find(stream);
+  if (currentStream == streams.end()) {
     return false;
   }
-  VdoStream *vdo_stream = current_stream->second;
+  VdoStream *vdoStream = currentStream->second;
 
-  VdoMap *info = vdo_stream_get_info(vdo_stream, &error);
+  VdoMap *info = vdo_stream_get_info(vdoStream, &error);
   if (!info) {
     ERRORLOG << "Getting stream info failed" << endl;
     return false;
@@ -122,7 +122,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
 
   MaybeUnrefOldestFrame();
 
-  VdoBuffer *buffer = vdo_stream_get_buffer(vdo_stream, &error);
+  VdoBuffer *buffer = vdo_stream_get_buffer(vdoStream, &error);
   if (buffer == nullptr) {
     ERRORLOG << "Unable to get VDO buffer. Stream: " << stream << endl;
     return false;
@@ -130,14 +130,14 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   VdoFrame *frame = vdo_buffer_get_frame(buffer);
   size = vdo_frame_get_size(frame);
 
-  void *new_data = vdo_buffer_get_data(buffer);
-  if (nullptr == new_data) {
-    if (!(vdo_stream_buffer_unref(vdo_stream, &buffer, &error)))
+  void *newData = vdo_buffer_get_data(buffer);
+  if (nullptr == newData) {
+    if (!(vdo_stream_buffer_unref(vdoStream, &buffer, &error)))
       ERRORLOG << "Unreferencing buffer failed" << endl;
     return false;
   }
 
-  *data = new_data;
+  *data = newData;
 
   // *data = malloc(size);
   // memcpy(*data, new_data, size);
@@ -148,7 +148,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   //   return false;
   // }
 
-  frame_ref = SaveFrame(vdo_stream, buffer, size);
+  frameRef = SaveFrame(vdoStream, buffer, size);
 
   return true;
 }
@@ -164,50 +164,50 @@ uint32_t Capture::SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size) {
 
   // Increment the reference number or set it to one if we have no previous
   // frame
-  uint32_t frame_ref = frame_queue.empty() ? 1 : frame_queue.back() + 1;
+  uint32_t frameRef = frameQueue.empty() ? 1 : frameQueue.back() + 1;
 
-  frame_map.insert(make_pair(frame_ref, frame{stream, buffer, size}));
-  frame_queue.push(frame_ref);
-  TRACELOG << "Queue size: " << frame_queue.size() << endl;
+  frameMap.insert(make_pair(frameRef, frame{stream, buffer, size}));
+  frameQueue.push(frameRef);
+  TRACELOG << "Queue size: " << frameQueue.size() << endl;
 
   pthread_mutex_unlock(&mutex);
 
-  return frame_ref;
+  return frameRef;
 }
 
 void Capture::MaybeUnrefOldestFrame() {
   pthread_mutex_lock(&mutex);
 
-  if (frame_queue.size() >= MAX_NBR_SAVED_FRAMES) {
-    uint32_t first_elem = frame_queue.front();
-    TRACELOG << "Unreferencing buffer: " << first_elem << endl;
+  if (frameQueue.size() >= MAX_NBR_SAVED_FRAMES) {
+    uint32_t firstElem = frameQueue.front();
+    TRACELOG << "Unreferencing buffer: " << firstElem << endl;
 
-    frame_queue.pop();
+    frameQueue.pop();
 
     // Free the data from the frame about to be deleted
-    auto frame = frame_map[first_elem];
+    auto frame = frameMap[firstElem];
 
     if (!(vdo_stream_buffer_unref(frame.vdo_stream, &frame.vdo_buffer, NULL))) {
       ERRORLOG << "Unreferencing buffer failed" << endl;
     }
 
-    frame_map.erase(first_elem);
+    frameMap.erase(firstElem);
   }
 
   pthread_mutex_unlock(&mutex);
 }
 
-bool Capture::SetResponseToSavedFrame(uint32_t frame_ref,
+bool Capture::SetResponseToSavedFrame(uint32_t frameRef,
                                       GetFrameResponse *response) {
   pthread_mutex_lock(&mutex);
 
   // Check if the reference exists among saved ones
-  if (frame_map.count(frame_ref) < 1) {
+  if (frameMap.count(frameRef) < 1) {
     pthread_mutex_unlock(&mutex);
     return false;
   };
 
-  auto frame = frame_map[frame_ref];
+  auto frame = frameMap[frameRef];
   TRACELOG << "Found saved vdo buffer. ID: " << vdo_buffer_get_id(frame.vdo_buffer) << endl;
 
   auto data = vdo_buffer_get_data(frame.vdo_buffer);
@@ -229,11 +229,11 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   (void)context;
   GError *error = nullptr;
 
-  auto current_stream = streams.find(request->stream_id());
-  if (current_stream == streams.end()) {
+  auto currentStream = streams.find(request->stream_id());
+  if (currentStream == streams.end()) {
     return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
   }
-  VdoStream *stream = current_stream->second;
+  VdoStream *stream = currentStream->second;
 
   uint32_t frame_ref = request->frame_reference();
   if (frame_ref > 0) {
@@ -286,14 +286,14 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   //   StatusCode::INTERNAL);
   // }
 
-  void *buffer_data = vdo_buffer_get_data(buffer);
-  if (nullptr == buffer_data) {
+  void *bufferData = vdo_buffer_get_data(buffer);
+  if (nullptr == bufferData) {
     return OutputError("Get buffer failed", StatusCode::INTERNAL);
   }
 
   // memcpy(addr, buffer_data, size);
 
-  response->set_data(buffer_data, size);
+  response->set_data(bufferData, size);
   // response->set_file_name(ss.str());
 
   response->set_timestamp(vdo_frame_get_timestamp(frame));

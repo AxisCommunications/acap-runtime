@@ -21,7 +21,6 @@ typedef struct {
   VdoStream* vdo_stream;
   VdoBuffer* vdo_buffer;
   size_t size;
-  //void* data;
 } frame;
 
 class Capture final : public VideoCapture::Service {
@@ -39,12 +38,12 @@ class Capture final : public VideoCapture::Service {
                   GetFrameResponse* response);
 
   bool GetImgDataFromStream(unsigned int stream, void** data, size_t& size,
-                            uint32_t& frame_ref);
+                            uint32_t& frameRef);
 
  private:
   uint32_t SaveFrame(VdoStream* stream, VdoBuffer* buffer, size_t size);
 
-  bool SetResponseToSavedFrame(uint32_t frame_ref, GetFrameResponse *response);
+  bool SetResponseToSavedFrame(uint32_t frameRef, GetFrameResponse* response);
 
   void MaybeUnrefOldestFrame();
 
@@ -56,8 +55,8 @@ class Capture final : public VideoCapture::Service {
   bool _verbose;
   map<uint, VdoStream*> streams;
   map<string, VdoBuffer*> buffers;
-  map<uint32_t, frame> frame_map;
-  queue<uint32_t> frame_queue;
+  map<uint32_t, frame> frameMap;
+  queue<uint32_t> frameQueue;
   const uint32_t MAX_NBR_SAVED_FRAMES = 3;
   pthread_mutex_t mutex;
 };
