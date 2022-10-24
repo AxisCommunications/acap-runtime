@@ -52,7 +52,7 @@ class Capture final : public VideoCapture::Service {
   bool GetDataFromSavedFrame(Stream& stream, uint32_t frameRef,
                              GetFrameResponse* response);
 
-  void MaybeUnrefOldestFrame(Stream& stream);
+  void MaybeDeleteOldestFrame(Stream& stream);
 
   void PrintStreamInfo(VdoStream* stream);
 
