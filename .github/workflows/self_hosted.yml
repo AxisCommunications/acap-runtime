@@ -1,0 +1,17 @@
+---
+name: temp testing self self-hosted
+
+on: [push]
+
+jobs:
+  job1:
+    name: The first job
+    runs-on: self-hosted
+    steps:
+      - run: echo "🎉 This is a self-hosted job triggered by a ${{ github.event_name }} event."
+  build:
+    needs: job1
+
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 This is a github hosted job."
