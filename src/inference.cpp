@@ -755,17 +755,7 @@ bool Inference::SetupPreprocessing(
     TRACELOG << "Model image size " << modelWidth << "x" << modelHeight << endl;
 
     bool isMemoryMappedFile = tp.dtype() == tensorflow::DataType::DT_STRING;
-
-    // TODO remove option of getting the stream from the uint32_val
-    bool isRequestForImageFromStream = false;
-    uint32_t requestStream = 0;
-    if (stream != 0) {
-      isRequestForImageFromStream = true;
-      requestStream = stream;
-    } else if (tp.dtype() == tensorflow::DataType::DT_UINT32) {
-      isRequestForImageFromStream = true;
-      requestStream = tp.uint32_val(0);
-    }
+    bool isRequestForImageFromStream = stream != 0;
 
     // Convert request image to file descriptor
     FILE* tmpFile = nullptr;
@@ -779,12 +769,11 @@ bool Inference::SetupPreprocessing(
         return false;
       }
     } else if (isRequestForImageFromStream) {
-      // auto stream = tp.uint32_val(0);
-      TRACELOG << "Got stream " << requestStream << endl;
+      TRACELOG << "Got stream " << stream << endl;
 
       size_t size;
       void* data;
-      if (!_captureService->GetImgDataFromStream(requestStream, &data, size,
+      if (!_captureService->GetImgDataFromStream(stream, &data, size,
                                                  frame_ref)) {
         TRACELOG << "Could not get data from stream" << endl;
         return false;
@@ -797,9 +786,7 @@ bool Inference::SetupPreprocessing(
         TRACELOG << "Failed creating tmp file" << size << endl;
         return false;
       }
-    }
-    else
-    {
+    } else {
       TRACELOG << "Input ByteSize: " << tp.tensor_content().size() << endl;
       if (!CreateTmpFile(
         tmpFile,
