@@ -17,13 +17,13 @@ using namespace std;
 
 #define ERRORLOG cerr << "ERROR in VideoCapture: "
 #define TRACELOG \
-  if (_verbose) cout << "TRACE in VideoCapture: "
+  if (verbose) cout << "TRACE in VideoCapture: "
 
 namespace acap_runtime {
 
 // Initialize Parameter Service
 bool Capture::Init(const bool verbose) {
-  _verbose = verbose;
+  this->verbose = verbose;
   TRACELOG << "Init" << endl;
 
   if (pthread_mutex_init(&mutex, NULL) != 0) {
@@ -69,8 +69,7 @@ Status Capture::NewStream(ServerContext *context,
   g_clear_object(&info);
 
   uint streamId = vdo_stream_get_id(stream);
-  streams.emplace(streamId, StreamAndBuffers{stream, deque<Buffer>{}});
-  // streams.emplace(streamId, stream);
+  streams.emplace(streamId, Stream{stream, deque<Buffer>{}});
 
   if (!vdo_stream_start(stream, &error)) {
     return OutputError("Starting stream failed", StatusCode::INTERNAL);
@@ -148,8 +147,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   return true;
 }
 
-uint32_t Capture::SaveFrame(StreamAndBuffers &stream, VdoBuffer *vdoBuffer,
-                            size_t size) {
+uint32_t Capture::SaveFrame(Stream &stream, VdoBuffer *vdoBuffer, size_t size) {
   pthread_mutex_lock(&mutex);
 
   // Increment frame reference by 1 or start at 1
@@ -166,7 +164,7 @@ uint32_t Capture::SaveFrame(StreamAndBuffers &stream, VdoBuffer *vdoBuffer,
   return frameRef;
 }
 
-void Capture::MaybeUnrefOldestFrame(StreamAndBuffers &stream) {
+void Capture::MaybeUnrefOldestFrame(Stream &stream) {
   pthread_mutex_lock(&mutex);
 
   if (stream.buffers.size() >= MAX_NBR_SAVED_FRAMES) {
@@ -175,7 +173,7 @@ void Capture::MaybeUnrefOldestFrame(StreamAndBuffers &stream) {
     stream.buffers.pop_front();
 
     // Free the buffer
-    if (!(vdo_stream_buffer_unref(stream.vdo_stream, &firstElem.buffer,
+    if (!(vdo_stream_buffer_unref(stream.vdo_stream, &firstElem.vdo_buffer,
                                   NULL))) {
       ERRORLOG << "Unreferencing buffer failed" << endl;
     }
@@ -184,8 +182,7 @@ void Capture::MaybeUnrefOldestFrame(StreamAndBuffers &stream) {
   pthread_mutex_unlock(&mutex);
 }
 
-bool Capture::SetResponseToSavedFrame(StreamAndBuffers &stream,
-                                      uint32_t frameRef,
+bool Capture::SetResponseToSavedFrame(Stream &stream, uint32_t frameRef,
                                       GetFrameResponse *response) {
   pthread_mutex_lock(&mutex);
 
@@ -198,7 +195,7 @@ bool Capture::SetResponseToSavedFrame(StreamAndBuffers &stream,
 
   TRACELOG << "Found saved vdo buffer. ID: " << buffer->id << endl;
 
-  auto data = vdo_buffer_get_data(buffer->buffer);
+  auto data = vdo_buffer_get_data(buffer->vdo_buffer);
   if (nullptr == data) {
     ERRORLOG << "Unreferencing buffer failed" << endl;
     return false;
@@ -227,7 +224,7 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   if (frameRef > 0) {
     if (!SetResponseToSavedFrame(currentStream->second, frameRef, response)) {
       return OutputError("Getting frame from previous inference call failed",
-                         StatusCode::NOT_FOUND, error);
+                         StatusCode::NOT_FOUND);
     } else {
       TRACELOG << "Getting frame " << frameRef
                << " from previous inference call" << endl;
@@ -258,32 +255,12 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   ss << "/s" << vdo_stream_get_id(stream) << '-'
      << vdo_frame_get_timestamp(frame);
 
-  // TRACELOG << "file name: " << ss.str().c_str() << endl;
-
-  // int fd = shm_open(ss.str().c_str(), O_CREAT | O_RDWR, S_IWUSR);
-  // if (fd == -1) {
-  //   return OutputError("Unable to to open shared memory file",
-  //   StatusCode::INTERNAL, error);
-  // }
-  // // TODO Don't ignore the return value
-  // (void)(ftruncate(fd, size) + 1);
-
-  // void *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  // if (addr == MAP_FAILED) {
-  //   return OutputError("Failed to create memory mapping",
-  //   StatusCode::INTERNAL);
-  // }
-
   void *bufferData = vdo_buffer_get_data(buffer);
   if (nullptr == bufferData) {
     return OutputError("Get buffer failed", StatusCode::INTERNAL);
   }
 
-  // memcpy(addr, buffer_data, size);
-
   response->set_data(bufferData, size);
-  // response->set_file_name(ss.str());
-
   response->set_timestamp(vdo_frame_get_timestamp(frame));
   response->set_custom_timestamp(vdo_frame_get_custom_timestamp(frame));
   response->set_size(size);
@@ -304,8 +281,7 @@ Status Capture::OutputError(const char *msg, StatusCode code) {
 
 Status Capture::OutputError(const char *msg, StatusCode code, GError *error) {
   stringstream ss;
-  ss << " ";
-  ss << msg
+  ss << " " << msg
      << ((nullptr != error) ? (string(" (") + error->message + ")") : "");
 
   ERRORLOG << ss.str() << endl;
