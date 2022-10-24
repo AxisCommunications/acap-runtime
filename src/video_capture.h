@@ -49,10 +49,12 @@ class Capture final : public VideoCapture::Service {
  private:
   uint32_t SaveFrame(Stream& stream, VdoBuffer* vdoBuffer, size_t size);
 
-  bool SetResponseToSavedFrame(Stream& stream, uint32_t frameRef,
-                               GetFrameResponse* response);
+  bool GetDataFromSavedFrame(Stream& stream, uint32_t frameRef,
+                             GetFrameResponse* response);
 
   void MaybeUnrefOldestFrame(Stream& stream);
+
+  void PrintStreamInfo(VdoStream* stream);
 
   Status OutputError(const char* msg, StatusCode code);
   Status OutputError(const char* msg, StatusCode code, GError* error);

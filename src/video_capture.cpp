@@ -41,8 +41,8 @@ Status Capture::NewStream(ServerContext *context,
 
   GError *error = nullptr;
   const StreamSettings &settings = request->settings();
-  VdoMap *settingsMap = vdo_map_new();
 
+  VdoMap *settingsMap = vdo_map_new();
   vdo_map_set_uint32(settingsMap, "format", settings.format());
   vdo_map_set_uint32(settingsMap, "buffer.strategy",
                      VDO_BUFFER_STRATEGY_INFINITE);
@@ -54,28 +54,19 @@ Status Capture::NewStream(ServerContext *context,
   if (!stream) {
     return OutputError("Stream creation failed", StatusCode::INTERNAL, error);
   }
-
-  VdoMap *info = vdo_stream_get_info(stream, &error);
-  if (!info) {
-    g_clear_object(&stream);
-    return OutputError("Getting stream info failed", StatusCode::INTERNAL,
-                       error);
+  if (verbose) {
+    PrintStreamInfo(stream);
   }
 
-  TRACELOG << "Starting stream:" << vdo_map_get_uint32(info, "width", 0) << 'x'
-           << vdo_map_get_uint32(info, "height", 0) << ' '
-           << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
-
-  g_clear_object(&info);
-
-  uint streamId = vdo_stream_get_id(stream);
+  unsigned int streamId = vdo_stream_get_id(stream);
   streams.emplace(streamId, Stream{stream, deque<Buffer>{}});
 
   if (!vdo_stream_start(stream, &error)) {
-    return OutputError("Starting stream failed", StatusCode::INTERNAL);
+    return OutputError("Starting stream failed", StatusCode::INTERNAL, error);
   }
 
   response->set_stream_id(streamId);
+
   return Status::OK;
 }
 
@@ -86,7 +77,8 @@ Status Capture::DeleteStream(ServerContext *context,
 
   auto currentStream = streams.find(request->stream_id());
   if (currentStream == streams.end()) {
-    return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
+    return OutputError("Deleting stream failed: stream not found",
+                       StatusCode::FAILED_PRECONDITION);
   }
 
   VdoStream *stream = currentStream->second.vdo_stream;
@@ -98,27 +90,23 @@ Status Capture::DeleteStream(ServerContext *context,
   return Status::OK;
 }
 
+// Capture a frame from a stream
 bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
                                    size_t &size, uint32_t &frameRef) {
   GError *error = nullptr;
 
+  TRACELOG << "Getting frame from stream " << stream << endl;
+
   auto currentStream = streams.find(stream);
   if (currentStream == streams.end()) {
+    ERRORLOG << "Stream " << stream << " not found" << endl;
     return false;
   }
+
   VdoStream *vdoStream = currentStream->second.vdo_stream;
-
-  VdoMap *info = vdo_stream_get_info(vdoStream, &error);
-  if (!info) {
-    ERRORLOG << "Getting stream info failed" << endl;
-    return false;
+  if (verbose) {
+    PrintStreamInfo(vdoStream);
   }
-
-  TRACELOG << "Stream info:" << vdo_map_get_uint32(info, "width", 0) << 'x'
-           << vdo_map_get_uint32(info, "height", 0) << ' '
-           << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
-
-  g_clear_object(&info);
 
   MaybeUnrefOldestFrame(currentStream->second);
 
@@ -147,6 +135,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream, void **data,
   return true;
 }
 
+// Save a frame in memory so that a client can request it later
 uint32_t Capture::SaveFrame(Stream &stream, VdoBuffer *vdoBuffer, size_t size) {
   pthread_mutex_lock(&mutex);
 
@@ -164,16 +153,17 @@ uint32_t Capture::SaveFrame(Stream &stream, VdoBuffer *vdoBuffer, size_t size) {
   return frameRef;
 }
 
+// Remove the oldest frame if the queue is getting full
 void Capture::MaybeUnrefOldestFrame(Stream &stream) {
   pthread_mutex_lock(&mutex);
 
   if (stream.buffers.size() >= MAX_NBR_SAVED_FRAMES) {
-    auto firstElem = stream.buffers.front();
-    TRACELOG << "Unreferencing buffer: " << firstElem.id << endl;
+    auto oldestBuffer = stream.buffers.front();
+    TRACELOG << "Unreferencing buffer: " << oldestBuffer.id << endl;
     stream.buffers.pop_front();
 
     // Free the buffer
-    if (!(vdo_stream_buffer_unref(stream.vdo_stream, &firstElem.vdo_buffer,
+    if (!(vdo_stream_buffer_unref(stream.vdo_stream, &oldestBuffer.vdo_buffer,
                                   NULL))) {
       ERRORLOG << "Unreferencing buffer failed" << endl;
     }
@@ -182,22 +172,24 @@ void Capture::MaybeUnrefOldestFrame(Stream &stream) {
   pthread_mutex_unlock(&mutex);
 }
 
-bool Capture::SetResponseToSavedFrame(Stream &stream, uint32_t frameRef,
-                                      GetFrameResponse *response) {
+// Find a frame based on the frame reference and put its data into the response
+bool Capture::GetDataFromSavedFrame(Stream &stream, uint32_t frameRef,
+                                    GetFrameResponse *response) {
   pthread_mutex_lock(&mutex);
 
   // Find the buffer
   auto buffer = find_if(stream.buffers.begin(), stream.buffers.end(),
                         [&](const Buffer &buf) { return buf.id == frameRef; });
   if (buffer == stream.buffers.end()) {
+    ERRORLOG << "Frame reference " << frameRef << " not found" << endl;
     return false;
   }
 
-  TRACELOG << "Found saved vdo buffer. ID: " << buffer->id << endl;
+  TRACELOG << "Found saved VDO buffer. ID: " << buffer->id << endl;
 
   auto data = vdo_buffer_get_data(buffer->vdo_buffer);
   if (nullptr == data) {
-    ERRORLOG << "Unreferencing buffer failed" << endl;
+    ERRORLOG << "Getting data from saved buffer failed" << endl;
     return false;
   }
 
@@ -211,18 +203,21 @@ bool Capture::SetResponseToSavedFrame(Stream &stream, uint32_t frameRef,
 
 Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
                          GetFrameResponse *response) {
-  (void)context;
   GError *error = nullptr;
 
   auto currentStream = streams.find(request->stream_id());
   if (currentStream == streams.end()) {
-    return OutputError("Stream not found", StatusCode::FAILED_PRECONDITION);
+    return OutputError("Getting frame failed. Stream not found",
+                       StatusCode::FAILED_PRECONDITION);
   }
   VdoStream *stream = currentStream->second.vdo_stream;
+  if (verbose) {
+    PrintStreamInfo(stream);
+  }
 
   uint32_t frameRef = request->frame_reference();
   if (frameRef > 0) {
-    if (!SetResponseToSavedFrame(currentStream->second, frameRef, response)) {
+    if (!GetDataFromSavedFrame(currentStream->second, frameRef, response)) {
       return OutputError("Getting frame from previous inference call failed",
                          StatusCode::NOT_FOUND);
     } else {
@@ -232,28 +227,12 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
     }
   }
 
-  VdoMap *info = vdo_stream_get_info(stream, &error);
-  if (!info) {
-    return OutputError("Getting stream info failed", StatusCode::INTERNAL,
-                       error);
-  }
-
-  TRACELOG << "Stream info:" << vdo_map_get_uint32(info, "width", 0) << 'x'
-           << vdo_map_get_uint32(info, "height", 0) << ' '
-           << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
-
-  g_clear_object(&info);
-
   VdoBuffer *buffer = vdo_stream_get_buffer(stream, &error);
   if (buffer == nullptr) {
     return OutputError("Unable to get VDO buffer", StatusCode::INTERNAL, error);
   }
   VdoFrame *frame = vdo_buffer_get_frame(buffer);
   gsize size = vdo_frame_get_size(frame);
-
-  stringstream ss;
-  ss << "/s" << vdo_stream_get_id(stream) << '-'
-     << vdo_frame_get_timestamp(frame);
 
   void *bufferData = vdo_buffer_get_data(buffer);
   if (nullptr == bufferData) {
@@ -273,6 +252,26 @@ Status Capture::GetFrame(ServerContext *context, const GetFrameRequest *request,
   }
 
   return Status::OK;
+}
+
+void Capture::PrintStreamInfo(VdoStream *stream) {
+  GError *error = nullptr;
+  VdoMap *info = vdo_stream_get_info(stream, &error);
+
+  if (!info) {
+    ERRORLOG << "Getting stream info failed" << endl;
+    goto end;
+    // return OutputError("Getting stream info failed", StatusCode::INTERNAL,
+    //                    error);
+  }
+
+  TRACELOG << "Stream info:" << vdo_map_get_uint32(info, "width", 0) << 'x'
+           << vdo_map_get_uint32(info, "height", 0) << ' '
+           << vdo_map_get_uint32(info, "framerate", 0) << "fps" << endl;
+
+end:
+  g_clear_object(&info);
+  g_clear_error(&error);
 }
 
 Status Capture::OutputError(const char *msg, StatusCode code) {
