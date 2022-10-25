@@ -40,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: Dockerfile.${{ matrix.name }}
+          file: Dockerfile.${{ matrix.arch }}
           build-args: TEST=true
           load: true
           tags: ${{ steps.meta.outputs.tags }}-test
