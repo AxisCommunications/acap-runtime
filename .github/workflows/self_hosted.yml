@@ -33,12 +33,11 @@ jobs:
           pip install pytest
       - name: Run test script
         run: pytest -s ./.github/workflows/test_acapruntimetest.py
-
-clean_up:
-    name: Cleanup after test run
-    if: ${{ always() }}
-    needs: [docker_image, test_image]
-    runs-on: self-hosted
-    steps:
-      - run: docker image rm ${{ env.ACAP_IMAGE }}
+  clean_up:
+      name: Cleanup after test run
+      if: ${{ always() }}
+      needs: [docker_image, test_image]
+      runs-on: self-hosted
+      steps:
+        - run: docker image rm ${{ env.ACAP_IMAGE }}
 
