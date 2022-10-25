@@ -3,16 +3,24 @@ name: temp testing self self-hosted
 
 on: [push]
 
+env:
+  ACAP_IMAGE: "axis-ecp/acap-runtime:armv7hf-test"
+
 jobs:
-  job1:
-    name: The first job
+  docker_image:
+    name: pull docker image
+    runs-on: self-hosted
+    steps:
+      - run: docker pull ${{ env.ACAP_IMAGE }}
+  test_image:
+    name: test docker image
+    needs: docker_image
     runs-on: self-hosted
     env:
       AXIS_TARGET_USER: "root"
       AXIS_TARGET_PASS: "pass"
 
     steps:
-      - run: echo "🎉 This is a self-hosted job triggered by a ${{ github.event_name }} event."
       -
         name: Checkout repo
         uses: actions/checkout@v3
@@ -23,14 +31,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-      - run: docker pull axisecp/acap-runtime:armv7hf-test
       - name: Run test script
         run: pytest -s ./.github/workflows/test_acapruntimetest.py
 
-      - run: docker image rm axisecp/acap-runtime:armv7hf-test
-  build:
-    needs: job1
-
-    runs-on: ubuntu-latest
+clean_up:
+    name: Cleanup after test run
+    if: ${{ always() }}
+    needs: [docker_image, test_image]
+    runs-on: self-hosted
     steps:
-      - run: echo "🎉 This is a github hosted job."
+      - run: docker image rm ${{ env.ACAP_IMAGE }}
+
