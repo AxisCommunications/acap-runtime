@@ -9,8 +9,14 @@ jobs:
     runs-on: self-hosted
     steps:
       - run: echo "🎉 This is a self-hosted job triggered by a ${{ github.event_name }} event."
-      - run: docker pull axisecp/acap-runtime:armv7hf-test
-      - run: docker image rm axisecp/acap-runtime:armv7hf-test
+      -
+        name: Checkout repo
+        uses: actions/checkout@v3
+      -
+        name: Run test script
+        run: pytest -s ./.github/workflows/test_acapruntimetest.py
+      #- run: docker pull axisecp/acap-runtime:armv7hf-test
+      #- run: docker image rm axisecp/acap-runtime:armv7hf-test
   build:
     needs: job1
 
