@@ -7,6 +7,10 @@ jobs:
   job1:
     name: The first job
     runs-on: self-hosted
+    env:
+      AXIS_TARGET_USER: "root"
+      AXIS_TARGET_PASS: "pass"
+
     steps:
       - run: echo "🎉 This is a self-hosted job triggered by a ${{ github.event_name }} event."
       -
@@ -15,14 +19,17 @@ jobs:
       -
         name: Setup python
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
       - name: Install pytest
         run: |
           python -m pip install --upgrade pip
           pip install pytest
+      - run: docker pull axisecp/acap-runtime:armv7hf-test
       - name: Run test script
         run: pytest -s ./.github/workflows/test_acapruntimetest.py
-      #- run: docker pull axisecp/acap-runtime:armv7hf-test
-      #- run: docker image rm axisecp/acap-runtime:armv7hf-test
+
+      - run: docker image rm axisecp/acap-runtime:armv7hf-test
   build:
     needs: job1
 
