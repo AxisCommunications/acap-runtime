@@ -7,11 +7,6 @@ from requests.auth import HTTPDigestAuth
 import subprocess
 import time
 
-AXIS_TARGET_ADDR="172.27.64.8"
-AXIS_TARGET_USER="root"
-AXIS_TARGET_PASS="pass"
-
-ACAP_DOCKER_IMAGE_NAME = r"axisecp/acap-runtime:armv7hf-test"
 ACAP_SPECIFIC_NAME = "acapruntimetest"
 
 ACAP_LOG_START_MATCH = "Running main() from"
@@ -24,9 +19,9 @@ def get_env(key):
         print(f"{key} not found")
 
 def acap_ctrl(action, wait = 0,
-        device_ip=AXIS_TARGET_ADDR,
-        device_pass=AXIS_TARGET_PASS,
-        docker_image_name=ACAP_DOCKER_IMAGE_NAME):
+        device_ip=get_env('AXIS_TARGET_ADDR'),
+        device_pass=get_env('AXIS_TARGET_PASS'),
+        docker_image_name=get_env('ACAP_DOCKER_IMAGE_NAME')):
     """Static method for controlling ACAP application via docker.
     """
     with open('/tmp/output.log','a') as output:
@@ -46,6 +41,7 @@ class TestClassAcapRuntimeTest:
     test_suites_executed_regex = re.compile(r'^(?P<nbr_tests>\d*) tests? from (?P<test_name>\S*).*$')
     result = {'total': {'test_suites': 0, 'tests': 0, 'executed': 0, 'passed': 0}}
 
+
     @pytest.fixture()
     def dut(self):
         # Setup
@@ -54,12 +50,9 @@ class TestClassAcapRuntimeTest:
 
     def setup_method(self):
         print("\n****Setup****")
-
-        print(get_env("AXIS_TARGET_USER"))
-
         self.init_dut_connection()
         status = self.check_dut_status()
-        assert status, f"Could not connect to {AXIS_TARGET_ADDR}"
+        assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
         print("Installing ACAP runtime test suite")
         acap_ctrl("install")
         installed = self.check_acap_installed()
@@ -98,13 +91,13 @@ class TestClassAcapRuntimeTest:
     def init_dut_connection(self):
         """Initiates a requests Session to be used for http communication with the DUT."""
         self.http_session = requests.Session()
-        self.http_session.auth = HTTPDigestAuth(AXIS_TARGET_USER, AXIS_TARGET_PASS)
+        self.http_session.auth = HTTPDigestAuth(get_env('AXIS_TARGET_USER'), get_env('AXIS_TARGET_PASS'))
         self.http_session.headers ={"Content-Type": "application/json; charset=utf-8"}
         return self.check_dut_status()
 
     def check_dut_status(self, timeout=120, max_time=120):
         """Uses the VAPIX Systemready API to check that the DUT is responding."""
-        url = f"http://{AXIS_TARGET_ADDR}/axis-cgi/systemready.cgi"
+        url = f"http://{get_env('AXIS_TARGET_ADDR')}/axis-cgi/systemready.cgi"
         json_body = { "apiVersion": "1.2", "method":"systemready", "params": { "timeout": 20 }}
         if self.http_session:
             #print(f"Check DUT status. This can take some time, time out set to {max_time} seconds.")
@@ -129,7 +122,7 @@ class TestClassAcapRuntimeTest:
 
     def check_acap_installed(self):
         """Uses the VAPIX Applications API to check if the ACAP is installed."""
-        url = f"http://{AXIS_TARGET_ADDR}/axis-cgi/applications/list.cgi"
+        url = f"http://{get_env('AXIS_TARGET_ADDR')}/axis-cgi/applications/list.cgi"
         if self.http_session:
             r = self.http_session.post(url)
             if r.status_code == 200:
@@ -138,7 +131,7 @@ class TestClassAcapRuntimeTest:
 
     def reboot_device(self, wait):
         """Uses VAPIX Firmware management API to reboot device."""
-        url = f"http://{AXIS_TARGET_ADDR}/axis-cgi/firmwaremanagement.cgi"
+        url = f"http://{get_env('AXIS_TARGET_ADDR')}/axis-cgi/firmwaremanagement.cgi"
         json_body = {"apiVersion": "1.4", "method":"reboot"}
         if self.http_session:
             r = self.http_session.post(url, json=json_body, timeout=10)
@@ -152,7 +145,7 @@ class TestClassAcapRuntimeTest:
 
     def read_acap_log(self):
         """Reads ACAP part of system log and returns it as as string."""
-        url = f"http://{AXIS_TARGET_ADDR}/axis-cgi/admin/systemlog.cgi?appname={ACAP_SPECIFIC_NAME}"
+        url = f"http://{get_env('AXIS_TARGET_ADDR')}/axis-cgi/admin/systemlog.cgi?appname={ACAP_SPECIFIC_NAME}"
         if self.http_session:
             r = self.http_session.get(url)
             return r.text

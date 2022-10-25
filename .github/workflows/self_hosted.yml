@@ -4,19 +4,59 @@ name: temp testing self self-hosted
 on: [push]
 
 env:
-  ACAP_IMAGE: "axisecp/acap-runtime:armv7hf-test"
+  ACAP_DOCKER_IMAGE_NAME: "axisecp/acap-runtime:armv7hf-test"
+  repository: acap-runtime
 
 jobs:
-  docker_image:
-    name: pull docker image
+  #docker_pull:
+  #  name: pull docker image
+  #  runs-on: self-hosted
+  #  steps:
+  #    - run: docker pull ${{ env.ACAP_DOCKER_IMAGE_NAME }}
+
+  docker_build:
+    name: build docker image
     runs-on: self-hosted
+    strategy:
+      matrix:
+        arch: [armv7hf]
     steps:
-      - run: docker pull ${{ env.ACAP_IMAGE }}
+      -
+        name: Checkout repo
+        uses: actions/checkout@v3
+      -
+        name: Create metadata for docker image
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.repository }}
+          tags: |
+            type=ref, event=branch
+      -
+        name: Setup docker buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Build docker test image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile.${{ matrix.name }}
+          build-args: TEST=true
+          load: true
+          tags: ${{ steps.meta.outputs.tags }}-test
+      -
+        name: Set image env var
+        shell: bash
+        run: |
+          ACAP_DOCKER_IMAGE_NAME=$${{ steps.meta.outputs.tags }}-test
+          echo "ACAP_DOCKER_IMAGE_NAME=$ACAP_DOCKER_IMAGE_NAME" >> $GITHUB_OUTPUT
+
   test_image:
     name: test docker image
-    needs: docker_image
+    needs: docker_build
     runs-on: self-hosted
     env:
+      AXIS_TARGET_ADDR: "172.27.64.8"
       AXIS_TARGET_USER: "root"
       AXIS_TARGET_PASS: "pass"
 
@@ -36,8 +76,8 @@ jobs:
   clean_up:
       name: Cleanup after test run
       if: ${{ always() }}
-      needs: [docker_image, test_image]
+      needs: [docker_build, test_image]
       runs-on: self-hosted
       steps:
-        - run: docker image rm ${{ env.ACAP_IMAGE }}
+        - run: docker image rm ${{ env.ACAP_DOCKER_IMAGE_NAME }}
 
