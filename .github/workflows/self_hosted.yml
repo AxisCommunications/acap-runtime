@@ -4,7 +4,7 @@ name: temp testing self self-hosted
 on: [push]
 
 env:
-  ACAP_IMAGE: "axis-ecp/acap-runtime:armv7hf-test"
+  ACAP_IMAGE: "axisecp/acap-runtime:armv7hf-test"
 
 jobs:
   docker_image:
