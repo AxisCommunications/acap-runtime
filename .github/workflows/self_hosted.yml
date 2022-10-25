@@ -5,7 +5,7 @@ on: [push]
 
 env:
   ACAP_DOCKER_IMAGE_NAME: "acap-runtime:ci-workflow-test"
-  repository: acap-runtime
+  repository: "acap-runtime"
 
 jobs:
   #docker_pull:
@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           IMAGE_NAME=$${{ steps.meta.outputs.tags }}-test
-          echo "ACAP_DOCKER_IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "ACAP_DOCKER_IMAGE_NAME=IMAGE_NAME" >> $GITHUB_OUTPUT
       -
         name: Build image
         run: |
