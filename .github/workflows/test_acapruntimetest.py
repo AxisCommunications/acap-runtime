@@ -19,7 +19,8 @@ class TestClassAcapRuntimeTest:
         yield "dut"
         print("\nTeardown")
 
-    def setup(self):
+    def setup_method(self):
+        #print("Running setup")
         self.init_dut_connection()
         status = self.check_dut_status()
         assert status, f"Could not connect to {AXIS_TARGET_ADDR}"
@@ -34,7 +35,7 @@ class TestClassAcapRuntimeTest:
         url = f"http://{AXIS_TARGET_ADDR}/axis-cgi/systemready.cgi"
         json_body = { "apiVersion": "1.2", "method":"systemready", "params": { "timeout": 20 }}
         if self.http_session:
-            print(f"Check DUT status. This can take some time, time out set to {max_time} seconds.")
+            #print(f"Check DUT status. This can take some time, time out set to {max_time} seconds.")
             start_time = time.time()
             while True:
                 if time.time()-start_time > max_time:
@@ -42,6 +43,7 @@ class TestClassAcapRuntimeTest:
                     return False
                 try:
                     r = self.http_session.post(url, json=json_body, timeout=timeout)
+                    print(r.text)
                     if r.status_code == 200:
                         # check if request was ok
                         response_dict = json.loads(r.text)
