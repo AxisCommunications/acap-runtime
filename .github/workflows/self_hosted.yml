@@ -42,7 +42,7 @@ jobs:
         name: Build image
         run: |
           export DOCKER_CONFIG="$WORKSPACE/.docker"
-          mkdir .p "DOCKER_CONFIG"
+          mkdir -p "DOCKER_CONFIG"
           echo '{"proxies":{"default":{"http_proxy":"http://wwwproxy.se.axis.com:3128","https_proxy":"http://wwwproxy.se.axis.com:3128"}}}'>"$DOCKER_CONFIG/config.json"
           docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test
       #-
