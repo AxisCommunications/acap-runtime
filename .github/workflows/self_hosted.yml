@@ -5,9 +5,9 @@ on: [push]
 
 env:
   #ACAP_DOCKER_IMAGE_NAME: "acap-runtime:ci-workflow-test"
-  repository: "acap-runtime"
+  repository: "AxisCommunications/acap-runtime"
   REGISTRY: ghcr.io
-  ACAP_DOCKER_IMAGE_NAME: "ghcr.io/acap-runtime:ci-workflow-test"
+  ACAP_DOCKER_IMAGE_NAME: "ghcr.io/AxisCommunications/acap-runtime:ci-workflow-test"
 
 jobs:
 
