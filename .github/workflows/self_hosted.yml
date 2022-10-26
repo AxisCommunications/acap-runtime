@@ -7,12 +7,12 @@ env:
   #ACAP_DOCKER_IMAGE_NAME: "acap-runtime:ci-workflow-test"
   repository: "acap-runtime"
   REGISTRY: ghcr.io
-  ACAP_DOCKER_IMAGE_NAME: "${{ env.REGISTRY }}/acap-runtime:ci-workflow-test"
+  ACAP_DOCKER_IMAGE_NAME: "ghcr.io/acap-runtime:ci-workflow-test"
 
 jobs:
 
   docker_build_github:
-    name: Build test image and store on github/super-linter/slim
+    name: Build test image and store on github
     runs-on: ubuntu-latest
     strategy:
       matrix:
