@@ -4,18 +4,51 @@ name: temp testing self self-hosted
 on: [push]
 
 env:
-  ACAP_DOCKER_IMAGE_NAME: "acap-runtime:ci-workflow-test"
+  #ACAP_DOCKER_IMAGE_NAME: "acap-runtime:ci-workflow-test"
   repository: "acap-runtime"
+  REGISTRY: ghcr.io
+  ACAP_DOCKER_IMAGE_NAME: "${{ env.REGISTRY }}/acap-runtime:ci-workflow-test"
 
 jobs:
-  #docker_pull:
-  #  name: pull docker image
-  #  runs-on: self-hosted
-  #  steps:
-  #    - run: docker pull ${{ env.ACAP_DOCKER_IMAGE_NAME }}
+
+  docker_build_github:
+    name: Build test image and store on github/super-linter/slim
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [armv7hf]
+    steps:
+      -
+        name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Create metadata for docker image
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.repository }}
+          tags: |
+            type=ref, event=branch
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          file: Dockerfile..${{ matrix.arch }}
+          build-args: TEST=true
+          tags: ${{ steps.meta.outputs.tags }}-test
+          labels: ${{ steps.meta.outputs.labels }}
 
   docker_build:
     name: build docker image
+    # skip this for now
+    if: (github.event_name == 'pull_request')
     runs-on: self-hosted
     strategy:
       matrix:
@@ -58,15 +91,28 @@ jobs:
       #    load: true
       #    tags: ${{ steps.meta.outputs.tags }}-test
 
+  docker_pull:
+    name: pull docker image
+    needs: docker_build_github
+    runs-on: self-hosted
+    steps:
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker pull ${{ env.ACAP_DOCKER_IMAGE_NAME }}
 
   test_image:
     name: test docker image
-    needs: docker_build
+    needs: docker_pull
     runs-on: self-hosted
     env:
       AXIS_TARGET_ADDR: "172.27.64.8"
       AXIS_TARGET_USER: "root"
       AXIS_TARGET_PASS: "pass"
+
 
     steps:
       -
@@ -84,7 +130,7 @@ jobs:
   clean_up:
       name: Cleanup after test run
       if: ${{ always() }}
-      needs: [docker_build, test_image]
+      needs: [docker_pull, test_image]
       runs-on: self-hosted
       steps:
         - run: docker image rm ${{ env.ACAP_DOCKER_IMAGE_NAME }}
