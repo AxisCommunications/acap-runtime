@@ -41,7 +41,10 @@ jobs:
       -
         name: Build image
         run: |
-          docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test --build-arg http_proxy="http://wwwproxy.se.axis.com:3128" --build-arg https_proxy="http://wwwproxy.se.axis.com:3128"
+          export DOCKER_CONFIG="$WORKSPACE/.docker"
+          mkdir .p "DOCKER_CONFIG"
+          echo '{"proxies":{"default":{"http_proxy":"http://wwwproxy.se.axis.com:3128","https_proxy":"http://wwwproxy.se.axis.com:3128"}}}'>"$DOCKER_CONFIG/config.json"
+          docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test
       #-
       #  name: Setup docker buildx
       #  uses: docker/setup-buildx-action@v2
