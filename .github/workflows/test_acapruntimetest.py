@@ -50,6 +50,12 @@ class TestClassAcapRuntimeTest:
 
     def setup_method(self):
         print("\n****Setup****")
+        print("Env variables:")
+        print(f"AXIS_TARGET_ADDR: {get_env('AXIS_TARGET_ADDR')}")
+        print(f"ACAP_DOCKER_IMAGE_NAME: {get_env('ACAP_DOCKER_IMAGE_NAME')}")
+        print(f"AXIS_TARGET_USER: {get_env('AXIS_TARGET_USER')}")
+        print(f"AXIS_TARGET_PASS: {get_env('AXIS_TARGET_PASS')}")
+
         self.init_dut_connection()
         status = self.check_dut_status()
         assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
