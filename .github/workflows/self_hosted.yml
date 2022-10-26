@@ -5,14 +5,16 @@ on: [push]
 
 env:
   #ACAP_DOCKER_IMAGE_NAME: "acap-runtime:ci-workflow-test"
-  repository: "AxisCommunications/acap-runtime"
+  repository: "axiscommunications/acap-runtime"
   REGISTRY: ghcr.io
-  ACAP_DOCKER_IMAGE_NAME: "ghcr.io/AxisCommunications/acap-runtime:ci-workflow-test"
+  ACAP_DOCKER_IMAGE_NAME: "ghcr.io/axiscommunications/acap-runtime:ci-workflow-test"
 
 jobs:
 
   docker_build_github:
     name: Build test image and store on github
+    # skip this for now
+    if: (github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -93,7 +95,7 @@ jobs:
 
   docker_pull:
     name: pull docker image
-    needs: docker_build_github
+    #needs: docker_build_github
     runs-on: self-hosted
     steps:
       - name: Log in to the Container registry
