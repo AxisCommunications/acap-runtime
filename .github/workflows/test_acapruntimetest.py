@@ -24,12 +24,15 @@ def acap_ctrl(action, wait = 0,
         docker_image_name=get_env('ACAP_DOCKER_IMAGE_NAME')):
     """Static method for controlling ACAP application via docker.
     """
-    with open('/tmp/output.log','a') as output:
-        subprocess.call(
+    response = subprocess.run(
         f"docker run --rm {docker_image_name} {device_ip} {device_pass} {action}",
-        shell=True, stdout=output, stderr=output)
+        shell=True, capture_output=True)
+    if response.returncode != 0:
+        print(response.stderr)
+        return False
     if wait != 0:
         time.sleep(wait)
+    return True
 
 class TestClassAcapRuntimeTest:
 
@@ -53,16 +56,17 @@ class TestClassAcapRuntimeTest:
         print("Env variables:")
         print(f"AXIS_TARGET_ADDR: {get_env('AXIS_TARGET_ADDR')}")
         print(f"ACAP_DOCKER_IMAGE_NAME: {get_env('ACAP_DOCKER_IMAGE_NAME')}")
-        print(f"AXIS_TARGET_USER: {get_env('AXIS_TARGET_USER')}")
-        print(f"AXIS_TARGET_PASS: {get_env('AXIS_TARGET_PASS')}")
+        #print(f"AXIS_TARGET_USER: {get_env('AXIS_TARGET_USER')}")
+        #print(f"AXIS_TARGET_PASS: {get_env('AXIS_TARGET_PASS')}")
 
         self.init_dut_connection()
         status = self.check_dut_status()
         assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
         print("Installing ACAP runtime test suite")
-        acap_ctrl("install")
-        installed = self.check_acap_installed()
+        installed = acap_ctrl("install")
         assert installed, "Failed to install ACAP runtime test suite"
+        installed = self.check_acap_installed()
+        assert installed, "Failed to verify that ACAP runtime test suite was installed"
 
     def teardown_method(self):
         print("\n****Teardown****")
@@ -72,16 +76,17 @@ class TestClassAcapRuntimeTest:
         acap_ctrl("remove", 1)
         installed = self.check_acap_installed()
         assert not installed, "Failed to remove ACAP runtime test suite."
-        print("Rebooting device. This will take some time.")
-        reboot = self.reboot_device(2)
-        assert reboot, "Failed to reboot DUT after test."
-        status = self.check_dut_status(max_time=360)
-        assert status, "Failed to get status of DUT after reboot."
+        #print("Rebooting device. This will take some time.")
+        #reboot = self.reboot_device(2)
+        #assert reboot, "Failed to reboot DUT after test."
+        #status = self.check_dut_status(max_time=360)
+        #assert status, "Failed to get status of DUT after reboot."
 
     def test_method(self, dut):
         print(f"****Testing {ACAP_SPECIFIC_NAME}****")
         print("Start ACAP Runtime test suite")
-        acap_ctrl("start", 1)
+        started = acap_ctrl("start", 1)
+        assert started, "Failed to start ACAP runtime test suite."
         running_count = self.find_match_in_log(ACAP_LOG_START_MATCH)
         assert running_count == 1, "The log should indicate that the ACAP Runtime\
              test suite was started once, but {running_count} matches were found"
