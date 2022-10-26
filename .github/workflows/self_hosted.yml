@@ -41,7 +41,7 @@ jobs:
       -
         name: Build image
         run: |
-          docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test
+          docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test --build-arg http_proxy="http://wwwproxy.se.axis.com:3128" --build-arg https_proxy="http://wwwproxy.se.axis.com:3128"
       #-
       #  name: Setup docker buildx
       #  uses: docker/setup-buildx-action@v2
