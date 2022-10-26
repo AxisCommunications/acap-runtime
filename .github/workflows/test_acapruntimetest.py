@@ -28,7 +28,9 @@ def acap_ctrl(action, wait = 0,
         f"docker run --rm {docker_image_name} {device_ip} {device_pass} {action}",
         shell=True, capture_output=True)
     if response.returncode != 0:
+        print(response.returncode)
         print(response.stderr)
+        print(response.stdout)
         return False
     if wait != 0:
         time.sleep(wait)
