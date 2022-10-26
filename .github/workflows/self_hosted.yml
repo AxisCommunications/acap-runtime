@@ -41,7 +41,8 @@ jobs:
       -
         name: Build image
         run: |
-          export DOCKER_CONFIG="$PWD/.docker"
+          export WORKSPACE="$PWD"
+          export DOCKER_CONFIG="$WORKSPACE/.docker"
           mkdir -p "DOCKER_CONFIG"
           touch "$DOCKER_CONFIG/config.json"
           echo '{"proxies":{"default":{"http_proxy":"http://wwwproxy.se.axis.com:3128","https_proxy":"http://wwwproxy.se.axis.com:3128"}}}'>"$DOCKER_CONFIG/config.json"
