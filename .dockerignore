@@ -1,3 +1,6 @@
+.github/
+.vscode/
+assets/
 build/
 build_x86_64-linux-gnu/
 serving/
