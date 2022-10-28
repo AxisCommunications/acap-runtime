@@ -12,110 +12,119 @@ on:
     branches:
       - 'main'
 
+env:
+  GITHUB_REPOSITORY: 'axiscommunications/acap-runtime'
+  GITHUB_REGISTRY: ghcr.io
+  DOCKERHUB_REPOSITORY: 'axisecp/acap-runtime'
+
 jobs:
-  build_push:
+  build_test_image:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      -
+        name: Local action call to build test image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          arch: ${{ matrix.arch }}
+          dockerfile: Dockerfile.${{ matrix.arch }}
+          push: true
+          suffix: -${{ matrix.arch }}-test
+          latest: false
+          build-args: |
+                TEST=true
+          repository: ${{ env.GITHUB_REPOSITORY }}
+          registry: ${{ env.GITHUB_REGISTRY }}
+          registry_user: ${{ github.actor }}
+          registry_token: ${{ secrets.GITHUB_TOKEN }}
+
+  pull_and_test_image:
+    name: Pulls test image(s) from GITHub container registry and runs tests
+    runs-on: self-hosted
+    needs: build_test_image
+    # TODO Don't use hardcoded values
     env:
-      repository: axis-ecp/acap-runtime
-      suffix: -${{ matrix.arch }}
-      containerized: "containerized"
-      containerized_suffix: '-${{ matrix.arch }}-${{ containerized }}'
+      AXIS_TARGET_ADDR: "172.27.64.8"
+      AXIS_TARGET_USER: "root"
+      AXIS_TARGET_PASS: "pass"
+    # TODO Test for both armv7hf and aarch64
+    strategy:
+        matrix:
+          arch: [armv7hf]
     steps:
       -
         name: Checkout repo
         uses: actions/checkout@v3
       -
-        name: Create metadata for base image
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.repository }}
-          flavor: suffix=${{ env.suffix }}, onlatest=true
-          tags: |
-            type=ref, event=branch
-            type=semver, pattern={{version}}, event=tag
-            type=ref, event=pr
-      -
-        name: Create metadata for containerized image
-        id: meta-containerized
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.repository }}
-          flavor: suffix=${{ env.containerized_suffix }}, onlatest=true
-          tags: |
-            type=ref, event=branch
-            type=semver, pattern={{version}}, event=tag
-            type=ref, event=pr
-      -
-        name: Get base version from tag
-        id: base_version
-        if: (github.event_name != 'pull_request')
-        shell: bash
-        run: |
-          TMP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
-          BASE_VERSION=$(echo $TMP_VERSION | sed -e "s/${{ env.suffix }}$//")
-          echo "BASE_VERSION=$BASE_VERSION" >> $GITHUB_OUTPUT
-      -
-        name: Update manifest file with version
-        if: (github.ref_type == 'tag')
-        shell: bash
-        run: |
-          tmp_file=$(mktemp)
-          manifest_file=./manifest-${{ matrix.name }}.json
-          cp "$manifest_file" "$tmp_file"
-          jq --arg new_val "${{ steps.base_version.outputs.base_version }}" \
-          '.conf.setup.version |= $new_val' "$tmp_file" > "$manifest_file"
-          rm -f "$tmp_file"
-      -
-        name: Login to Docker Hub
+        name: Log in to the GITHub Container registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          registry: ${{ env.GITHUB_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       -
-        name: Setup Docker buildx
-        uses: docker/setup-buildx-action@v2
-      -
-        name: Build docker test image
-        uses: docker/build-push-action@v3
+        name: Create metadata for docker image
+        id: meta
+        uses: ./.github/actions/metadata-action
         with:
-          context: .
-          file: Dockerfile.${{ matrix.name }}
-          build-args: TEST=true
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}-test
-# TODO: Replace with a proper test run
-#      -
-#        name: Run docker test image
-#        run: |
-#          docker run --rm ${{ fromJSON(steps.meta.outputs).json.tags[0] }}-test
+          suffix: -${{ matrix.arch }}-test
+          latest: false
+          repository: ${{ env.GITHUB_REPOSITORY }}
+          registry: ${{ env.GITHUB_REGISTRY }}
       -
-        name: Build and push base image
-        uses: docker/build-push-action@v3
-        if: (github.event_name != 'pull_request')
+        name: Pull the test image from GITHub container repository
+        run: docker pull ${{ steps.meta.outputs.tags }}
+      -
+        name: Set docker image env variable
+        run: echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta.outputs.tags }}" >> $GITHUB_ENV
+      -
+        name: Setup python
+        uses: actions/setup-python@v4
+      -
+        name: Install pytest
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      -
+        name: Run test script
+        run: pytest -s ./.github/tests/test_acapruntimetest.py
+      -
+        name: Remove the image
+        if: success() || failure()
+        run: docker image rm ${{ steps.meta.outputs.tags }}
+
+  build_and_push_to_docker:
+    runs-on: ubuntu-latest
+    needs: pull_and_test_image
+    if: (github.event_name != 'pull_request')
+    strategy:
+      matrix:
+        arch: [armv7hf, aarch64]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and push base image
+        id: build_base
+        uses: ./.github/actions/local-action
         with:
-          context: .
-          file: Dockerfile.${{ matrix.name }}
+          dockerfile: Dockerfile.${{ matrix.arch }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-      -
-        name: Setup QEMU
-        uses: docker/setup-qemu-action@v2
-        if: (github.event_name != 'pull_request')
-      -
-        name: Build and push containerized image
-        uses: docker/build-push-action@v3
-        if: (github.event_name != 'pull_request')
+          suffix: -${{ matrix.arch }}
+          registry_user: ${{ secrets.DOCKER_HUB_USERNAME }}
+          registry_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          get_version: true
+      - name: Build and push containerized image
+        uses: ./.github/actions/local-action
         with:
-          context: .
-          file: Dockerfile.${{ matrix.name }}-${{ env.containerized }}
+          dockerfile: Dockerfile.${{ matrix.arch }}-containerized
+          push: true
+          use_qemu: true
+          suffix: -${{ matrix.arch }}-containerized
           build-args: |
-            NAME=${{ matrix.name }}
-            VERSION=${{ steps.base_version.outputs.base_version }}
-          push: true
-          tags: ${{ steps.meta-containerized.outputs.tags }}
-          labels: ${{ steps.meta-containerized.outputs.labels }}
+            NAME=${{ matrix.arch }}
+            VERSION=${{ steps.build_base.outputs.version }}
+          registry_user: ${{ secrets.DOCKER_HUB_USERNAME }}
+          registry_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
