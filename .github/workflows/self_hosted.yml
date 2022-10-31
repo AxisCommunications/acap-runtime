@@ -94,7 +94,7 @@ jobs:
 
   docker_pull:
     name: pull docker image
-    needs: docker_build_github
+    #needs: docker_build_github
     runs-on: self-hosted
     steps:
       - name: Log in to the Container registry
