@@ -77,7 +77,6 @@ Inference::~Inference()
 }
 
 // Initialize inference
-//bool Inference::Init(const bool verbose, const uint64_t chipId, const vector<string>& models)
 bool Inference::Init(const bool verbose, const uint64_t chipId,
                      const vector<string>& models, Capture* captureService) {
   _verbose = verbose;

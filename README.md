@@ -91,6 +91,8 @@ The ACAP runtime service provides the following APIs:
 - Parameter API - Provides gRPC read access to the parameters of an Axis device.
   There are usage examples available for the Parameter API written in
   [Python][parameter-api-python] and [C++][paramter-api-cpp].
+- Video capture API - Enables capture of images from a camera. No usage examples
+  for this API exist yet.
 
 ## Installation and usage
 
