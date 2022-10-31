@@ -132,7 +132,7 @@ jobs:
       -
         name: Build docker test image
         run: |
-          docker buildx . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }} --no-cache
+          docker buildx build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }} --no-cache
       #-
       #  name: Build docker test image
       #  uses: docker/build-push-action@v3
