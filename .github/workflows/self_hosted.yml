@@ -1,8 +1,7 @@
 ---
 name: temp testing self self-hosted
 
-on:
-  workflow_dispatch:
+on: [push]
 
 env:
   repository: "axiscommunications/acap-runtime"
