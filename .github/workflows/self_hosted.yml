@@ -132,7 +132,10 @@ jobs:
       -
         name: Build docker test image
         run: |
-          docker buildx build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }} --no-cache
+          export DOCKER_CONFIG="$WORKSPACE/.docker"
+          mkdir -p "$DOCKER_CONFIG"
+          echo '{"proxies":{ "default":{"httpProxy": "http://wwwproxy.se.axis.com:3128", "httpsProxy": "http://wwwproxy.se.axis.com:3128"}}}' > "$DOCKER_CONFIG/config.json"
+          docker buildx build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }} --no-cache --load
       #-
       #  name: Build docker test image
       #  uses: docker/build-push-action@v3
