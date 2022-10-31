@@ -49,7 +49,7 @@ jobs:
   docker_build:
     name: build docker image
     # skip this for now
-    if: (github.event_name == 'pull_request')
+    #if: (github.event_name == 'pull_request')
     runs-on: self-hosted
     strategy:
       matrix:
@@ -94,7 +94,7 @@ jobs:
 
   docker_pull:
     name: pull docker image
-    #needs: docker_build_github
+    needs: docker_build_github
     runs-on: self-hosted
     steps:
       - name: Log in to the Container registry
@@ -107,7 +107,8 @@ jobs:
 
   test_image:
     name: test docker image
-    needs: docker_pull
+    #needs: docker_pull
+    needs: docker_build
     runs-on: self-hosted
     env:
       AXIS_TARGET_ADDR: "172.27.64.8"
@@ -131,7 +132,7 @@ jobs:
   clean_up:
       name: Cleanup after test run
       if: ${{ always() }}
-      needs: [docker_pull, test_image]
+      #needs: [docker_pull, test_image]
       runs-on: self-hosted
       steps:
         - run: docker image rm ${{ env.ACAP_DOCKER_IMAGE_NAME }}
