@@ -117,12 +117,12 @@ jobs:
         run: |
           IMAGE_NAME=${{ steps.meta.outputs.tags }}
           echo "ACAP_DOCKER_IMAGE_NAME=IMAGE_NAME" >> $GITHUB_ENV
-      #-
-      #  name: Build image
-      #  run: |
-      #    export DOCKER_CONFIG="$WORKSPACE/.docker"
-      #    mkdir -p "$DOCKER_CONFIG"
-      #    echo '{"proxies":{ "default":{"httpProxy": "http://wwwproxy.se.axis.com:3128", "httpsProxy": "http://wwwproxy.se.axis.com:3128"}}}' > "$DOCKER_CONFIG/config.json"
+      -
+        name: Setup proxies in config
+        run: |
+          export DOCKER_CONFIG="$WORKSPACE/.docker"
+          mkdir -p "$DOCKER_CONFIG"
+          echo '{"proxies":{ "default":{"httpProxy": "http://wwwproxy.se.axis.com:3128", "httpsProxy": "http://wwwproxy.se.axis.com:3128"}}}' > "$DOCKER_CONFIG/config.json"
       #    docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test --no-cache
       -
         name: Setup docker buildx
