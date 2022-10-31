@@ -120,10 +120,10 @@ jobs:
       -
         name: Setup proxies in config
         run: |
-          echo "DOCKER_CONFIG=$WORKSPACKE./docker" >> $GITHUB_ENV
-#          export DOCKER_CONFIG="$WORKSPACE/.docker"
+          export DOCKER_CONFIG="$WORKSPACE/.docker"
           mkdir -p "$DOCKER_CONFIG"
           echo '{"proxies":{ "default":{"httpProxy": "http://wwwproxy.se.axis.com:3128", "httpsProxy": "http://wwwproxy.se.axis.com:3128"}}}' > "$DOCKER_CONFIG/config.json"
+          echo "DOCKER_CONFIG=$DOCKER_CONFIG" >>  $GITHUB_ENV
       #    docker build . -f Dockerfile.${{ matrix.arch }} --build-arg TEST=true -t ${{ steps.meta.outputs.tags }}-test --no-cache
       -
         name: Setup docker buildx
