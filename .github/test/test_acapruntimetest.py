@@ -58,8 +58,6 @@ class TestClassAcapRuntimeTest:
         print("Env variables:")
         print(f"AXIS_TARGET_ADDR: {get_env('AXIS_TARGET_ADDR')}")
         print(f"ACAP_DOCKER_IMAGE_NAME: {get_env('ACAP_DOCKER_IMAGE_NAME')}")
-        #print(f"AXIS_TARGET_USER: {get_env('AXIS_TARGET_USER')}")
-        #print(f"AXIS_TARGET_PASS: {get_env('AXIS_TARGET_PASS')}")
 
         self.init_dut_connection()
         status = self.check_dut_status()
@@ -78,11 +76,11 @@ class TestClassAcapRuntimeTest:
         acap_ctrl("remove", 1)
         installed = self.check_acap_installed()
         assert not installed, "Failed to remove ACAP runtime test suite."
-        #print("Rebooting device. This will take some time.")
-        #reboot = self.reboot_device(2)
-        #assert reboot, "Failed to reboot DUT after test."
-        #status = self.check_dut_status(max_time=360)
-        #assert status, "Failed to get status of DUT after reboot."
+        print("Rebooting device. This will take some time.")
+        reboot = self.reboot_device(2)
+        assert reboot, "Failed to reboot DUT after test."
+        status = self.check_dut_status(max_time=360)
+        assert status, "Failed to get status of DUT after reboot."
 
     def test_method(self, dut):
         print(f"****Testing {ACAP_SPECIFIC_NAME}****")
