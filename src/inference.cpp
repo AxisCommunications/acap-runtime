@@ -77,10 +77,12 @@ Inference::~Inference()
 }
 
 // Initialize inference
-bool Inference::Init(const bool verbose, const uint64_t chipId, const vector<string>& models)
-{
+bool Inference::Init(const bool verbose, const uint64_t chipId,
+                     const vector<string>& models, Capture* captureService) {
   _verbose = verbose;
   larodError* error = nullptr;
+
+  _captureService = captureService;
 
   TRACELOG << "Init chipId=" << chipId << endl;
 
@@ -140,6 +142,7 @@ Status Inference::Predict(
   uint64_t larodTime;
   vector<pair<FILE*, int>> inFiles;
   vector<pair<FILE*, int>> outFiles;
+  uint32_t frame_ref;
   (void) context;
 
   // Validate parameters
@@ -202,9 +205,13 @@ Status Inference::Predict(
     model,
     request->inputs(),
     inFiles,
+    request->stream_id(),
+    frame_ref,
     error)) {
     goto predict_error;
   }
+
+  response->set_frame_reference(frame_ref);
 
   // Setup output tensors
   if (!SetupOutputTensors(
@@ -707,6 +714,8 @@ bool Inference::SetupPreprocessing(
   tensorflow::TensorProto tp,
   larodTensor* tensor,
   vector<pair<FILE*, int>>& inFiles,
+  u_int32_t stream,
+  uint32_t& frame_ref,
   larodError*& error)
   {
     void* larodInputAddr = MAP_FAILED;
@@ -743,10 +752,13 @@ bool Inference::SetupPreprocessing(
     TRACELOG << "Request image size " << requestWidth << "x" << requestHeight << endl;
     TRACELOG << "Model image size " << modelWidth << "x" << modelHeight << endl;
 
+    bool isMemoryMappedFile = tp.dtype() == tensorflow::DataType::DT_STRING;
+    bool isRequestForImageFromStream = stream != 0;
+
     // Convert request image to file descriptor
     FILE* tmpFile = nullptr;
     int tmpFd = -1;
-    if (tp.dtype() == tensorflow::DataType::DT_STRING) {
+    if (isMemoryMappedFile) {
       string filename = tp.string_val(0);
       TRACELOG << "Input file: " << filename << endl;
       tmpFd = shm_open(filename.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
@@ -754,9 +766,25 @@ bool Inference::SetupPreprocessing(
         ERRORLOG << "Can not open shared memory file " << filename << endl;
         return false;
       }
-    }
-    else
-    {
+    } else if (isRequestForImageFromStream) {
+      TRACELOG << "Got request to use image from stream " << stream << endl;
+
+      size_t size;
+      void* data;
+      if (!_captureService->GetImgDataFromStream(stream, &data, size,
+                                                 frame_ref)) {
+        ERRORLOG << "Could not get data from stream" << endl;
+        return false;
+      }
+
+      TRACELOG << "Got data of size " << size << endl;
+
+      // TODO: Try to set tmpFd directly to the fd from the vdo_buffer
+      if (!CreateTmpFile(tmpFile, tmpFd, data, size)) {
+        TRACELOG << "Failed creating tmp file" << size << endl;
+        return false;
+      }
+    } else {
       TRACELOG << "Input ByteSize: " << tp.tensor_content().size() << endl;
       if (!CreateTmpFile(
         tmpFile,
@@ -784,10 +812,15 @@ bool Inference::SetupPreprocessing(
     return false;
   }
 
-  if (!larodMapSetStr(_ppMap, "image.input.format", "rgb-interleaved", &error)) {
+  // We only support YUV here for now. In the future we should perhaps allow for
+  // other formats in the stream.
+  const char* inputFormat = isRequestForImageFromStream ? "nv12" : "rgb-interleaved";
+
+  if (!larodMapSetStr(_ppMap, "image.input.format", inputFormat, &error)) {
     PrintError("Failed setting preprocessing parameters", error);
     return false;
   }
+
   if (!larodMapSetIntArr2(_ppMap, "image.input.size", requestWidth, requestHeight, &error)) {
     PrintError("Failed setting preprocessing parameters", error);
     return false;
@@ -852,6 +885,8 @@ bool Inference::SetupInputTensors(
   const google::protobuf::Map<string,
   TensorProto>& inputs,
   vector<pair<FILE*, int>>& inFiles,
+  const u_int32_t stream,
+  uint32_t& frame_ref,
   larodError*& error)
 {
   // Setup input tensors
@@ -872,7 +907,7 @@ bool Inference::SetupInputTensors(
   for (auto & [input_name, tpa] : inputs) {
     tensorflow::TensorProto tp = tpa;
     TRACELOG << "Input name: " << input_name << endl;
-    if (!SetupPreprocessing(tp, _inputTensors[i], inFiles, error)) {
+    if (!SetupPreprocessing(tp, _inputTensors[i], inFiles, stream, frame_ref, error)) {
         return false;
     }
 
