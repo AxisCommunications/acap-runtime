@@ -22,7 +22,7 @@ All types of contributions are encouraged and valued. See the [Table of contents
     - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
     - [How do I submit a good enhancement suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
   - [Your first code contribution](#your-first-code-contribution)
-  - [Lint of code base](#lint-of-code-base)
+  - [Lint of codebase](#lint-of-codebase)
     - [Linters in GitHub Action](#linters-in-github-action)
     - [Run super-linter locally](#run-super-linter-locally)
     - [Run super-linter interactively](#run-super-linter-interactively)
@@ -121,34 +121,27 @@ git push origin <branch name>
 Before opening a Pull Request (PR), please consider the following guidelines:
 
 - Please make sure that the code builds perfectly fine on your local system.
-- Make sure that all linters pass, see [Lint of code base](#lint-of-code-base)
+- Make sure that all linters pass, see [Lint of codebase](#lint-of-codebase)
 - The PR will have to meet the code standard already available in the repository.
 - Explanatory comments related to code functions are required. Please write code comments for a better understanding of the code for other developers.
 
 And finally when you are satisfied with your changes, open a new PR.
 
-### Lint of code base
+### Lint of codebase
 
-A set of different linters test the code base and these must pass in order to
-get a pull request approved.
+A set of different linters test the codebase and these must pass in order to get a pull request approved.
 
 #### Linters in GitHub Action
 
-When you create a pull request, a set of linters will run syntax and format
-checks on different file types in GitHub actions by making use of a tool called
-[super-linter][super-linter]. If any of the linters
-gives an error, this will be shown in the action connected to the pull request.
+When you create a pull request, a set of linters will run syntax and format checks on different file types in GitHub actions by making use of a tool called [super-linter][super-linter]. If any of the linters gives an error, this will be shown in the action connected to the pull request.
 
-In order to speed up development, it's possible to run linters as part of your
-local development environment.
+In order to speed up development, it's possible to run linters as part of your local development environment.
 
 #### Run super-linter locally
 
-Since super-linter is using a Docker image in GitHub Actions, users of other
-editors may run it locally to lint the code base. For complete instructions and
-guidance, see super-linter page for [running locally][super-linter-local].
+Since super-linter is using a Docker image in GitHub Actions, users of other editors may run it locally to lint the codebase. For complete instructions and guidance, see super-linter page for [running locally][super-linter-local].
 
-To run a number of linters on the code base from command line:
+To run a number of linters on the codebase from command line:
 
 ```sh
 docker run --rm \
@@ -167,8 +160,7 @@ See [`.github/workflows/linter.yml`](.github/workflows/linter.yml) for the exact
 
 #### Run super-linter interactively
 
-It might be more convenient to run super-linter interactively. Run container and
-enter command line:
+It might be more convenient to run super-linter interactively. Run container and enter command line:
 
 ```sh
 docker run --rm \
@@ -178,8 +170,7 @@ docker run --rm \
   -it github/super-linter:slim-v4
 ```
 
-Then from the container terminal, the following commands can lint the the code
-base for different file types:
+Then from the container terminal, the following commands can lint the the code base for different file types:
 
 ```sh
 # Lint Dockerfile files
