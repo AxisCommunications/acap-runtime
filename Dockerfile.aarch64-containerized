@@ -1,17 +1,22 @@
+# syntax=docker/dockerfile:1
+
 ARG ARCH=aarch64
 ARG REPO=axisecp
 ARG RUNTIME_VERSION=1.1.2
 ARG RUNTIME_UBUNTU_VERSION=22.04
 
 FROM arm64v8/ubuntu:${RUNTIME_UBUNTU_VERSION} as runtime-image-aarch64
-FROM $REPO/acap-runtime:${RUNTIME_VERSION}-${ARCH} as runtime-base
+FROM ${REPO}/acap-runtime:${RUNTIME_VERSION}-${ARCH} as runtime-base
 
 FROM runtime-image-aarch64
 WORKDIR /opt/app/
 
 COPY --from=runtime-base /opt/app/*.eap ./
-RUN mkdir -p acap_runtime &&\
-    for f in *.eap; \
-    do tar -xzf "$f" -C acap_runtime ; done
+RUN <<EOF
+mkdir -p acap_runtime
+for f in *.eap;
+    do tar -xzf "$f" -C acap_runtime ;
+done
+EOF
 
 ENTRYPOINT [ "/opt/app/acap_runtime/acapruntime" ]

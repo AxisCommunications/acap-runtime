@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 ARG ARCH=armv7hf
 ARG REPO=axisecp
 ARG VERSION=1.3
@@ -10,21 +12,27 @@ ARG ARCH
 ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
 
 # Install openssl (to use instead of boringssl)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends \
     pkg-config \
     g++ \
     cmake \
     libssl-dev \
     gnupg \
     openssl
+EOF
 
 # Install Edge TPU compiler
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" \
-    | tee /etc/apt/sources.list.d/coral-edgetpu.list &&\
-    curl -k https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &&\
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN <<EOF
+echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" \
+    | tee /etc/apt/sources.list.d/coral-edgetpu.list
+curl -k https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+apt-get update
+apt-get install -y --no-install-recommends \
     edgetpu-compiler
+EOF
 
 # Get testdata models
 WORKDIR /opt/app/testdata
@@ -42,19 +50,29 @@ ADD https://github.com/google-coral/edgetpu/raw/master/test_data/grace_hopper.bm
 ADD http://download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224_quant.tgz tmp/
 ADD https://github.com/google-coral/edgetpu/raw/master/test_data/mobilenet_v2_1.0_224_quant_edgetpu.tflite .
 ADD https://github.com/google-coral/edgetpu/raw/master/test_data/imagenet_labels.txt .
-RUN cd tmp &&\
-    tar -xvf mobilenet_v2_1.0_224_quant.tgz &&\
-    mv ./*.tflite .. &&\
-    cd .. && rm -rf tmp
+RUN <<EOF
+(
+    cd tmp || exit
+    tar -xvf mobilenet_v2_1.0_224_quant.tgz
+    mv ./*.tflite ..
+)
+rm -rf tmp
+EOF
 
 # Get EfficientNet-EdgeTpu (M)
 ADD https://storage.googleapis.com/cloud-tpu-checkpoints/efficientnet/efficientnet-edgetpu-M.tar.gz tmp/
-RUN cd tmp &&\
-    tar -xvf efficientnet-edgetpu-M.tar.gz &&\
-    cd efficientnet-edgetpu-M &&\
-    edgetpu_compiler --min_runtime_version 13 efficientnet-edgetpu-M_quant.tflite &&\
-    mv efficientnet-edgetpu-M_quant*.tflite ../.. &&\
-    cd ../.. && rm -rf tmp
+RUN <<EOF
+(
+    cd tmp || exit
+    tar -xvf efficientnet-edgetpu-M.tar.gz
+    (
+        cd efficientnet-edgetpu-M || exit
+        edgetpu_compiler --min_runtime_version 13 efficientnet-edgetpu-M_quant.tflite
+        mv efficientnet-edgetpu-M_quant*.tflite ../..
+    )
+)
+rm -rf tmp
+EOF
 
 # Switch to build directory
 WORKDIR /opt
@@ -62,9 +80,11 @@ WORKDIR /opt
 # Build and install gRPC for the host architecture.
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
-RUN git clone -b v1.46.3 https://github.com/grpc/grpc &&\
-    cd grpc &&\
-    git submodule update --init
+RUN <<EOF
+git clone -b v1.46.3 https://github.com/grpc/grpc
+cd grpc || exit
+git submodule update --init
+EOF
 
 #Quick patch security warning
 RUN sed -i 's/gpr_log(GPR_INFO, __func__);/gpr_log(GPR_INFO, "%s", __func__);/g' \
@@ -75,57 +95,67 @@ RUN sed -i 's/gpr_log(GPR_INFO, __func__);/gpr_log(GPR_INFO, "%s", __func__);/g'
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
 WORKDIR /opt/grpc/cmake/build
-RUN cmake \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DgRPC_INSTALL=ON \
-        -DgRPC_BUILD_TESTS=OFF \
-        -DgRPC_SSL_PROVIDER=package \
-        ../.. &&\
-    make -j4 install
+RUN <<EOF
+cmake \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DgRPC_INSTALL=ON \
+    -DgRPC_BUILD_TESTS=OFF \
+    -DgRPC_SSL_PROVIDER=package \
+    ../..
+make -j4 install
+EOF
 
 # return to build dir
 WORKDIR /opt
 # Build for ARM
 
 # Clone openssl and extract source code
-RUN curl -O https://www.openssl.org/source/openssl-1.1.1l.tar.gz && \
-    tar xzvf openssl-1.1.1l.tar.gz
-RUN mkdir -p openssl-1.1.1l/build &&\
-    cd openssl-1.1.1l/build &&\
-    rm -rf ../doc &&\
-    ../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr && \
-    make CC=arm-linux-gnueabihf-gcc && \
-    make install
+RUN <<EOF
+curl -O https://www.openssl.org/source/openssl-1.1.1l.tar.gz
+tar xzvf openssl-1.1.1l.tar.gz
+mkdir -p openssl-1.1.1l/build
+cd openssl-1.1.1l/build || exit
+rm -rf ../doc
+../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr
+make CC=arm-linux-gnueabihf-gcc
+make install
+EOF
 
 # Build and install gRPC for ARM.
 # This build will use the host architecture copies of protoc and
 # grpc_cpp_plugin that we built earlier because we installed them
 # to a location in our PATH (/usr/local/bin).
 WORKDIR /opt/grpc/cmake/build_arm
-RUN . /opt/axis/acapsdk/environment-setup* &&\
-    CXXFLAGS="$CXXFLAGS -g0" cmake \
-        -DCMAKE_SYSTEM_NAME=Linux \
-        -DCMAKE_SYSTEM_PROCESSOR=armv7hf \
-        -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
-        -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
-        -DgRPC_INSTALL=ON \
-        -DgRPC_SSL_PROVIDER=package \
-        -DCMAKE_BUILD_TYPE=Release \
-        ../.. &&\
-    make -j4 install/strip &&\
-    cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
-        "$SDKTARGETSYSROOT"/usr/include
+RUN <<EOF
+. /opt/axis/acapsdk/environment-setup*
+CXXFLAGS="$CXXFLAGS -g0" cmake \
+    -DCMAKE_SYSTEM_NAME=Linux \
+    -DCMAKE_SYSTEM_PROCESSOR=armv7hf \
+    -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
+    -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
+    -DgRPC_INSTALL=ON \
+    -DgRPC_SSL_PROVIDER=package \
+    -DCMAKE_BUILD_TYPE=Release \
+    ../..
+make -j4 install/strip
+cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
+    "$SDKTARGETSYSROOT"/usr/include
+EOF
 
 # Get Tensorflow and Tensorflow Serving
-RUN git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow &&\
-    git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+RUN <<EOF
+git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
+git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+EOF
 
 ## Setup build structure
 WORKDIR /opt/app
 COPY . .
-RUN cd apis &&\
-    ln -fs /opt/tensorflow/tensorflow/tensorflow . &&\
-    ln -fs /opt/tensorflow/serving/tensorflow_serving .
+RUN <<EOF
+cd apis || exit
+ln -fs /opt/tensorflow/tensorflow/tensorflow .
+ln -fs /opt/tensorflow/serving/tensorflow_serving .
+EOF
 
 # Patch the Predict call of Tensorflow Serving
 RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
@@ -133,20 +163,22 @@ RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/pred
 # Building the ACAP application
 ARG TEST
 ARG DEBUG
-RUN . /opt/axis/acapsdk/environment-setup* &&\
-    if [ -n "$DEBUG" ]; then \
-        printf "Building debug\n" ; \
-        CXXFLAGS="$CXXFLAGS -O0 -ggdb" \
-        acap-build . -m manifest-armv7hf.json ; \
-    elif [ -n "$TEST" ]; then \
-        printf "Building test\n" ; \
-        CXXFLAGS="$CXXFLAGS -g0 -DTEST" \
-        acap-build . -m manifest-test.json -a 'testdata/*'; \
-    else \
-        printf "Building app\n" ; \
-        CXXFLAGS="$CXXFLAGS -g0" \
-        acap-build . -m manifest-armv7hf.json ; \
-    fi
+RUN <<EOF
+. /opt/axis/acapsdk/environment-setup*
+if [ -n "$DEBUG" ]; then \
+    printf "Building debug\n" ; \
+    CXXFLAGS="$CXXFLAGS -O0 -ggdb" \
+    acap-build . -m manifest-armv7hf.json ; \
+elif [ -n "$TEST" ]; then \
+    printf "Building test\n" ; \
+    CXXFLAGS="$CXXFLAGS -g0 -DTEST" \
+    acap-build . -m manifest-test.json -a 'testdata/*'; \
+else \
+    printf "Building app\n" ; \
+    CXXFLAGS="$CXXFLAGS -g0" \
+    acap-build . -m manifest-armv7hf.json ; \
+fi
+EOF
 
 FROM acap-native-sdk
 WORKDIR /opt/app
