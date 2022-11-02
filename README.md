@@ -1,13 +1,13 @@
 *Copyright (C) 2022, Axis Communications AB, Lund, Sweden. All Rights Reserved.*
 
 <!-- omit in toc -->
-# BETA - ACAP runtime
+# BETA - ACAP Runtime
 
 [![Lint codebase](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml)
 
-ACAP runtime is a network protocol based service, using [gRPC][gRPC].
+ACAP Runtime is a network protocol based service, using [gRPC][gRPC].
 This makes the service available to clients written in different languages on
-the same device. ACAP runtime is also described in the [ACAP documentation][acap-documentation-acap-runtime].
+the same device. ACAP Runtime is also described in the [ACAP documentation][acap-documentation-acap-runtime].
 
 If you are new to the world of ACAPs take a moment to check out
 [What is ACAP?][acap-documentation]
@@ -29,7 +29,7 @@ If you are new to the world of ACAPs take a moment to check out
     - [TLS](#tls)
     - [gRPC socket](#grpc-socket)
   - [Examples](#examples)
-- [Building ACAP runtime](#building-acap-runtime)
+- [Building ACAP Runtime](#building-acap-runtime)
   - [Native ACAP application](#native-acap-application-2)
   - [Containerized version](#containerized-version-2)
 - [Test suite](#test-suite)
@@ -38,15 +38,15 @@ If you are new to the world of ACAPs take a moment to check out
 
 ## Overview
 
-ACAP runtime provides a network protocol based service, using gRPC to
-expose a number of [APIs](#apis). Once started, ACAP runtime runs a gRPC server
+ACAP Runtime provides a network protocol based service, using gRPC to
+expose a number of [APIs](#apis). Once started, ACAP Runtime runs a gRPC server
 that can be accessed by a client application, written in any gRPC compatible language.
 For further information on the gRPC protocol and how to write gRPC clients see
 [https://grpc.io/][gRPC].
 
-![ACAP runtime Service with gRPC client](assets/gRPC.png)
+![ACAP Runtime Service with gRPC client](assets/gRPC.png)
 
-ACAP runtime can be installed on a device as a standard native ACAP application.
+ACAP Runtime can be installed on a device as a standard native ACAP application.
 Additionally it is available in a containerized version, i.e. it can run as a
 container on the device.
 The former case is mainly suitable for use together with the
@@ -59,21 +59,21 @@ described in the respective Configuration sub sections in the
 
 > **Note**
 >
-> The ACAP runtime service can run with TLS authentication or without.
+> The ACAP Runtime service can run with TLS authentication or without.
 > Be aware that running without TLS authentication is extremely insecure and we
 strongly recommend against this.
 > See [TLS](#tls) for information on how to generate certificates for TLS
-authentication when using ACAP runtime.
+authentication when using ACAP Runtime.
 
 ### Requirements
 
 The following requirements need to be met.
 
 - Axis device:
-  - ACAP runtime as an ACAP application can be installed on any device that the
+  - ACAP Runtime as an ACAP application can be installed on any device that the
   ACAP Native SDK supports. See [Axis devices & compatibility][devices] for
   more information.
-  - ACAP runtime's containerized version also requires [Docker ACAP][docker-acap]
+  - ACAP Runtime's containerized version also requires [Docker ACAP][docker-acap]
   to be installed and running.
   - Certificate files if [TLS](#tls) is used.
 
@@ -83,7 +83,7 @@ The following requirements need to be met.
 
 ### APIs
 
-The ACAP runtime service provides the following APIs:
+The ACAP Runtime service provides the following APIs:
 
 - Inference API - An implementation of [Tensorflow Serving][tensorflow]. There
   are usage examples available for the Inference API written in
@@ -98,9 +98,9 @@ The ACAP runtime service provides the following APIs:
 
 ### Installation
 
-Both variants of ACAP runtime, the native ACAP application and the containerized
+Both variants of ACAP Runtime, the native ACAP application and the containerized
 version, are available as pre-built images on [Docker Hub][docker-hub-acap-runtime].
-These images are the recommended way to install and use ACAP runtime.
+These images are the recommended way to install and use ACAP Runtime.
 
 #### Native ACAP application
 
@@ -108,7 +108,7 @@ To install use any image from [axisecp/acap-runtime][docker-hub-acap-runtime] wi
 a tag on the form `<version>-<ARCH>`, where `<version>` is the acap-runtime release
 version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
 E.g. `1.1.2-armv7hf`.
-Running the image installs ACAP runtime as an ACAP application on the device,
+Running the image installs ACAP Runtime as an ACAP application on the device,
 where it can be controlled in the device GUI **Apps** tab.
 
 ```sh
@@ -140,14 +140,14 @@ docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device passwo
 
 #### Containerized version
 
-Whereas the standard ACAP runtime Docker image will install the service as an ACAP
+Whereas the standard ACAP Runtime Docker image will install the service as an ACAP
 application, the containerized version allows to run it in a container on the device.
 This requires that [Docker ACAP][docker-acap] is installed and running on the device.
 
 Pre-built containerized images are available on
 [axisecp/acap-runtime][docker-hub-acap-runtime] with tags on the form
 `<version>-<ARCH>-containerized`.
-To include the containerized ACAP runtime server in a project, add the image in
+To include the containerized ACAP Runtime server in a project, add the image in
 the projects `docker-compose.yml` file. The following is an illustrative
 example of how the service can be set up with docker-compose. Here we use the
 image for `armv7hf`architecture. For a complete description
@@ -174,7 +174,7 @@ services:
 #### Native ACAP application
 <!-- markdownlint-enable MD024 -->
 
-To change the configuration of the ACAP runtime service, use the settings in the
+To change the configuration of the ACAP Runtime service, use the settings in the
 application drop down menu in the device GUI. Note that the application needs to
 be restarted for any changes to take effect.
 
@@ -206,7 +206,7 @@ be given. See [Chip id](#chip-id) for more information.
 #### Containerized version
 <!-- markdownlint-enable MD024 -->
 
-When starting the ACAP runtime service from command line, as is done with the
+When starting the ACAP Runtime service from command line, as is done with the
 containerized version, it accepts the following settings:
 
 ```text
@@ -235,7 +235,7 @@ See [TLS](#tls) for more information.
 **(3)** When using the Inference API the chip Id corresponding to the device must
 be given. See [Chip id](#chip-id) for more information.
 
-**(4)** If an instance of ACAP runtime as an ACAP application is installed on the
+**(4)** If an instance of ACAP Runtime as an ACAP application is installed on the
 device, the device parameters are also available. Setting the `-o` flag will
 then override the -v, -p, -j and -c and -k settings, if the the corresponding
 device parameter value is valid. This setting is mainly aimed at debug/test
@@ -246,7 +246,7 @@ usage and should not be used in production.
 The Inference API uses [larod][acap-documentation-native-ml] for image processing
 and to set it up the correct chip id for the device needs to be selected.
 Note that there is no direct corelation between chip id and architecture.
-For convenience the pre-built images for the ACAP runtime native application sets
+For convenience the pre-built images for the ACAP Runtime native application sets
 the default value for ChipId to 4 for `armv7hf` and 12 for `aarch64`, since those
 are currently the most common ids for the respective architectures.
 See the table below for a full list of supported values.
@@ -269,7 +269,7 @@ be started.
 
 #### TLS
 
-The ACAP runtime service can be run either in TLS authenticated or unsecured mode.
+The ACAP Runtime service can be run either in TLS authenticated or unsecured mode.
 TLS authenticated mode provides additional security and encryption on the gRPC
 channel and is the recommended (and default) mode. The service requires a certificate
 file and a key file to run in TLS authenticated mode. By default these should be
@@ -311,7 +311,7 @@ Where `<device IP>` is the IP address of the device.
 
 #### gRPC socket
 
-With the default settings the ACAP runtime service will set at a Unix Domain Socket
+With the default settings the ACAP Runtime service will set at a Unix Domain Socket
 (UDS) with the address:
 
 ```sh
@@ -324,21 +324,21 @@ ACAP application or the `-a` and `-p` settings for the containerized version.
 
 ### Examples
 
-The following examples use the Parameter API with ACAP runtime as a native
+The following examples use the Parameter API with ACAP Runtime as a native
 ACAP application:
 
 - [parameter-api-cpp][paramter-api-cpp]
 - [parameter-api-python][parameter-api-python]
 
-The following examples use the ACAP runtime containerized version to run the
+The following examples use the ACAP Runtime containerized version to run the
 Inference API server:
 
 - [minimal-ml-inference][minimal-ml-inference]
 - [object-detector-cpp][object-detector-cpp]
 
-## Building ACAP runtime
+## Building ACAP Runtime
 
-This repo provides Dockerfiles to be used to build ACAP runtime.
+This repo provides Dockerfiles to be used to build ACAP Runtime.
 
 <!-- markdownlint-disable MD024 -->
 ### Native ACAP application
@@ -347,7 +347,7 @@ This repo provides Dockerfiles to be used to build ACAP runtime.
 To build as a native ACAP application use either the Dockerfile `Dockerfile.armv7hf` or `Dockerfile.aarch64`. Select the one that matches the architecture of your device:
 
 ```sh
-# Build ACAP runtime image
+# Build ACAP Runtime image
 docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> .
 ```
 
@@ -371,27 +371,27 @@ To build the containerized version, use either `Dockerfile.armv7hf-containerized
 or `Dockerfile.aarch64-containerized`:
 
 ```sh
-# Build ACAP runtime containerized version
+# Build ACAP Runtime containerized version
 docker build --file Dockerfile.<ARCH>-containerized --tag acap-runtime:<ARCH>-containerized .
 ```
 
 This pulls the pre-built [axisecp/acap-runtime][docker-hub-acap-runtime] image
-with tag `<BUILDVERSION>-<ARCH>`. To use your own locally built ACAP runtime image,
+with tag `<BUILDVERSION>-<ARCH>`. To use your own locally built ACAP Runtime image,
 either re-tag it or update the Dockerfile to match. Also note that the base is an
 Ubuntu image and that that version (build argument `RUNTIME_UBUNTU_VERSION`) must
-match the version that the ACAP runtime image  is based on, i.e. the ACAP native
+match the version that the ACAP Runtime image  is based on, i.e. the ACAP native
 sdk image.
 
 ## Test suite
 
-The repo contains a test suite project to verify that ACAP runtime works as expected
+The repo contains a test suite project to verify that ACAP Runtime works as expected
 on a supported device. It builds and is executed as a standalone ACAP application
 called `Acapruntimetest`.
 
 Build and install it by running:
 
 ```sh
-# Build ACAP runtime test suite image
+# Build ACAP Runtime test suite image
 docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes .
 
 docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> install
