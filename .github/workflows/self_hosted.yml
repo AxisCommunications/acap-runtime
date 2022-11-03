@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv7hf]
+        arch: [armv7hf, aarch64]
     steps:
       -
         name: Checkout repo
