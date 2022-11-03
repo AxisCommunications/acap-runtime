@@ -13,11 +13,11 @@ jobs:
   docker_build_github:
     name: Build test image and store on github
     # skip this for now
-    if: (github.event_name == 'pull_request')
+    #if: (github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv7hf, aarch64]
+        arch: [armv7hf]
     steps:
       -
         name: Checkout repo
@@ -34,6 +34,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.repository }}
+          flavor: |
+            suffix=-test, onlatest=true
           tags: |
             type=ref, event=branch
       - name: Build and push Docker image
@@ -43,8 +45,14 @@ jobs:
           push: true
           file: Dockerfile.${{ matrix.arch }}
           build-args: TEST=true
-          tags: ${{ steps.meta.outputs.tags }}-test
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      -
+        name: Set image env var
+        shell: bash
+        run: |
+          IMAGE_NAME=${{ steps.meta.outputs.tags }}
+          echo "ACAP_DOCKER_IMAGE_NAME=IMAGE_NAME" >> $GITHUB_ENV
 
   docker_build:
     name: build docker image
@@ -93,6 +101,8 @@ jobs:
       #    tags: ${{ steps.meta.outputs.tags }}-test
 
   docker_buildx:
+    # skip this for now
+    if: (github.event_name == 'pull_request')
     runs-on: self-hosted
     strategy:
       matrix:
@@ -145,6 +155,7 @@ jobs:
       #    build-args: TEST=true
       #    load: true
       #    tags: ${{ steps.meta.outputs.tags }}
+
   docker_pull:
     name: pull docker image
     needs: docker_build_github
@@ -160,8 +171,8 @@ jobs:
 
   test_image:
     name: test docker image
-    #needs: docker_pull
-    needs: docker_buildx
+    needs: docker_pull
+    #needs: docker_buildx
     runs-on: self-hosted
     env:
       AXIS_TARGET_ADDR: "172.27.64.8"
