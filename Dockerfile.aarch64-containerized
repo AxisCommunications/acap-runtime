@@ -14,8 +14,8 @@ WORKDIR /opt/app/
 COPY --from=runtime-base /opt/app/*.eap ./
 RUN <<EOF
 mkdir -p acap_runtime
-for f in *.eap;
-    do tar -xzf "$f" -C acap_runtime ;
+for f in *.eap; do
+    tar -xzf "$f" -C acap_runtime
 done
 EOF
 

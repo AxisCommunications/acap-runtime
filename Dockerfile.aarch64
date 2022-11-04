@@ -162,17 +162,17 @@ ARG DEBUG
 RUN <<EOF
 . /opt/axis/acapsdk/environment-setup*
 if [ -n "$DEBUG" ]; then
-    printf "Building debug\n" ;
+    printf "Building debug\n"
     CXXFLAGS="$CXXFLAGS -O0 -ggdb -D__arm64__" \
-    acap-build . -m manifest-aarch64.json ;
+    acap-build . -m manifest-aarch64.json
 elif [ -n "$TEST" ]; then
-    printf "Building test\n" ;
+    printf "Building test\n"
     CXXFLAGS="$CXXFLAGS -g0 -D__arm64__ -DTEST" \
-    acap-build . -m manifest-test.json -a 'testdata/*';
+    acap-build . -m manifest-test.json -a 'testdata/*'
 else
-    printf "Building app\n" ;
+    printf "Building app\n"
     CXXFLAGS="$CXXFLAGS -g0 -D__arm64__" \
-    acap-build . -m manifest-aarch64.json ;
+    acap-build . -m manifest-aarch64.json
 fi
 EOF
 
