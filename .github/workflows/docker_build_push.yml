@@ -55,6 +55,12 @@ jobs:
       - name: Set environment variables for test
         shell: bash
         run: |
+          if [ ${{ matrix.arch }} = armv7hf ]
+          then
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV
+          else
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
+          fi
           echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta_test.outputs.tags }}" >> $GITHUB_ENV
       - name: Run the test image
         uses: ./.github/actions/pytest-action
