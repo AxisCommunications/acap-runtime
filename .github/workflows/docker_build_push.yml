@@ -2,6 +2,8 @@
 ---
 name: docker build and push
 
+# Run the workflow on when code or a semver tag is pushed to main branch,
+# and on pull requests towards main branch
 on:
   push:
     branches:
@@ -12,119 +14,135 @@ on:
     branches:
       - 'main'
 
+# Environment variables that are valid for all jobs
 env:
-  GITHUB_REPOSITORY: 'axiscommunications/acap-runtime'
-  GITHUB_REGISTRY: ghcr.io
   DOCKERHUB_REPOSITORY: 'axisecp/acap-runtime'
 
 jobs:
-  build_test_image:
+  # Build and run the test suite
+  build_and_test:
+    name: Build and run test image
     runs-on: ubuntu-latest
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
+    env:
+      AXIS_TARGET_ADDR_ARMV7HF: "${{ secrets.DEVICE_SRVR_IP }}/camera1"
+      AXIS_TARGET_ADDR_AARCH64: "${{ secrets.DEVICE_SRVR_IP }}/camera2"
+      AXIS_TARGET_USER: ${{ secrets.DEVICE_USER }}
+      AXIS_TARGET_PASS: ${{ secrets.DEVICE_SRVR_PASS }}
+      AXIS_EXTERNAL_POOL: true
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
-      -
-        name: Local action call to build test image
-        uses: ./.github/actions/docker-build-push-action
-        with:
-          arch: ${{ matrix.arch }}
-          dockerfile: Dockerfile.${{ matrix.arch }}
-          push: true
-          suffix: -${{ matrix.arch }}-test
-          latest: false
-          build-args: |
-                TEST=true
-          repository: ${{ env.GITHUB_REPOSITORY }}
-          registry: ${{ env.GITHUB_REGISTRY }}
-          registry_user: ${{ github.actor }}
-          registry_token: ${{ secrets.GITHUB_TOKEN }}
-
-  pull_and_test_image:
-    name: Pulls test image(s) from GITHub container registry and runs tests
-    runs-on: self-hosted
-    needs: build_test_image
-    # TODO Don't use hardcoded values
-    env:
-      AXIS_TARGET_ADDR: "172.27.64.8"
-      AXIS_TARGET_USER: "root"
-      AXIS_TARGET_PASS: "pass"
-    # TODO Test for both armv7hf and aarch64
-    strategy:
-        matrix:
-          arch: [armv7hf]
-    steps:
-      -
-        name: Checkout repo
-        uses: actions/checkout@v3
-      -
-        name: Log in to the GITHub Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.GITHUB_REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Create metadata for docker image
-        id: meta
+        # sha for actions/checkout@v3 at time of commit.
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - name: Create test image metadata
+        id: meta_test
         uses: ./.github/actions/metadata-action
         with:
           suffix: -${{ matrix.arch }}-test
-          latest: false
-          repository: ${{ env.GITHUB_REPOSITORY }}
-          registry: ${{ env.GITHUB_REGISTRY }}
-      -
-        name: Pull the test image from GITHub container repository
-        run: docker pull ${{ steps.meta.outputs.tags }}
-      -
-        name: Set docker image env variable
-        run: echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta.outputs.tags }}" >> $GITHUB_ENV
-      -
-        name: Setup python
-        uses: actions/setup-python@v4
-      -
-        name: Install pytest
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
+          latest: 'false'
+      - name: Build test image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: Dockerfile.${{ matrix.arch }}
+          tags: ${{ steps.meta_test.outputs.tags }}
+          labels: ${{ steps.meta_test.outputs.labels }}
+          push: false
+          load: true
+          build-args: TEST=true
+      - name: Set environment variables for test
+        shell: bash
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-      -
-        name: Run test script
-        run: pytest -s ./.github/tests/test_acapruntimetest.py
-      -
-        name: Remove the image
+          if [ ${{ matrix.arch }} = armv7hf ]
+          then
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV
+          else
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
+          fi
+          echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta_test.outputs.tags }}" >> $GITHUB_ENV
+      - name: Run the test image
+        uses: ./.github/actions/pytest-action
+        with:
+          testfile: ./.github/test/test_acapruntimetest.py
+      - name: Push test image
+        # always push the image so that it can be used for debugging if tests fail
         if: success() || failure()
-        run: docker image rm ${{ steps.meta.outputs.tags }}
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: Dockerfile.${{ matrix.arch }}
+          tags: ${{ steps.meta_test.outputs.tags }}
+          labels: ${{ steps.meta_test.outputs.labels }}
+          push: true
+          build-args: TEST=true
+          registry_user: ${{ secrets.DOCKER_HUB_USERNAME }}
+          registry_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-  build_and_push_to_docker:
+  # Build base and containerized images and push to Docker Hub
+  # Skip this step if not on main branch and if build_and_test job is not successful
+  build_and_push:
+    name: Build and push image(s)
     runs-on: ubuntu-latest
-    needs: pull_and_test_image
+    needs: build_and_test
     if: (github.event_name != 'pull_request')
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        # sha for actions/checkout@v3 at time of commit.
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - name: Create base image metadata
+        id: meta
+        uses: ./.github/actions/metadata-action
+        with:
+          suffix: -${{ matrix.arch }}
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
+          get_version: 'true'
       - name: Build and push base image
-        id: build_base
-        uses: ./.github/actions/local-action
+        uses: ./.github/actions/docker-build-push-action
         with:
           dockerfile: Dockerfile.${{ matrix.arch }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           push: true
-          suffix: -${{ matrix.arch }}
           registry_user: ${{ secrets.DOCKER_HUB_USERNAME }}
           registry_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          get_version: true
+      - name: Create containerized image metadata
+        id: meta_containerized
+        uses: ./.github/actions/metadata-action
+        with:
+          suffix: -${{ matrix.arch }}-containerized
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
       - name: Build and push containerized image
-        uses: ./.github/actions/local-action
+        uses: ./.github/actions/docker-build-push-action
         with:
           dockerfile: Dockerfile.${{ matrix.arch }}-containerized
+          tags: ${{ steps.meta_containerized.outputs.tags }}
+          labels: ${{ steps.meta_containerized.outputs.labels }}
           push: true
-          use_qemu: true
-          suffix: -${{ matrix.arch }}-containerized
           build-args: |
-            ARCH=${{ matrix.arch }}
-            RUNTIME_VERSION=${{ steps.build_base.outputs.version }}
+              ARCH=${{ matrix.arch }}
+              RUNTIME_VERSION=${{ steps.meta.outputs.version }}
+          use_qemu: 'true'
           registry_user: ${{ secrets.DOCKER_HUB_USERNAME }}
           registry_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+  # Push readme file to Docker Hub if the build_and_push job succedded
+  push_readme:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    if: (github.event_name != 'pull_request')
+    steps:
+      - name: Checkout repo
+        # sha for actions/checkout@v3 at time of commit.
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - name: Push README.md to Docker Hub
+      # sha for peter-evans/dockerhub-description@v3 at time of commit.
+        uses: peter-evans/dockerhub-description@93b93397c27ed52b4055b8c6b2f8d92456ab3c56
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
+          readme-filepath: ./README.md

@@ -1,0 +1,27 @@
+---
+name: 'Run pytest action'
+description: 'A local composite action for running a pytest script towards a remote device.'
+
+inputs:
+  testfile:
+    description: 'The path to the pytest file to run.'
+    required: true
+  python-version:
+    description: 'The version of python to use. Default 3.9'
+    required: false
+    default: '3.9'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup python
+      # sha for actions/setup-python@v4 at time of commit.
+      uses: actions/setup-python@13ae5bb136fac2878aff31522b9efb785519f984
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install pytest
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+    - name: Run pytest
+      run: pytest -s ${{ inputs.testfile }}

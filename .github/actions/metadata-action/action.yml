@@ -1,25 +1,25 @@
+# yamllint disable rule:line-length
 ---
 name: 'Docker metadata action'
 description: 'A local composite action for creating docker image metadata.
-              Uses docker/metadata-action to generate the data.'
+              Uses docker/metadata-action and returns the tags and labels output.
+              If get_version is set to true it also returns the base version
+              for the image, i.e without suffix.'
+
 inputs:
   suffix:
     description: 'The suffix to use when constructing the tag(s) for the docker image.'
     required: false
-    default: ""
+    default: ''
   latest:
-    description: 'Set to alow creation of latest tags. Default auto.'
+    description: 'Set to allow creation of latest tags. Default auto.'
     required: false
     default: 'auto'
   repository:
     description: 'Name of the repository of the image to build.'
     required: true
-  registry:
-    description: 'Name of the remote registry to push the image to. Default docker.io'
-    required: false
-    default: 'docker.io'
   get_version:
-    description: 'Set to true if the action should return the version tag of the built image. Default false'
+    description: 'Set to true if the action should return the version tag without suffix. Default false'
     required: false
     default: 'false'
 
@@ -37,13 +37,13 @@ outputs:
 runs:
   using: "composite"
   steps:
-    -
-      name: Create metadata for docker image
+    - name: Create metadata for docker image
       id: meta
-      uses: docker/metadata-action@v4
+      # sha for docker/metadata-action@v4 at time of commit.
+      uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
       with:
-        images: ${{ inputs.registry }}/${{ inputs.repository }}
-        # add the suffix for all tags, even latest.
+        images: ${{ inputs.repository }}
+        # adds the suffix for all tags, even latest.
         flavor: |
           latest=${{ inputs.latest }}
           suffix=${{ inputs.suffix }}, onlatest=true
@@ -51,12 +51,11 @@ runs:
           type=ref, event=branch
           type=semver, pattern={{version}}, event=tag
           type=ref, event=pr
-    -
-        name: Get base version from tag
-        id: return_version
-        if: ${{ inputs.get_version == 'true'}}
-        shell: bash
-        run: |
-          TMP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
-          BASE_VERSION=$(echo $TMP_VERSION | sed -e "s/${{ inputs.suffix }}$//")
-          echo "version=$BASE_VERSION" >> $GITHUB_OUTPUT
+    - name: Get base version from tag
+      id: return_version
+      if: ${{ inputs.get_version == 'true'}}
+      shell: bash
+      run: |
+        TMP_VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+        BASE_VERSION=$(echo $TMP_VERSION | sed -e "s/${{ inputs.suffix }}$//")
+        echo "version=$BASE_VERSION" >> $GITHUB_OUTPUT
