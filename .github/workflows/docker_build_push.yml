@@ -34,7 +34,7 @@ jobs:
       AXIS_EXTERNAL_POOL: true
     steps:
       - name: Checkout repo
-        # actions/checkout@v3
+        # sha for actions/checkout@v3 at time of commit.
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - name: Create test image metadata
         id: meta_test
@@ -91,7 +91,7 @@ jobs:
         arch: [armv7hf, aarch64]
     steps:
       - name: Checkout repo
-        # actions/checkout@v3
+        # sha for actions/checkout@v3 at time of commit.
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
       - name: Create base image metadata
         id: meta
@@ -128,3 +128,21 @@ jobs:
           use_qemu: 'true'
           registry_user: ${{ secrets.DOCKER_HUB_USERNAME }}
           registry_token: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+  # Push readme file to Docker Hub if the build_and_push job succedded
+  push_readme:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    if: (github.event_name != 'pull_request')
+    steps:
+      - name: Checkout repo
+        # sha for actions/checkout@v3 at time of commit.
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - name: Push README.md to Docker Hub
+      # sha for peter-evans/dockerhub-description@v3 at time of commit.
+        uses: peter-evans/dockerhub-description@93b93397c27ed52b4055b8c6b2f8d92456ab3c56
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ env.DOCKERHUB_REPOSITORY }}
+          readme-filepath: ./README.md
