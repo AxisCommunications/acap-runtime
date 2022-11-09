@@ -75,6 +75,7 @@ The following requirements need to be met.
   more information.
   - ACAP Runtime's containerized version also requires [Docker ACAP][docker-acap]
   to be installed and running.
+  - AXIS OS version 10.7 or higher.
   - Certificate files if [TLS](#tls) is used.
 
 - Computer:
@@ -217,7 +218,7 @@ containerized version, it accepts the following settings:
 -c <file name>    Certificate file for TLS authentication. See note2,
 -k <file name>    Private key file for TLS authentication. See note2,
 -j <chip id>      Chip id used by Inference API server. See note3,
--m <file name>    Larod model file used by Inference API server,
+-m <file name>    Machine learning model file used by Inference API server,
 -o                Override settings from device parameters. See note4,
 ```
 
@@ -243,7 +244,7 @@ usage and should not be used in production.
 
 #### Chip id
 
-The Inference API uses [larod][acap-documentation-native-ml] for image processing
+The Inference API uses the [Machine learning API][acap-documentation-native-ml] for image processing
 and to set it up the correct chip id for the device needs to be selected.
 Note that there is no direct corelation between chip id and architecture.
 For convenience the pre-built images for the ACAP Runtime native application sets
