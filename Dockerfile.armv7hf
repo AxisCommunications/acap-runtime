@@ -161,19 +161,7 @@ ARG TEST
 ARG DEBUG
 RUN <<EOF
 . /opt/axis/acapsdk/environment-setup*
-if [ -n "$DEBUG" ]; then
-    printf "Building debug\n";
-    CXXFLAGS="$CXXFLAGS -O0 -ggdb" \
-    acap-build . -m manifest-armv7hf.json;
-elif [ -n "$TEST" ]; then
-    printf "Building test\n";
-    CXXFLAGS="$CXXFLAGS -g0 -DTEST" \
-    acap-build . -m manifest-test.json -a 'testdata/*';
-else
-    printf "Building app\n";
-    CXXFLAGS="$CXXFLAGS -g0" \
-    acap-build . -m manifest-armv7hf.json;
-fi
+CXXFLAGS="$CXXFLAGS -g0 -DTEST" acap-build . -m manifest-test.json -a 'testdata/*'
 EOF
 
 FROM acap-native-sdk
