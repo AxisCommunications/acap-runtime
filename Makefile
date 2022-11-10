@@ -27,13 +27,13 @@ TEST_FILES := $(wildcard $(TEST_PATH)/*.cpp $(TEST_PATH)/*.cc)
 # Compiler flags
 # gRPC and protobuf packages don't play well with pkg-config for include so we do a little workaround
 
-PKGS = protobuf grpc grpc++ vdostream
+PKGS = protobuf grpc grpc++
 PKG_CONFIG_CFLAGS_I := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
 PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
 PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
 PKG_CONFIG_LDLIBS := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-l $(PKGS))
 
-PKGS = gio-2.0 glib-2.0
+PKGS = gio-2.0 glib-2.0 vdostream
 PKG_CONFIG_CFLAGS_I += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
 PKG_CONFIG_CFLAGS_OTHER += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
 PKG_CONFIG_LDFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
