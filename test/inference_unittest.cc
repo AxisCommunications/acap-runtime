@@ -507,7 +507,7 @@ TEST(InferenceUnittest, InitDlpu)
   const vector<string> models = { cpuModel1 };
 
   Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
 }
 
 TEST(InferenceUnittest, PredictDlpuModel1Preload)
@@ -517,7 +517,7 @@ TEST(InferenceUnittest, PredictDlpuModel1Preload)
   shm_unlink(sharedFile);
 
   Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
   PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
   PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
   PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
@@ -537,7 +537,7 @@ TEST(InferenceUnittest, PredictDlpuModel1)
   shm_unlink(sharedFile);
 
   Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
   PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, false);
   PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, false);
   PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
@@ -552,7 +552,7 @@ TEST(InferenceUnittest, PredictDlpuModel2)
   shm_unlink(sharedFile);
 
   Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
   PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
   PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
   PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
@@ -569,7 +569,7 @@ TEST(InferenceUnittest, DISABLED_PredictDlpuModel3)
   shm_unlink(sharedFile);
 
   Inference inference;
-  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models));
+  ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
   PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
   PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
   PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
