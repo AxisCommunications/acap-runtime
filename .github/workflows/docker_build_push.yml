@@ -24,6 +24,7 @@ jobs:
     name: Build and run test image
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [armv7hf, aarch64]
     env:
