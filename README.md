@@ -86,8 +86,8 @@ The following requirements need to be met.
 
 The ACAP Runtime service provides the following APIs:
 
-- Inference API - An implementation of [Tensorflow Serving][tensorflow]. There
-  are usage examples available for the Inference API written in
+- Machine learning API - An implementation of [Tensorflow Serving][tensorflow]. There
+  are usage examples available for the Machine learning API written in
   [Python][minimal-ml-inference] and [C++][object-detector-cpp].
 - Parameter API - Provides gRPC read access to the parameters of an Axis device.
   There are usage examples available for the Parameter API written in
@@ -185,7 +185,7 @@ The available settings are:
 Verbose     Enable extended logging, default 'No',
 IpPort      IP port of gRPC server. See note1,
 Use TLS     Enable SSL/TLS, default 'Yes'. See note2,
-ChipId      Chip id used by Inference API server. See note3.
+ChipId      Chip id used by Machine learning API service. See note3.
 ```
 
 Notes.
@@ -200,7 +200,7 @@ be supplied. If either is omitted, or if the device setting Use TLS is set to 'N
 TLS is not used.
 See [TLS](#tls) for more information.
 
-**(3)** When using the Inference API, the chip Id corresponding to the device must
+**(3)** When using the Machine learning API, the chip Id corresponding to the device must
 be given. See [Chip id](#chip-id) for more information.
 
 <!-- markdownlint-disable MD024 -->
@@ -217,8 +217,8 @@ containerized version, it accepts the following settings:
 -t <seconds>      Runtime in seconds (used for test),
 -c <file name>    Certificate file for TLS authentication. See note2,
 -k <file name>    Private key file for TLS authentication. See note2,
--j <chip id>      Chip id used by Inference API server. See note3,
--m <file name>    Machine learning model file used by Inference API server,
+-j <chip id>      Chip id used by Machine learning API service. See note3,
+-m <file name>    Inference model file used by Machine learning API service,
 -o                Override settings from device parameters. See note4,
 ```
 
@@ -233,7 +233,7 @@ See [gRPC](#grpc-socket) for more information.
 be supplied. If either is omitted TLS is not used.
 See [TLS](#tls) for more information.
 
-**(3)** When using the Inference API the chip Id corresponding to the device must
+**(3)** When using the Machine learning API the chip Id corresponding to the device must
 be given. See [Chip id](#chip-id) for more information.
 
 **(4)** If an instance of ACAP Runtime as an ACAP application is installed on the
@@ -244,7 +244,7 @@ usage and should not be used in production.
 
 #### Chip id
 
-The Inference API uses the [Machine learning API][acap-documentation-native-ml] for image processing
+The Machine learning API uses the [Machine learning API][acap-documentation-native-ml] for image processing
 and to set it up the correct chip id for the device needs to be selected.
 Note that there is no direct corelation between chip id and architecture.
 For convenience the pre-built images for the ACAP Runtime native application sets
@@ -252,7 +252,7 @@ the default value for ChipId to 4 for `armv7hf` and 12 for `aarch64`, since thos
 are currently the most common ids for the respective architectures.
 See the table below for a full list of supported values.
 
-If the value is set to 0 (LAROD_CHIP_INVALID) the Inference API server will not
+If the value is set to 0 (LAROD_CHIP_INVALID) the Machine learning API inference service will not
 be started.
 
 | Chip id | Name                          | Description                                |
@@ -331,8 +331,8 @@ ACAP application:
 - [parameter-api-cpp][paramter-api-cpp]
 - [parameter-api-python][parameter-api-python]
 
-The following examples use the ACAP Runtime containerized version to run the
-Inference API server:
+The following examples use the ACAP Runtime containerized version to use the
+Machine learning API service:
 
 - [minimal-ml-inference][minimal-ml-inference]
 - [object-detector-cpp][object-detector-cpp]
