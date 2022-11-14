@@ -113,7 +113,7 @@ mkdir -p openssl-1.1.1l/build
 cd openssl-1.1.1l/build
 rm -rf ../doc
 ../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr
-make CC=arm-linux-gnueabihf-gcc
+make CC=aarch64-linux-gnu-gcc
 make install
 EOF
 
