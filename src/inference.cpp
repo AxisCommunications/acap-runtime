@@ -310,18 +310,17 @@ Status Inference::Predict(
 
 predict_error:
   // Cleanup
-  larodClearError(&error);
   larodDestroyTensors(&_ppInputTensors, _ppNumInputs);
   larodDestroyTensors(&_ppOutputTensors, _ppNumOutputs);
   larodDestroyTensors(&_inputTensors, _numInputs);
   larodDestroyTensors(&_outputTensors, _numOutputs);
   larodDestroyMap(&_ppMap);
-  larodDeleteModel(&_conn, &_ppModel, nullptr)
+  larodDeleteModel(_conn, _ppModel, &error);
   larodDestroyModel(&_ppModel);
   CloseTmpFiles(inFiles);
   CloseTmpFiles(outFiles);
   pthread_mutex_unlock(&_mtx);
-
+  larodClearError(&error);
   return status;
 }
 
