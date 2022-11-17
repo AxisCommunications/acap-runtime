@@ -119,7 +119,7 @@ bool Inference::Init(const bool verbose, const uint64_t chipId,
     // Load models if any
   _models.clear();
   for (auto model : models) {
-    if (!LoadModel(*_conn, model.c_str(), _chipId, LAROD_ACCESS_PUBLIC)) {
+    if (!LoadModel(*_conn, model.c_str(), _chipId, LAROD_ACCESS_PRIVATE)) {
       return false;
     }
   }
@@ -172,7 +172,7 @@ Status Inference::Predict(
 
     // Try to load model from file
     TRACELOG << "Loading model file " << modelName << endl;
-    if (!LoadModel(*_conn, modelName.c_str(), _chipId, LAROD_ACCESS_PUBLIC)) {
+    if (!LoadModel(*_conn, modelName.c_str(), _chipId, LAROD_ACCESS_PRIVATE)) {
       return Status::CANCELLED;
     }
 
@@ -310,17 +310,17 @@ Status Inference::Predict(
 
 predict_error:
   // Cleanup
-  larodClearError(&error);
   larodDestroyTensors(&_ppInputTensors, _ppNumInputs);
   larodDestroyTensors(&_ppOutputTensors, _ppNumOutputs);
   larodDestroyTensors(&_inputTensors, _numInputs);
   larodDestroyTensors(&_outputTensors, _numOutputs);
   larodDestroyMap(&_ppMap);
+  larodDeleteModel(_conn, _ppModel, &error);
   larodDestroyModel(&_ppModel);
   CloseTmpFiles(inFiles);
   CloseTmpFiles(outFiles);
   pthread_mutex_unlock(&_mtx);
-
+  larodClearError(&error);
   return status;
 }
 
