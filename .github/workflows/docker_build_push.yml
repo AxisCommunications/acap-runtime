@@ -63,6 +63,7 @@ jobs:
       - name: Set environment variables for test
         shell: bash
         run: |
+          echo "AXIS_TARGET_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV
           if [ ${{ matrix.arch }} = armv7hf ]
           then
             echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV

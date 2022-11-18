@@ -51,7 +51,9 @@ def get_eap_file(docker_image_name, rel_path="/build"):
         cwd = os.getcwd()
         for file in os.listdir(f"{cwd}{rel_path}"):
             if file.endswith(".eap"):
-                return os.path.join(f"{cwd}{rel_path}", file)
+                eap_file = os.path.join(f"{cwd}{rel_path}", file)
+                print("got acap file: {eap_file}")
+                return eap_file
     return None
 
 
@@ -59,6 +61,7 @@ class TestClassAcapRuntimeTest:
     """Class for running pytest.
     Requires the following environment variables to be defined:
     AXIS_TARGET_ADDR - ip of device
+    AXIS_TARGET_ARCH - expected arch of device
     AXIS_TARGET_USER - username on device/server
     AXIS_TARGET_PASS - password for user on device/server
     ACAP_DOCKER_IMAGE_NAME - name of docker image containing ACAP Runtime test suite
@@ -88,9 +91,14 @@ class TestClassAcapRuntimeTest:
     def setup_method(self):
         print("\n****Setup****")
         print(f"AXIS_TARGET_ADDR: {get_env('AXIS_TARGET_ADDR')}")
+        print(f"AXIS_EXTERNAL_POOL: {get_env('AXIS_EXTERNAL_POOL')}")
+        print(f"AXIS_TARGET_ARCH: {get_env('AXIS_TARGET_ARCH')}")
         self.init_dut_connection()
         status = self.check_dut_status()
         assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
+        print("Get architecture of device")
+        arch = self.get_dut_architecture()
+        # assert arch == get_env('AXIS_TARGET_ARCH'), f"Expected armv7hf or aarch64 but was {arch}"
         installed = self.acap_ctrl("install")
         assert installed, "Failed to install ACAP runtime test suite"
         installed = self.check_acap_installed()
@@ -112,9 +120,7 @@ class TestClassAcapRuntimeTest:
 
     def test_method(self, dut):
         print(f"****Testing ****")
-        print("Get architecture of device")
-        arch = self.get_dut_architecture()
-        assert arch, f"Expected armv7hf or aarch64 but was {arch}"
+
         print("Start ACAP Runtime test suite")
         started = self.acap_ctrl("start", 1)
         assert started, "Failed to start ACAP runtime test suite."
@@ -222,10 +228,12 @@ class TestClassAcapRuntimeTest:
         """Initiates a requests Session to be used for http communication with the DUT."""
         self.http_session = requests.Session()
         if get_env("AXIS_EXTERNAL_POOL"):
+            print("Using HttpBasicAuth")
             self.http_session.auth = HTTPBasicAuth(
                 get_env("AXIS_TARGET_USER"), get_env("AXIS_TARGET_PASS")
             )
         else:
+            print("Using HTTPDigestAuth")
             self.http_session.auth = HTTPDigestAuth(
                 get_env("AXIS_TARGET_USER"), get_env("AXIS_TARGET_PASS")
             )
@@ -300,6 +308,7 @@ class TestClassAcapRuntimeTest:
                 return False
         else:
             if action == "install":
+                print('acap_ctrl, action: install')
                 eapfile = get_eap_file(docker_image_name)
                 if eapfile:
                     upload_eapfile = io.open(eapfile, "rb")
@@ -308,6 +317,9 @@ class TestClassAcapRuntimeTest:
                         r = self.http_session.post(url, files={eapfile: upload_eapfile})
                         if r.status_code == 200:
                             return True
+                        else:
+                            print(r.status_code)
+                            print(r.text)
                 return False
             if action in ["start", "stop", "remove"]:
                 if self.http_session:
