@@ -23,7 +23,7 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install pytest
+        pip install pytest requests
     - name: Run pytest
       shell: bash
       run: pytest -s ${{ inputs.testfile }}
