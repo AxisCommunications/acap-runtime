@@ -298,7 +298,7 @@ class TestClassAcapRuntimeTest:
     def acap_ctrl(self, action, wait=0):
         """Static method for controlling ACAP application via docker."""
         docker_image_name = get_env("ACAP_DOCKER_IMAGE_NAME")
-        if not get_env("AXIS_EXTERNAL_POOL"):
+        if True: #not get_env("AXIS_EXTERNAL_POOL"):
             # we  can use docker for control
             device_ip = get_env("AXIS_TARGET_ADDR")
             device_pass = get_env("AXIS_TARGET_PASS")
@@ -306,6 +306,7 @@ class TestClassAcapRuntimeTest:
             if not run_docker_cmd(
                 f"run --rm {docker_image_name} {device_ip} {device_pass} {action}"
             ):
+                print(f"failed to install the app")
                 return False
         else:
             if action == "install":
