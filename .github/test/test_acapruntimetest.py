@@ -52,7 +52,7 @@ def get_eap_file(docker_image_name, rel_path="/build"):
         for file in os.listdir(f"{cwd}{rel_path}"):
             if file.endswith(".eap"):
                 eap_file = os.path.join(f"{cwd}{rel_path}", file)
-                print("got acap file: {eap_file}")
+                print(f"got acap file: {eap_file}")
                 return eap_file
     return None
 
@@ -113,10 +113,11 @@ class TestClassAcapRuntimeTest:
         installed = self.check_acap_installed()
         assert not installed, "Failed to remove ACAP runtime test suite."
         print("Rebooting device. This will take some time.")
-        reboot = self.reboot_device(2)
+        reboot = self.reboot_device(3)
         assert reboot, "Failed to reboot DUT after test."
         status = self.check_dut_status(max_time=360)
         assert status, "Failed to get status of DUT after reboot."
+        print("All done.")
 
     def test_method(self, dut):
         print(f"****Testing ****")
@@ -297,7 +298,7 @@ class TestClassAcapRuntimeTest:
     def acap_ctrl(self, action, wait=0):
         """Static method for controlling ACAP application via docker."""
         docker_image_name = get_env("ACAP_DOCKER_IMAGE_NAME")
-        if not get_env("AXIS_EXTERNAL_POOL"):
+        if Temporary override  not get_env("AXIS_EXTERNAL_POOL"):
             # we  can use docker for control
             device_ip = get_env("AXIS_TARGET_ADDR")
             device_pass = get_env("AXIS_TARGET_PASS")
@@ -310,25 +311,25 @@ class TestClassAcapRuntimeTest:
             if action == "install":
                 print('acap_ctrl, action: install')
                 eapfile = get_eap_file(docker_image_name)
-                if eapfile:
-                    upload_eapfile = io.open(eapfile, "rb")
-                    if self.http_session:
-                        url = f"{self.base_url}/axis-cgi/applications/upload.cgi"
-                        r = self.http_session.post(url, files={eapfile: upload_eapfile})
-                        if r.status_code == 200:
-                            return True
-                        else:
-                            print(r.status_code)
-                            print(r.text)
-                return False
-            if action in ["start", "stop", "remove"]:
-                if self.http_session:
-                    url = f"{self.base_url}/axis-cgi/applications/control.cgi?action={action}&package={ACAP_SPECIFIC_NAME}"
-                    r = self.http_session.post(url)
-                    if r.status_code == 200:
-                        return True
+                if eapfile == None:
+                    return False
+                url = f"{self.base_url}/axis-cgi/applications/upload.cgi"
+                upload_eapfile = {'file': io.open(eapfile, "rb")}
+                r = self.http_session.post(url, files = upload_eapfile)
+                if r.status_code != 200:
+                    print(r.status_code)
+                    print(r.text)
+                    return False
+            elif action in ["start", "stop", "remove"]:
+                url = f"{self.base_url}/axis-cgi/applications/control.cgi?action={action}&package={ACAP_SPECIFIC_NAME}"
+                r = self.http_session.post(url)
+                if r.status_code != 200:
+                    return False
+            else:
+                print(f"action, {action}, not supported.")
                 return False
         if wait != 0:
+            print(f"wait for {wait} seconds")
             time.sleep(wait)
         return True
 
@@ -351,6 +352,7 @@ class TestClassAcapRuntimeTest:
                 response_dict = json.loads(r.text)
                 if not "error" in response_dict.keys():
                     if wait != 0:
+                        print(f"Waiting {wait} seconds for reboot to start.")
                         time.sleep(wait)
                     return True
         return False
