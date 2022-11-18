@@ -20,8 +20,10 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
     - name: Install pytest
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install pytest
     - name: Run pytest
+      shell: bash
       run: pytest -s ${{ inputs.testfile }}

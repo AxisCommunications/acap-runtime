@@ -52,9 +52,14 @@ jobs:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta_test.outputs.tags }}
           labels: ${{ steps.meta_test.outputs.labels }}
-          push: false
-          load: true
+          push: true
           build-args: TEST=true
+          registry_user: ${{ env.DOCKER_HUB_USER }}
+          registry_token: ${{ env.DOCKER_HUB_TOKEN }}
+      - name: Pull test image
+        shell: bash
+        run: |
+          docker pull ${{ steps.meta_test.outputs.tags }}
       - name: Set environment variables for test
         shell: bash
         run: |
@@ -69,18 +74,7 @@ jobs:
         uses: ./.github/actions/pytest-action
         with:
           testfile: ./.github/test/test_acapruntimetest.py
-      - name: Push test image
-        # always push the image so that it can be used for debugging if tests fail
-        if: success() || failure()
-        uses: ./.github/actions/docker-build-push-action
-        with:
-          dockerfile: Dockerfile.${{ matrix.arch }}
-          tags: ${{ steps.meta_test.outputs.tags }}
-          labels: ${{ steps.meta_test.outputs.labels }}
-          push: true
-          build-args: TEST=true
-          registry_user: ${{ env.DOCKER_HUB_USER }}
-          registry_token: ${{ env.DOCKER_HUB_TOKEN }}
+
 
   # Build base and containerized images and push to Docker Hub
   # Skip this step if not on main branch and if build_and_test job is not successful
