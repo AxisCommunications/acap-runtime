@@ -23,6 +23,7 @@ env:
 jobs:
   pull_and_push:
     name: Pull an image and push it back
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
