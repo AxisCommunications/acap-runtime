@@ -43,10 +43,9 @@ jobs:
       - name: login to docker hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
-          username: ${{ env.DOCKER_HUB_USER }}
-          password: ${{ env.DOCKER_HUB_TOKEN }}
+          username: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          password: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
       - name: push docker image
-        shell: bash
         run: docker push ${{ env.DOCKER_HUB_REPOSITORY }}:${{ matrix.arch }}-push-test
       - name: Set environment variables for test
         shell: bash
