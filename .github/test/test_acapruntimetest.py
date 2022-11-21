@@ -22,8 +22,17 @@ def get_env(key):
     if os.environ.__contains__(key):
         return os.environ[key]
     else:
-        print(f"{key} not found")
         return None
+
+
+def verify_required_env_variables():
+        """Check that all required env variables are set.
+        """
+        response = []
+        for env_var in ['AXIS_TARGET_ADDR','AXIS_TARGET_ARCH','AXIS_TARGET_USER','AXIS_TARGET_PASS','ACAP_DOCKER_IMAGE_NAME']:
+            if not get_env(env_var):
+                response.append(env_var)
+        return response
 
 
 def run_docker_cmd(cmd):
@@ -68,8 +77,9 @@ class TestClassAcapRuntimeTest:
     AXIS_EXTERNAL_POOL - Set if device is on the external pool.
     """
 
-    http_session = None
+    arch = None
     base_url = None
+    http_session = None
     top_regex = re.compile(
         r"^.*\s\[ INFO\s*\]\sacapruntimetest\[\S*\]:\s\[\s*(?P<bracket>\S*)\s*\]\s*(?P<text>.*)$"
     )
@@ -90,15 +100,19 @@ class TestClassAcapRuntimeTest:
 
     def setup_method(self):
         print("\n****Setup****")
+        response = verify_required_env_variables()
+        assert len(response) == 0, f"One or more required environment variables are not set: {response}."
         print(f"AXIS_TARGET_ADDR: {get_env('AXIS_TARGET_ADDR')}")
         print(f"AXIS_EXTERNAL_POOL: {get_env('AXIS_EXTERNAL_POOL')}")
-        print(f"AXIS_TARGET_ARCH: {get_env('AXIS_TARGET_ARCH')}")
+        self.arch = get_env('AXIS_TARGET_ARCH')
+        print(f"AXIS_TARGET_ARCH: {self.arch}")
         self.init_dut_connection()
         status = self.check_dut_status()
         assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
-        print("Get architecture of device")
-        arch = self.get_dut_architecture()
-        # assert arch == get_env('AXIS_TARGET_ARCH'), f"Expected armv7hf or aarch64 but was {arch}"
+        print("Get properties of DUT")
+        properties = self.get_dut_info()
+        print(properties)
+        assert properties["Architecture"] == self.arch, f"The DUT does not have the expected architecture: {self.arch}."
         installed = self.acap_ctrl("install")
         assert installed, "Failed to install ACAP runtime test suite"
         installed = self.check_acap_installed()
@@ -132,6 +146,8 @@ class TestClassAcapRuntimeTest:
         started once, but {running_count} matches were found."
         print("Wait for ACAP Runtime test suite to finish execution.")
         test_suite_finished = self.check_acap_test_suite_finished()
+        # save the log before checking status of test run
+        self.save_acap_log(f"test_log_{self.arch}.txt")
         assert test_suite_finished, "ACAP runtime test suite execution timed out."
         print("Evaluate ACAP Runtime test suite result.")
         test_suite_passed = self.evaluate_acap_runtime_test_suite_result()
@@ -279,22 +295,20 @@ class TestClassAcapRuntimeTest:
                     print("ReadTimeout while waiting for DUT to respond")
         return False
 
-    def get_dut_architecture(self):
-        """Uses the VAPIX Basic Device Info API to get the architecture of the DUT."""
+    def get_dut_info(self):
+        """Uses the VAPIX Basic Device Info API to get the properties of the DUT.
+        """
         url = f"{self.base_url}/axis-cgi/basicdeviceinfo.cgi"
         json_body = {
             "apiVersion": "1.0",
-            "method": "getProperties",
-            "params": {"propertyList": ["Architecture"]},
+            "method": "getAllProperties"
         }
         if self.http_session:
             r = self.http_session.post(url, json=json_body)
             if r.status_code == 200:
                 response_dict = json.loads(r.text)
                 if not "error" in response_dict.keys() and "data" in response_dict.keys():
-                    arch = response_dict["data"]["propertyList"]["Architecture"]
-                    print(arch)
-                    return arch
+                    return response_dict["data"]["propertyList"]
         return None
 
     def acap_ctrl(self, action, wait=0):
@@ -366,6 +380,14 @@ class TestClassAcapRuntimeTest:
         if self.http_session:
             r = self.http_session.get(url)
             return r.text
+
+    def save_acap_log(self, path):
+        """Save the test log to disk.
+        """
+        test_log = self.read_acap_log()
+        log_file = open(path,"w")
+        log_file.write(test_log)
+        log_file.close()
 
     def find_match_in_log(self, pattern):
         """Check how many times pattern appears in the application log"""
