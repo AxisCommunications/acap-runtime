@@ -46,16 +46,16 @@ jobs:
           suffix: -${{ matrix.arch }}-test
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
           latest: 'false'
-      # - name: Build test image
-      #   uses: ./.github/actions/docker-build-push-action
-      #   with:
-      #     dockerfile: Dockerfile.${{ matrix.arch }}
-      #     tags: ${{ steps.meta_test.outputs.tags }}
-      #     labels: ${{ steps.meta_test.outputs.labels }}
-      #     push: true
-      #     build-args: TEST=true
-      #     registry_user: ${{ env.DOCKER_HUB_USER }}
-      #     registry_token: ${{ env.DOCKER_HUB_TOKEN }}
+      - name: Build test image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: Dockerfile.${{ matrix.arch }}
+          tags: ${{ steps.meta_test.outputs.tags }}
+          labels: ${{ steps.meta_test.outputs.labels }}
+          push: true
+          build-args: TEST=true
+          registry_user: ${{ env.DOCKER_HUB_USER }}
+          registry_token: ${{ env.DOCKER_HUB_TOKEN }}
       - name: Pull test image
         shell: bash
         run: |
