@@ -221,8 +221,6 @@ class TestClassAcapRuntimeTest:
                         tmp_dict.update({"nbr": m.group("nbr_tests")})
                     self.result.update({m.group("test_name"): tmp_dict})
             elif bracket in ["RUN", "OK", "FAILED"]:
-                if bracket in ["FAILED"]:
-                    print(line)
                 m = re.search(r"^(\S+)\.(\S+).*$", text)
                 if m:
                     test_suite_name = m.groups()[0]

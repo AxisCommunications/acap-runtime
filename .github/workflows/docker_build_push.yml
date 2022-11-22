@@ -46,6 +46,13 @@ jobs:
           suffix: -${{ matrix.arch }}-test
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
           latest: 'false'
+          get_version: 'true'
+      - name: Update manifest file
+        if: ( github.ref_type == 'tag')
+        uses: ./.github/actions/update-manifest-action
+        with:
+          manifest_file: ./manifest-test.json
+          version: ${{ steps.meta_test.outputs.version }}
       - name: Build test image
         uses: ./.github/actions/docker-build-push-action
         with:
@@ -97,6 +104,12 @@ jobs:
           suffix: -${{ matrix.arch }}
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
           get_version: 'true'
+      - name: Update manifest file
+        if: ( github.ref_type == 'tag')
+        uses: ./.github/actions/update-manifest-action
+        with:
+          manifest_file: ./manifest-${{ matrix.arch }}.json
+          version: ${{ steps.meta.outputs.version }}
       - name: Build and push base image
         uses: ./.github/actions/docker-build-push-action
         with:

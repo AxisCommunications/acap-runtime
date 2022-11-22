@@ -22,6 +22,7 @@ All types of contributions are encouraged and valued. See the [Table of contents
     - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
     - [How do I submit a good enhancement suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
   - [Your first code contribution](#your-first-code-contribution)
+  - [Test of codebase](#test-of-codebase)
   - [Lint of codebase](#lint-of-codebase)
     - [Linters in GitHub Action](#linters-in-github-action)
     - [Run super-linter locally](#run-super-linter-locally)

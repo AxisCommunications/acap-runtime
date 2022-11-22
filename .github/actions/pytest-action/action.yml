@@ -31,8 +31,8 @@ runs:
     - name: Upload test log
       # sha for actions/upload-artifact@v3 at time of commit
       uses: actions/upload-artifact@83fd05a356d7e2593de66fc9913b3002723633cb
-      if: success() || failure()
+      if: failure()
       with:
-        name: test_log_{{ github.AXIS_TARGET_ARCH }}.txt
-        path: .
+        name: test_log_${{ env.AXIS_TARGET_ARCH }}
+        path: test_log_${{ env.AXIS_TARGET_ARCH }}.txt
 
