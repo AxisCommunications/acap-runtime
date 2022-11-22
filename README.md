@@ -1,7 +1,7 @@
 *Copyright (C) 2022, Axis Communications AB, Lund, Sweden. All Rights Reserved.*
 
 <!-- omit in toc -->
-# BETA - ACAP Runtime
+# ACAP Runtime
 
 [![Lint codebase](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml)
 
