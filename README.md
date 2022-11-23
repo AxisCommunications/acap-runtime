@@ -48,14 +48,16 @@ For further information on the gRPC protocol and how to write gRPC clients see
 
 ACAP Runtime can be installed on a device as a standard native ACAP application.
 Additionally it is available in a containerized version, i.e. it can run as a
-container on the device.
-The former case is mainly suitable for use together with the
-[ACAP Native SDK][acap-documentation-native], whereas the latter is aimed to be
-used together with the [ACAP Computer Vision SDK][acap-documentation-cv] and
-requires that [Docker ACAP][docker-acap] is installed on the device. The
-containerized version provides more configuration options. This is further
-described in the respective Configuration sub sections in the
-[Installation and usage](#installation-and-usage).
+container on the device, in which case it requires that [Docker ACAP][docker-acap]
+is installed and running on the device. The containerized version provides more configuration
+options, this is further described in the respective Configuration sub sections
+in the [Installation and usage](#installation-and-usage).
+
+A client for the ACAP Runtime gRPC server could be developed either using the
+[ACAP Native SDK][acap-documentation-native] or the
+[ACAP Computer Vision SDK][acap-documentation-cv]. See the [Examples](#examples)
+section for examples of how ACAP Runtime is used together with ACAP Computer Vision
+SDK both as a native ACAP application and as containerized version.
 
 > **Note**
 >
