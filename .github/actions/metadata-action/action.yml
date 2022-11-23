@@ -56,7 +56,7 @@ runs:
           type=ref, event=branch
           type=ref, event=pr
           type=semver, pattern={{version}}, event=tag
-          type=semver, pattern={{major.minor}}
+          type=semver, pattern={{major}}.{{minor}}
           type=semver, pattern={{major}}
     - name: Get base version without suffix
       id: return_version
