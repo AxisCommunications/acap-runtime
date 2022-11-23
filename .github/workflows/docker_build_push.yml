@@ -18,8 +18,6 @@ on:
 # Environment variables that are valid for all jobs
 env:
   DOCKER_HUB_REPOSITORY: 'axisecp/acap-runtime'
-  DOCKER_HUB_USER: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
-  DOCKER_HUB_TOKEN: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
 
 jobs:
   # Build and run the test suite
@@ -30,6 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [armv7hf, aarch64]
+    # Environment variables that are used by the pytest script
     env:
       AXIS_TARGET_ADDR_ARMV7HF: "${{ secrets.DEVICE_SRVR_IP }}/camera1"
       AXIS_TARGET_ADDR_AARCH64: "${{ secrets.DEVICE_SRVR_IP }}/camera2"
@@ -62,8 +61,8 @@ jobs:
           labels: ${{ steps.meta_test.outputs.labels }}
           push: true
           build-args: TEST=true
-          registry_user: ${{ env.DOCKER_HUB_USER }}
-          registry_token: ${{ env.DOCKER_HUB_TOKEN }}
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
       - name: Pull test image
         shell: bash
         run: |
@@ -89,9 +88,9 @@ jobs:
           logfile: test_log_${{ matrix.arch }}.txt
 
   # Build base and containerized images and push to Docker Hub
-  # Skip this step if not on main branch and if build_and_test job is not successful
+  # This job is skipped if not on main branch or if build_and_test job has failed
   build_and_push:
-    name: Build and push image(s)
+    name: Build and push images
     runs-on: ubuntu-latest
     needs: build_and_test
     if: (github.event_name != 'pull_request')
@@ -122,8 +121,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           push: true
-          registry_user: ${{ env.DOCKER_HUB_USER }}
-          registry_token: ${{ env.DOCKER_HUB_TOKEN }}
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
@@ -141,5 +140,5 @@ jobs:
               ARCH=${{ matrix.arch }}
               RUNTIME_VERSION=${{ steps.meta.outputs.version }}
           use_qemu: 'true'
-          registry_user: ${{ env.DOCKER_HUB_USER }}
-          registry_token: ${{ env.DOCKER_HUB_TOKEN }}
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}

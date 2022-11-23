@@ -133,10 +133,10 @@ And finally when you are satisfied with your changes, open a new PR.
 
 The repo has a CI/CD workflow setup that includes testing of the codebase. The steps of the workflow are, for each architecture:
 
-1. Build the ACAP Runtime [test suite][test-suite] docker image and push to Docker Hub.
-2. Pull the test suite image and run it on an external device.
-3. Build the ACAP Runtime docker image and push to Docker Hub.
-4. Build the ACAP Runtime containerized docker image and push to Docker Hub.
+1. Build the ACAP Runtime [test suite][test-suite] Docker image and push to Docker Hub.
+2. Pull the test suite Docker image and run it on an external device.
+3. Build the ACAP Runtime Docker image and push to Docker Hub.
+4. Build the ACAP Runtime containerized Docker image and push to Docker Hub.
 
 The workflow should be possible to run from a fork with the following updates:
 
