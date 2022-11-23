@@ -1,26 +1,27 @@
 ---
-name: 'Update version in manifest action'
-description: 'A local composite action to update the version in a manifest file.'
+name: Update version in ACAP application manifest.json action
+description: >
+  A local composite action to update the version in a ACAP application
+  manifest.json file.
 
 inputs:
   manifest_file:
-    description: 'Path to the manifest file to update.'
+    description: Path to the manifest file to update.
     required: true
   version:
-    description: 'The new version to update the file with.'
+    description: The new version to update the file with.
     required: true
   version_position:
-    description: 'The position in the file to update. Defaults to .acapPackageConf.setup.version.'
+    description: The position in the file to update.
+      Defaults to .acapPackageConf.setup.version.
     default: '.acapPackageConf.setup.version'
+    required: false
 
 runs:
-  using: 'composite'
+  using: composite
   steps:
     - shell: bash
       run: |
-        tmpfile=$(mktemp)
-        manifest_file=${{ inputs.manifest_file }}
-        cp "$manifest_file" "$tmpfile"
-        jq --arg new_val "${{ inputs.version }}" \
-        ${{ inputs.version_position }} |= $new_val' "$tmpfile" >"$manifest_file"
-        rm -f "$tmpfile"
+        jq '${{ inputs.version_position }} = "${{ inputs.version }}"'
+        "$manifest_file" > "$manifest_file".tmp
+        mv "$manifest_file".tmp "$manifest_file"

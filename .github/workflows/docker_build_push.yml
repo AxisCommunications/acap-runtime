@@ -1,6 +1,6 @@
 # yamllint disable rule:line-length
 ---
-name: docker build and push
+name: CI/CD workflow.
 
 # Run the workflow on when code or a semver tag is pushed to main branch,
 # and on pull requests towards main branch
@@ -9,7 +9,9 @@ on:
     branches:
       - 'main'
     tags:
-      - '*.*.*'
+      tags:
+      - '[v]?[1-9]+.[0-9]+.[0-9]+'
+      - '[v]?[1-9]+.[0-9]+.[0-9]+-[a-z0-9]+.[1-9]+'
   pull_request:
     branches:
       - 'main'
@@ -74,14 +76,18 @@ jobs:
           if [ ${{ matrix.arch }} = armv7hf ]
           then
             echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV
-          else
+          elif [ ${{ matrix.arch }} = aarch64 ]
+          then
             echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
+          else
+            echo "::error::Non valid architecture encountered"
           fi
-          echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta_test.outputs.tags }}" >> $GITHUB_ENV
+          echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta_test.outputs.full_name }}" >> $GITHUB_ENV
       - name: Run the test image
         uses: ./.github/actions/pytest-action
         with:
           testfile: ./.github/test/test_acapruntimetest.py
+          logfile: test_log_${{ matrix.arch }}.txt
 
   # Build base and containerized images and push to Docker Hub
   # Skip this step if not on main branch and if build_and_test job is not successful

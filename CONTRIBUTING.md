@@ -125,7 +125,7 @@ Before opening a Pull Request (PR), please consider the following guidelines:
 - Make sure that all linters pass, see [Lint of codebase](#lint-of-codebase)
 - The PR will have to meet the code standard already available in the repository.
 - Explanatory comments related to code functions are required. Please write code comments for a better understanding of the code for other developers.
-- Note that code changes or additions to the .github folder (or sub-folders) will not be accepted.
+- Note that code changes or additions to the `.github` folder (or sub-folders) will not be accepted.
 
 And finally when you are satisfied with your changes, open a new PR.
 
@@ -133,15 +133,15 @@ And finally when you are satisfied with your changes, open a new PR.
 
 The repo has a CI/CD workflow setup that includes testing of the codebase. The steps of the workflow are, for each architecture:
 
-- Build the ACAP Runtime [test suite][ẗest-suite] docker image and push to Docker Hub.
-- Pull the test suite image and run it on an external device.
-- Build the ACAP Runtime docker image and push to Docker Hub.
-- Build the ACAP Runtime containerized docker image and push to Docker Hub.
+1. Build the ACAP Runtime [test suite][test-suite] docker image and push to Docker Hub.
+2. Pull the test suite image and run it on an external device.
+3. Build the ACAP Runtime docker image and push to Docker Hub.
+4. Build the ACAP Runtime containerized docker image and push to Docker Hub.
 
 The workflow should be possible to run from a fork with the following updates:
 
 - Create your own Docker repository and refer to it in the workflow. Make sure to add your own secrets for login to the repository.
-- Setup up devices to test on and update the workflow with their IP addresses and provide secrets for the user name and login to the devices.
+- Setup devices to test on and update the workflow with their IP addresses and provide secrets for the user name and login to the devices.
 
 ### Lint of codebase
 
@@ -211,5 +211,5 @@ To lint only a specific file, replace `.` or `$(COMMAND)` with the file path.
 [issues_bugs]: https://github.com/AxisCommunications/acap-runtime/issues?q=label%3Abug
 [super-linter]: https://github.com/github/super-linter
 [super-linter-local]: https://github.com/github/super-linter/blob/main/docs/run-linter-locally.md
-[ẗest-suite]: https://github.com/AxisCommunications/acap-runtime#test-suite
+[test-suite]: https://github.com/AxisCommunications/acap-runtime#test-suite
 <!-- markdownlint-enable MD034 -->
