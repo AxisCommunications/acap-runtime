@@ -25,5 +25,5 @@ runs:
     - shell: bash
       run: |
         jq '${{ inputs.key }} = "${{ inputs.value }}"' \
-        "${{ inputs.manifest_file }}" > manifest_file.tmp
+          "${{ inputs.manifest_file }}" > manifest_file.tmp
         mv manifest_file.tmp "${{ inputs.manifest_file }}"
