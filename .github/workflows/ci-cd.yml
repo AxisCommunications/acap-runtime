@@ -9,8 +9,9 @@ on:
     branches:
       - 'main'
     tags:
-      - '[v]?[1-9]+.[0-9]+.[0-9]+'
-      - '[v]?[1-9]+.[0-9]+.[0-9]+-[a-z0-9]+.[1-9]+'
+      - 'v[1-9]+.[0-9]+.[0-9]+'
+      - 'v[1-9]+.[0-9]+.[0-9]+-[a-z0-9]+.[1-9]+'
+      - 'v[1-9]+.[0-9]+.[0-9]+-[1-9][0-9]+'
   pull_request:
     branches:
       - 'main'
@@ -49,10 +50,10 @@ jobs:
           get_version: 'true'
       - name: Update manifest file
         if: ( github.ref_type == 'tag')
-        uses: ./.github/actions/update-manifest-action
+        uses: ./.github/actions/update-acap-manifest-action
         with:
           manifest_file: ./manifest-test.json
-          version: ${{ steps.meta_test.outputs.version }}
+          value: ${{ steps.meta_test.outputs.version }}
       - name: Build test image
         uses: ./.github/actions/docker-build-push-action
         with:
@@ -78,13 +79,14 @@ jobs:
           then
             echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
           else
-            echo "::error::Non valid architecture encountered"
+            echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
           echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta_test.outputs.full_name }}" >> $GITHUB_ENV
       - name: Run the test image
         uses: ./.github/actions/pytest-action
         with:
           testfile: ./.github/test/test_acapruntimetest.py
+          requirements_file: ./.github/test/requirements.txt
           logfile: test_log_${{ matrix.arch }}.txt
 
   # Build base and containerized images and push to Docker Hub
@@ -110,10 +112,10 @@ jobs:
           get_version: 'true'
       - name: Update manifest file
         if: ( github.ref_type == 'tag')
-        uses: ./.github/actions/update-manifest-action
+        uses: ./.github/actions/update-acap-manifest-action
         with:
           manifest_file: ./manifest-${{ matrix.arch }}.json
-          version: ${{ steps.meta.outputs.version }}
+          value: ${{ steps.meta.outputs.version }}
       - name: Build and push base image
         uses: ./.github/actions/docker-build-push-action
         with:
