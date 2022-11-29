@@ -4,7 +4,7 @@
 # ACAP Runtime
 
 [![Lint codebase](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml)
-[![CI/CD](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker_build_push.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/docker_build_push.yml)
+[![CI/CD](https://github.com/AxisCommunications/acap-runtime/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/ci-cd.yml)
 
 ACAP Runtime is a network protocol based service, using [gRPC][gRPC].
 This makes the service available to clients written in different languages on
