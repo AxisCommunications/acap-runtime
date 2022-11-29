@@ -1,4 +1,5 @@
 .devcontainer/
+.github/test/__pycache__/
 apis/
 !apis/keyvaluestore.proto
 build/

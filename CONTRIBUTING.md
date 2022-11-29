@@ -22,6 +22,7 @@ All types of contributions are encouraged and valued. See the [Table of contents
     - [Before Submitting an Enhancement](#before-submitting-an-enhancement)
     - [How do I submit a good enhancement suggestion?](#how-do-i-submit-a-good-enhancement-suggestion)
   - [Your first code contribution](#your-first-code-contribution)
+  - [Test of codebase](#test-of-codebase)
   - [Lint of codebase](#lint-of-codebase)
     - [Linters in GitHub Action](#linters-in-github-action)
     - [Run super-linter locally](#run-super-linter-locally)
@@ -124,8 +125,23 @@ Before opening a Pull Request (PR), please consider the following guidelines:
 - Make sure that all linters pass, see [Lint of codebase](#lint-of-codebase)
 - The PR will have to meet the code standard already available in the repository.
 - Explanatory comments related to code functions are required. Please write code comments for a better understanding of the code for other developers.
+- Note that code changes or additions to the `.github` folder (or sub-folders) will not be accepted.
 
 And finally when you are satisfied with your changes, open a new PR.
+
+### Test of codebase
+
+The repo has a CI/CD workflow setup that includes testing of the codebase. The steps of the workflow are, for each architecture:
+
+1. Build the ACAP Runtime [test suite][test-suite] Docker image and push to Docker Hub.
+2. Pull the test suite Docker image and run it on an external device.
+3. Build the ACAP Runtime Docker image and push to Docker Hub.
+4. Build the ACAP Runtime containerized Docker image and push to Docker Hub.
+
+The workflow should be possible to run from a fork with the following updates:
+
+- Create your own Docker repository and refer to it in the workflow. Make sure to add your own secrets for login to the repository.
+- Setup devices to test on and update the workflow with their IP addresses and provide secrets for the user name and login to the devices.
 
 ### Lint of codebase
 
@@ -195,4 +211,5 @@ To lint only a specific file, replace `.` or `$(COMMAND)` with the file path.
 [issues_bugs]: https://github.com/AxisCommunications/acap-runtime/issues?q=label%3Abug
 [super-linter]: https://github.com/github/super-linter
 [super-linter-local]: https://github.com/github/super-linter/blob/main/docs/run-linter-locally.md
+[test-suite]: https://github.com/AxisCommunications/acap-runtime#test-suite
 <!-- markdownlint-enable MD034 -->

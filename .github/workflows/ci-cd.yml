@@ -1,0 +1,153 @@
+# yamllint disable rule:line-length
+---
+name: CI/CD workflow.
+
+# Run the workflow on when code or a semver tag is pushed to main branch,
+# and on pull requests towards main branch
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      # semver, e.g. v1.2.0 (does no match v0.1.2)
+      - 'v[1-9]+.[0-9]+.[0-9]+'
+      # semver with prerelease info, e.g. v1.0.2-beta.1 or v1.2.3-rc.10
+      - 'v[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
+      # do not match prerelease starting w/ 0, e.g. v1.0.2-beta.0 or v1.2.3-rc.01
+      - '!v[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*'
+      # semver with date info, e.g. v1.0.2-20221125
+      - 'v[1-9]+.[0-9]+.[0-9]+-[0-9]+'
+      # do not match date starting w/ 0, e.g. v1.0.2-01232023
+      - '!v[1-9]+.[0-9]+.[0-9]+-[0]*'
+  pull_request:
+    branches:
+      - 'main'
+
+# Environment variables that are valid for all jobs
+env:
+  DOCKER_HUB_REPOSITORY: 'axisecp/acap-runtime'
+
+jobs:
+  # Build and run the test suite
+  build_and_test:
+    name: Build and run test image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [armv7hf, aarch64]
+    # Environment variables that are used by the pytest script
+    env:
+      AXIS_TARGET_ADDR_ARMV7HF: "${{ secrets.DEVICE_SRVR_IP }}/camera1"
+      AXIS_TARGET_ADDR_AARCH64: "${{ secrets.DEVICE_SRVR_IP }}/camera2"
+      AXIS_TARGET_USER: ${{ secrets.DEVICE_USER }}
+      AXIS_TARGET_PASS: ${{ secrets.DEVICE_SRVR_PASS }}
+      AXIS_EXTERNAL_POOL: true
+    steps:
+      - name: Checkout repo
+        # sha for actions/checkout@v3 at time of commit.
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - name: Create test image metadata
+        id: meta_test
+        uses: ./.github/actions/metadata-action
+        with:
+          suffix: -${{ matrix.arch }}-test
+          repository: ${{ env.DOCKER_HUB_REPOSITORY }}
+          latest: 'false'
+          get_version: 'true'
+      - name: Update manifest file
+        if: ( github.ref_type == 'tag')
+        uses: ./.github/actions/update-acap-manifest-action
+        with:
+          manifest_file: ./manifest-test.json
+          value: ${{ steps.meta_test.outputs.version }}
+      - name: Build test image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: Dockerfile.${{ matrix.arch }}
+          tags: ${{ steps.meta_test.outputs.tags }}
+          labels: ${{ steps.meta_test.outputs.labels }}
+          push: true
+          build-args: TEST=true
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
+      - name: Pull test image
+        shell: bash
+        run: |
+          docker pull ${{ steps.meta_test.outputs.tags }}
+      - name: Set environment variables for test
+        shell: bash
+        run: |
+          echo "AXIS_TARGET_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV
+          if [ ${{ matrix.arch }} = armv7hf ]
+          then
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV
+          elif [ ${{ matrix.arch }} = aarch64 ]
+          then
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
+          else
+            echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
+          fi
+          echo "ACAP_DOCKER_IMAGE_NAME=${{ steps.meta_test.outputs.full_name }}" >> $GITHUB_ENV
+      - name: Run the test image
+        uses: ./.github/actions/pytest-action
+        with:
+          testfile: ./.github/test/test_acapruntimetest.py
+          requirements_file: ./.github/test/requirements.txt
+          logfile: test_log_${{ matrix.arch }}.txt
+
+  # Build base and containerized images and push to Docker Hub
+  # This job is skipped if not on main branch or if build_and_test job has failed
+  build_and_push:
+    name: Build and push images
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: (github.event_name != 'pull_request')
+    strategy:
+      matrix:
+        arch: [armv7hf, aarch64]
+    steps:
+      - name: Checkout repo
+        # sha for actions/checkout@v3 at time of commit.
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+      - name: Create base image metadata
+        id: meta
+        uses: ./.github/actions/metadata-action
+        with:
+          suffix: -${{ matrix.arch }}
+          repository: ${{ env.DOCKER_HUB_REPOSITORY }}
+          get_version: 'true'
+      - name: Update manifest file
+        if: ( github.ref_type == 'tag')
+        uses: ./.github/actions/update-acap-manifest-action
+        with:
+          manifest_file: ./manifest-${{ matrix.arch }}.json
+          value: ${{ steps.meta.outputs.version }}
+      - name: Build and push base image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: Dockerfile.${{ matrix.arch }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
+      - name: Create containerized image metadata
+        id: meta_containerized
+        uses: ./.github/actions/metadata-action
+        with:
+          suffix: -${{ matrix.arch }}-containerized
+          repository: ${{ env.DOCKER_HUB_REPOSITORY }}
+      - name: Build and push containerized image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: Dockerfile.${{ matrix.arch }}-containerized
+          tags: ${{ steps.meta_containerized.outputs.tags }}
+          labels: ${{ steps.meta_containerized.outputs.labels }}
+          push: true
+          build-args: |
+              ARCH=${{ matrix.arch }}
+              RUNTIME_VERSION=${{ steps.meta.outputs.version }}
+          use_qemu: 'true'
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
