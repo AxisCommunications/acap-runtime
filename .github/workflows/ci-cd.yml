@@ -74,7 +74,7 @@ jobs:
       - name: Pull test image
         shell: bash
         run: |
-          docker pull ${{ steps.meta_test.outputs.tags }}
+          docker pull ${{ steps.meta_test.outputs.full_name }}
       - name: Set environment variables for test
         shell: bash
         run: |
