@@ -324,7 +324,7 @@ predict_error:
   return status;
 }
 
-// Convert from tensorflow to larod datatype
+// Convert from TensorFlow to larod datatype
 inline const larodTensorDataType TfToLarodDataType(
   const DataType& dataType)
 {
@@ -365,7 +365,7 @@ inline const larodTensorDataType TfToLarodDataType(
   }
 }
 
-// Convert from larod to tensorflow datatype
+// Convert from larod to TensorFlow datatype
 inline const DataType LarodToTfDataType(
   const larodTensorDataType& dataType)
 {

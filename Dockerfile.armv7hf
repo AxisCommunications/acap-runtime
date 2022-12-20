@@ -138,7 +138,7 @@ cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
     "$SDKTARGETSYSROOT"/usr/include
 EOF
 
-# Get Tensorflow and Tensorflow Serving
+# Get TensorFlow and TensorFlow Serving
 RUN <<EOF
 git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
 git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
@@ -153,7 +153,7 @@ ln -fs /opt/tensorflow/tensorflow/tensorflow .
 ln -fs /opt/tensorflow/serving/tensorflow_serving .
 EOF
 
-# Patch the Predict call of Tensorflow Serving
+# Patch the Predict call of TensorFlow Serving
 RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
 
 # Building the ACAP application

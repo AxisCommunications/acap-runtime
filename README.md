@@ -89,7 +89,7 @@ The following requirements need to be met.
 
 The ACAP Runtime service provides the following APIs:
 
-- Machine learning API - An implementation of [Tensorflow Serving][tensorflow]. There
+- Machine learning API - An implementation of [TensorFlow Serving][tensorflow]. There
   are usage examples available for the Machine learning API written in
   [Python][minimal-ml-inference] and [C++][object-detector-cpp].
 - Parameter API - Provides gRPC read access to the parameters of an Axis device.
