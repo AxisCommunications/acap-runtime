@@ -1,0 +1,33 @@
+---
+name: Temp testing on external camera setup
+
+on: [push]
+
+jobs:
+
+  run_test_on_external:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: ['armv7hf','aarch64']
+    env:
+      AXIS_TARGET_ADDR_ARMV7HF: "${{ secrets.DEVICE_SRVR_IP }}/camera1"
+      AXIS_TARGET_ADDR_AARCH64: "${{ secrets.DEVICE_SRVR_IP }}/camera2"
+      AXIS_TARGET_USER: ${{ secrets.DEVICE_USER }}
+      AXIS_TARGET_PASS: ${{ secrets.DEVICE_SRVR_PASS }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      - shell: bash
+        run: |
+          if [ ${{ matrix.arch }} = armv7hf ]
+          then
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV
+          else
+            echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
+          fi
+      - run: pytest -s ./.github/test/temp_test.py
