@@ -268,7 +268,7 @@ be started.
 | 9       | LAROD_CHIP_CVFLOW_PROC        | Ambarella CVFlow (proc) |
 | 10      | LAROD_CHIP_ACE                | Axis Compute Engine |
 | 11      | LAROD_CHIP_LIBYUV             | CPU with libyuv. |
-| 12      | LAROD_CHIP_TFLITE_ARTPEC8DLPU | ARTPEC-8 DLPU with TensorFlow Lite. WARNING: This is an experimental chip which is subject to change.|
+| 12      | LAROD_CHIP_TFLITE_ARTPEC8DLPU | ARTPEC-8 DLPU with TensorFlow Lite. |
 | 13      | LAROD_CHIP_OPENCL | Image processing using OpenCL |
 
 #### TLS
