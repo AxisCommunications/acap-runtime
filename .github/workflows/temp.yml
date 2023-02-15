@@ -23,12 +23,17 @@ jobs:
       - run: |
           python -m pip install --upgrade pip
           pip install pytest
-      - shell: bash
+      - name: Set environment variables for test
+        shell: bash
         run: |
+          echo "AXIS_TARGET_ARCH=${{ matrix.arch }}" >> $GITHUB_ENV
           if [ ${{ matrix.arch }} = armv7hf ]
           then
             echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_ARMV7HF }}" >> $GITHUB_ENV
-          else
+          elif [ ${{ matrix.arch }} = aarch64 ]
+          then
             echo "AXIS_TARGET_ADDR=${{ env.AXIS_TARGET_ADDR_AARCH64 }}" >> $GITHUB_ENV
+          else
+            echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
       - run: pytest -s ./.github/test/temp_test.py
