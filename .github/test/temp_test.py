@@ -218,7 +218,7 @@ class TestClassAcapRuntimeTest:
         if get_env("AXIS_EXTERNAL_POOL"):
             print("Using HttpBasicAuth")
             self.http_session.auth = HTTPBasicAuth(
-                get_env("AXIS_TARGET_USER"), get_env("AXIS_TARGET_PASS")
+                get_env("AXIS_TARGET_USER"), f"{get_env('AXIS_TARGET_PASS')}"
             )
         else:
             print("Using HTTPDigestAuth")
