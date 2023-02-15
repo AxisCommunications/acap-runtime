@@ -14,7 +14,7 @@ jobs:
       AXIS_TARGET_ADDR_ARMV7HF: "${{ secrets.DEVICE_SRVR_IP }}/camera1"
       AXIS_TARGET_ADDR_AARCH64: "${{ secrets.DEVICE_SRVR_IP }}/camera2"
       AXIS_TARGET_USER: ${{ secrets.DEVICE_USER }}
-      AXIS_TARGET_PASS: ${{ secrets.DEVICE_SRVR_PASS_TMP }}
+      AXIS_TARGET_PASS: ${{ secrets.DEVICE_SRVR_PASS }}
       AXIS_EXTERNAL_POOL: true
 
     steps:
