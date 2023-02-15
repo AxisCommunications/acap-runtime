@@ -35,11 +35,10 @@ jobs:
           curl -X 'POST' \
           'https://gw.int.csi-api.axis.com/int/acap/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' \
           -H 'accept: */*'
-          -H 'Content-Type: multipart/form-data' \
-          -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
-          -F 'uploadedFile=$ACAP_TO_SIGN_NAME'
-  
-
+          -H 'Content-Type: multipart/form-data' \
+          -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
+          -F 'uploadedFile=$ACAP_TO_SIGN_NAME'
+          
       - uses: actions/upload-artifact@v3
         with:
           name: signed-ACAP
