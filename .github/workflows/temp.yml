@@ -15,6 +15,7 @@ jobs:
       AXIS_TARGET_ADDR_AARCH64: "${{ secrets.DEVICE_SRVR_IP }}/camera2"
       AXIS_TARGET_USER: ${{ secrets.DEVICE_USER }}
       AXIS_TARGET_PASS: "${{ secrets.DEVICE_SRVR_PASS_TMP }}"
+      AXIS_EXTERNAL_POOL: true
 
     steps:
       - uses: actions/checkout@v3
