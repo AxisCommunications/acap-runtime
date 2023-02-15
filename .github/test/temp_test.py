@@ -110,6 +110,7 @@ class TestClassAcapRuntimeTest:
         assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
         print("Get properties of DUT")
         properties = self.get_dut_info()
+        assert properties["Architecture"] == self.arch, f"The DUT does not have the expected architecture: {self.arch}."
         print(properties)
 
 
