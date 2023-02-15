@@ -110,8 +110,8 @@ class TestClassAcapRuntimeTest:
         assert status, f"Could not connect to {get_env('AXIS_TARGET_ADDR')}"
         print("Get properties of DUT")
         properties = self.get_dut_info()
-        assert properties["Architecture"] == self.arch, f"The DUT does not have the expected architecture: {self.arch}."
         print(properties)
+        assert properties['Architecture'] == self.arch, f"The DUT does not have the expected architecture: {self.arch}."
 
 
     def teardown_method(self):
@@ -274,10 +274,12 @@ class TestClassAcapRuntimeTest:
         }
         if self.http_session:
             r = self.http_session.post(url, json=json_body)
+            print(r.status_code)
             if r.status_code == 200:
                 response_dict = json.loads(r.text)
+                print(response_dict)
                 if not "error" in response_dict.keys() and "data" in response_dict.keys():
-                    return response_dict["data"]["propertyList"]
+                    return response_dict['data']['propertyList']
         return None
 
     def acap_ctrl(self, action, wait=0):
