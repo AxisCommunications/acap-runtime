@@ -37,7 +37,7 @@ jobs:
           -H 'accept: */*'\
           -H 'Content-Type:multipart/form-data'\
           -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}'\
-          -F 'uploadedFile=@$ACAP_TO_SIGN_NAME'
+          -F "uploadedFile=@$ACAP_TO_SIGN_NAME"
           
       - uses: actions/upload-artifact@v3
         with:
