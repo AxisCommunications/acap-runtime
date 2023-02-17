@@ -11,7 +11,7 @@ on:
 # Environment variables that are valid for all jobs
 env:
   DOCKER_HUB_REPOSITORY: 'axisecp/acap-runtime'
-  ACAP_TO_SIGN_NAME: .build/ACAP_Runtime_1_2_0_aarch64.eap
+  ACAP_TO_SIGN_NAME: /home/runner/work/acap-runtime/acap-runtime/ACAP_Runtime_1_2_0_aarch64.eap
 
 jobs:
   # Build and run the test suite
