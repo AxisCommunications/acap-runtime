@@ -32,12 +32,8 @@ jobs:
 
       - name: Sign and upload ACAP
         run: |
-          curl -X POST \
-          -F "uploadedFile=@$ACAP_TO_SIGN_NAME"
-          -H 'accept: */*' \
-          -H 'Content-Type:multipart/form-data' \
-          -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
-          https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary | cat
+          curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
+          'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F 'uploadedFile=@ACAP_Runtime_1_2_0_aarch64.eap'
         
       - uses: actions/upload-artifact@v3
         with:
