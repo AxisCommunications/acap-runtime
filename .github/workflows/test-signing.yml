@@ -33,7 +33,7 @@ jobs:
       - name: Sign and upload ACAP
         run: |
           curl -X POST \
-          'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' \
+          "https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary"
           -H 'accept: */*'
           -H 'Content-Type:multipart/form-data'
           -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}'\
