@@ -28,7 +28,7 @@ jobs:
         run: |
           docker pull axisecp/acap-runtime:main-aarch64
           docker cp $(docker create axisecp/acap-runtime:main-aarch64):/opt/app .build
-          find .build -type f -name ACAP_Runtime_1_2_0_aarch64.eap
+          realpath -s ACAP_Runtime_1_2_0_aarch64.eap
 
       - name: Sign and upload ACAP
         run: |
