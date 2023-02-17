@@ -41,4 +41,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: signed-ACAP
-          path: path/to/artifact/$ACAP_TO_SIGN_NAME
+          path: path/to/artifact/ACAP_Runtime_1_2_0_aarch64
