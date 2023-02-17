@@ -36,9 +36,9 @@ jobs:
           pwd
           ls -la
           curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
-          'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"ACAP_Runtime_1_2_0_aarch64.eap" --output ACAP_Runtime_1_2_0_aarch64.eap 
+          'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"ACAP_Runtime_1_2_0_aarch64.eap" --output Signed_ACAP_Runtime_1_2_0_aarch64.eap 
         
       - uses: actions/upload-artifact@v3
         with:
           name: signed-ACAP
-          path: path/to/artifact/ACAP_Runtime_1_2_0_aarch64
+          path: /home/runner/work/acap-runtime/acap-runtime/.build/Signed_ACAP_Runtime_1_2_0_aarch64.eap
