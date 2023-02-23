@@ -3,6 +3,7 @@
     "acapPackageConf": {
         "setup": {
             "friendlyName": "ACAP Runtime",
+            "appId": "414174",
             "appName": "acapruntime",
             "vendor": "Axis Communications",
             "embeddedSdkVersion": "3.0",
