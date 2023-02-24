@@ -13,6 +13,10 @@ inputs:
     description: List of build arguments to use when building the image.
     required: false
     default: ''
+  target:
+    description: Name of target build stage to build.
+    required: false
+    default: ''
   tags:
     description: List of tags to apply to the built image.
       It is recommended to use docker/metadata-action to generate these.
@@ -80,3 +84,4 @@ runs:
         build-args: ${{ inputs.build-args }}
         tags: ${{ inputs.tags }}
         labels: ${{ inputs.labels }}
+        target: ${{ inputs.target }}
