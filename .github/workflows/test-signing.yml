@@ -26,6 +26,7 @@ jobs:
     steps:
       - name: Pull image from DockerHub
         run: |
+          echo "Full_name ${{ steps.meta.outputs.full_name }}""
           docker pull ${{ steps.meta.outputs.full_name }}
       - name: Build and fetch eap-file
         run: |
