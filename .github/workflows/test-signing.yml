@@ -31,7 +31,7 @@ jobs:
           docker pull ${{ steps.meta.outputs.full_name }}
       - name: Build and fetch eap-file
         run: |
-          docker pull ${{ DOCKER_HUB_REPOSITORY }}:main-${{ matrix.arch }}
+          docker pull ${{ env.DOCKER_HUB_REPOSITORY }}:main-${{ matrix.arch }}
           docker cp $(docker create ${{ steps.meta.outputs.full_name }}):/opt/app .build
           EAP_PATH=$(find .build -type f -name *.eap)
           echo "EAP_PATH=$EAP_PATH" >> $GITHUB_ENV
