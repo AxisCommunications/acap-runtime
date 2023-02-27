@@ -26,12 +26,12 @@ jobs:
     steps:
       - name: Pull image from DockerHub
         run: |
-          echo "Full_name ${{ steps.meta.outputs.full_name }}"
-          docker pull ${{ steps.meta.outputs.full_name }}
+          echo "Full_name ${{ steps.meta_test.outputs.full_name }}"
+          docker pull ${{ steps.meta_test.outputs.full_name }}
       - name: Build and fetch eap-file
         run: |
           docker pull axisecp/acap-runtime:main-aarch64
-          docker cp $(docker create ${{ steps.meta.outputs.full_name }}):/opt/app .build
+          docker cp $(docker create ${{ steps.meta_test.outputs.full_name }}):/opt/app .build
           EAP_PATH=$(find .build -type f -name *.eap)
           echo "EAP_PATH=$EAP_PATH" >> $GITHUB_ENV
           EAP_FILE=$(find .build -type f -printf "%f\n")
