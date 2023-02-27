@@ -68,7 +68,6 @@ jobs:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta_test.outputs.tags }}
           labels: ${{ steps.meta_test.outputs.labels }}
-          push: false
           load: true
           build-args: TEST=true
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
@@ -131,7 +130,7 @@ jobs:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          push: false
+          load: true
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
       - name: Pull image from DockerHub
