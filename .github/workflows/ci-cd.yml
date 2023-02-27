@@ -67,7 +67,8 @@ jobs:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta_test.outputs.tags }}
           labels: ${{ steps.meta_test.outputs.labels }}
-          push: true
+          push: false
+          load: true
           build-args: TEST=true
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
@@ -129,9 +130,28 @@ jobs:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          push: true
+          push: false
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
+      - name: Pull image from DockerHub
+        run: |
+          echo "Full_name ${{ steps.meta.outputs.full_name }}"
+      - name: Build and fetch eap-file
+        run: |
+          docker cp $(docker create ${{ steps.meta.outputs.full_name }}):/opt/app .build
+          EAP_PATH=$(find .build -type f -name *.eap)
+          echo "EAP_PATH=$EAP_PATH" >> $GITHUB_ENV
+          EAP_FILE=$(find .build -type f -printf "%f\n")
+          echo "EAP_FILE=$EAP_FILE" >> $GITHUB_ENV
+      - name: Sign eap-file
+        run: |
+          curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
+          'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"${{ env.EAP_FILE }}" --output Signed_${{ env.EAP_FILE }}
+      - name: Push signed ACAP to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: signed-ACAP
+          path: .build/Signed_${{ env.EAP_FILE }}
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
