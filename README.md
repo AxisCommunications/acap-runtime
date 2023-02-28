@@ -352,7 +352,7 @@ To build as a native ACAP application use either the Dockerfile `Dockerfile.armv
 
 ```sh
 # Build ACAP Runtime image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> .
+docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --target runtime-base .
 ```
 
 where `<ARCH>` is either `armv7hf` or `aarch64`.
@@ -371,20 +371,12 @@ docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERS
 ### Containerized version
 <!-- markdownlint-enable MD024 -->
 
-To build the containerized version, use either `Dockerfile.armv7hf-containerized`
-or `Dockerfile.aarch64-containerized`:
+To build the containerized version, use either the Dockerfile `Dockerfile.armv7hf` or `Dockerfile.aarch64`. Select the one that matches the architecture of your device:
 
 ```sh
 # Build ACAP Runtime containerized version
-docker build --file Dockerfile.<ARCH>-containerized --tag acap-runtime:<ARCH>-containerized .
+docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-containerized .
 ```
-
-This pulls the pre-built [axisecp/acap-runtime][docker-hub-acap-runtime] image
-with tag `<BUILDVERSION>-<ARCH>`. To use your own locally built ACAP Runtime image,
-either re-tag it or update the Dockerfile to match. Also note that the base is an
-Ubuntu image and that that version (build argument `RUNTIME_UBUNTU_VERSION`) must
-match the version that the ACAP Runtime image  is based on, i.e. the ACAP native
-sdk image.
 
 ## Test suite
 
@@ -396,7 +388,7 @@ Build and install it by running:
 
 ```sh
 # Build ACAP Runtime test suite image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes .
+docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes --target runtime-base .
 
 docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> install
 ```

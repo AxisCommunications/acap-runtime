@@ -176,9 +176,29 @@ else
 fi
 EOF
 
-FROM acap-native-sdk
+# Copy out eap to an installation image
+# Use this to install ACAP Runtime as an ACAP on a device
+FROM acap-native-sdk as runtime-base
+
 WORKDIR /opt/app
 COPY --from=build /opt/app/*.eap ./
 COPY --from=build /opt/app/*.conf ./
 
 ENTRYPOINT [ "/opt/axis/acapsdk/sysroots/x86_64-pokysdk-linux/usr/bin/eap-install.sh" ]
+
+# Copy out eap to a containerized image
+# Use this to run ACAP Runtime in a container on a device
+FROM arm64v8/ubuntu:${UBUNTU_VERSION} as containerized
+
+WORKDIR /opt/app/
+COPY --from=runtime-base /opt/app/*.eap ./
+RUN <<EOF
+mkdir -p acap_runtime
+for f in *.eap; do
+    tar -xzf "$f" -C acap_runtime
+done
+EOF
+
+ENTRYPOINT [ "/opt/app/acap_runtime/acapruntime" ]
+
+
