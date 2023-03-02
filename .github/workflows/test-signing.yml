@@ -36,14 +36,6 @@ jobs:
           suffix: -${{ matrix.arch }}
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
           get_version: 'true'
-
-      - name: Get EAP from base image
-        id: test
-        uses: shrink/actions-docker-extract@v2
-        with:
-          image: ${{ steps.meta.outputs.full_name }}
-          path: .build
-
       - name: Get EAP from base image
         id: get_artifact
         run: |
