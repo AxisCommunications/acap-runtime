@@ -63,12 +63,18 @@ jobs:
           manifest_file: ./manifest-test.json
           value: ${{ steps.meta_test.outputs.version }}
       - name: Build test image
+        id: build_image
         uses: ./.github/actions/docker-build-push-action
         with:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta_test.outputs.tags }}
           labels: ${{ steps.meta_test.outputs.labels }}
-          build-args: TEST=true
+          push: false
+          load: true
+          build-args: |
+            TEST=true
+            FOO=${{ matrix.arch }}
+          target: base
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
       - name: Pull test image
