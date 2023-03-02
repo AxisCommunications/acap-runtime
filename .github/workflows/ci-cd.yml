@@ -63,17 +63,13 @@ jobs:
           manifest_file: ./manifest-test.json
           value: ${{ steps.meta_test.outputs.version }}
       - name: Build test image
-        id: build_image
         uses: ./.github/actions/docker-build-push-action
         with:
           dockerfile: Dockerfile.${{ matrix.arch }}
           tags: ${{ steps.meta_test.outputs.tags }}
           labels: ${{ steps.meta_test.outputs.labels }}
-          push: false
-          load: true
-          build-args: |
-            TEST=true
-            FOO=${{ matrix.arch }}
+          push: true
+          build-args: TEST=true
           target: base
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
@@ -139,7 +135,7 @@ jobs:
           load: true
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
-      - name: Pull image from base image
+      - name: Get EAP from base image
         id: get_artifact
         run: |
           echo "Full_name ${{ steps.meta.outputs.full_name }}"
@@ -151,6 +147,7 @@ jobs:
           echo "EAP_FILE=$EAP_FILE" >> $GITHUB_ENV
       - name: Sign eap-file
         run: |
+          cd .build
           curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
           'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"${{ env.EAP_FILE }}" --output Signed_${{ env.EAP_FILE }}
       - name: Upload artifact
