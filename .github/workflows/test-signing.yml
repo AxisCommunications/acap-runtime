@@ -35,6 +35,12 @@ jobs:
           suffix: -${{ matrix.arch }}
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
           get_version: 'true'
+      - name: Update manifest file
+        if: ( github.ref_type == 'tag')
+        uses: ./.github/actions/update-acap-manifest-action
+        with:
+          manifest_file: ./manifest-${{ matrix.arch }}.json
+          value: ${{ steps.meta.outputs.version }}
       - name: Get EAP from base image
         id: get_artifact
         run: |
