@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'acap-signing-2'
     tags:
       # semver, e.g. 1.2.0 (does no match 0.1.2)
       - '[1-9]+.[0-9]+.[0-9]+'
@@ -131,9 +132,32 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           target: runtime-base
-          push: true
+          push: false
+          load: true
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
+      - name: Get EAP from base image
+        id: get_artifact
+        run: |
+          echo "Full_name ${{ steps.meta.outputs.full_name }}"
+
+          docker cp $(docker create "${{ steps.meta.outputs.full_name }}"):/opt/app .build
+          export EAP_FILE=$(find .build -type f -name "*.eap" -printf "%f\n")
+          delimiter="$(openssl rand -hex 8)"
+          echo "EAP_FILE<<${delimiter}" >> ${GITHUB_ENV}
+          echo "${EAP_FILE}" >> ${GITHUB_ENV}
+          echo "${delimiter}" >> ${GITHUB_ENV}
+          echo "EAP_FILE ${EAP_FILE}"
+      - name: Sign eap-file
+        run: |
+          cd .build
+          curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
+          'https://gw.ext.csi-api.axis.com/ext/acap/admin/application/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"${{ env.EAP_FILE }}" --output Signed_${{ env.EAP_FILE }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: signed-artifact-${{ matrix.arch }}
+          path: .build/Signed_${{ env.EAP_FILE }}
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
