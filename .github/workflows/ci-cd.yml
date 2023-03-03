@@ -141,11 +141,12 @@ jobs:
           echo "Full_name ${{ steps.meta.outputs.full_name }}"
 
           docker cp $(docker create "${{ steps.meta.outputs.full_name }}"):/opt/app .build
-          EAP_PATH=$(find .build -type f -name *.eap)
-          echo "EAP_PATH=$EAP_PATH" >> $GITHUB_ENV
-
-          EAP_FILE=$(find .build -type f -printf "%f\n")
-          echo "EAP_FILE=$EAP_FILE" >> $GITHUB_ENV
+          export EAP_FILE=$(find .build -type f -name "*.eap" -printf "%f\n")
+          delimiter="$(openssl rand -hex 8)"
+          echo "EAP_FILE<<${delimiter}" >> ${GITHUB_ENV}
+          echo "${EAP_FILE}" >> ${GITHUB_ENV}
+          echo "${delimiter}" >> ${GITHUB_ENV}
+          echo "EAP_FILE ${EAP_FILE}"
       - name: Sign eap-file
         run: |
           cd .build
