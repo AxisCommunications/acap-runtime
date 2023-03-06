@@ -1,0 +1,17 @@
+name: Release workflow.
+
+# Run the workflow on when code or a semver tag is pushed to main branch,
+# and on pull requests towards main branch
+on:
+  release:
+    branches:
+      - 'main'
+
+jobs:
+  my-job:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          MESSAGE: ${{ github.event_name }}
+        run: echo $MESSAGE
+
