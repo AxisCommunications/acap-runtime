@@ -84,7 +84,7 @@ The following requirements need to be met.
 - Computer:
   - Either [Docker Desktop][dockerDesktop] version 4.11.1 or higher, or
   [Docker Engine][dockerEngine] version 20.10.17 or higher.
-  - To build Docker ACAP locally it is required have [Buildx][buildx] enabled.
+  - To build Docker ACAP locally it is required to have [Buildx][buildx] installed.
 
 ### APIs
 
