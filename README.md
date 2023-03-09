@@ -343,7 +343,7 @@ Machine learning API service:
 
 ## Building ACAP Runtime
 
-This repo provides Dockerfiles to be used to build ACAP Runtime.
+This repo provides Dockerfiles to be used to build ACAP Runtime. Note that buildx is used and thus BuildKit is required to be installed and enabled for the build to work.
 
 <!-- markdownlint-disable MD024 -->
 ### Native ACAP application
@@ -353,7 +353,7 @@ To build as a native ACAP application use either the Dockerfile `Dockerfile.armv
 
 ```sh
 # Build ACAP Runtime image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --target runtime-base .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --target runtime-base .
 ```
 
 where `<ARCH>` is either `armv7hf` or `aarch64`.
@@ -365,7 +365,7 @@ build arguments `VERSION` and `UBUNTU_VERSION` to select a specific tag of the
 [axisecp/acap-native-sdk:1.4_beta1-armv7hf-ubuntu22.04][docker-hub-acap-native-sdk-1.4_beta1-armv7hf-ubuntu22.04]:
 
 ```sh
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
 ```
 
 <!-- markdownlint-disable MD024 -->
@@ -376,7 +376,7 @@ To build the containerized version, use either the Dockerfile `Dockerfile.armv7h
 
 ```sh
 # Build ACAP Runtime containerized version
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-containerized .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-containerized .
 ```
 
 ## Test suite
@@ -389,7 +389,7 @@ Build and install it by running:
 
 ```sh
 # Build ACAP Runtime test suite image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes --target runtime-base .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes --target runtime-base .
 
 docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> install
 ```
