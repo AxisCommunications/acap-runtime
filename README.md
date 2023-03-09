@@ -84,7 +84,7 @@ The following requirements need to be met.
 - Computer:
   - Either [Docker Desktop][dockerDesktop] version 4.11.1 or higher, or
   [Docker Engine][dockerEngine] version 20.10.17 or higher.
-  - To build Docker ACAP locally it is required have [BuildKit][buildkit] enabled.
+  - To build Docker ACAP locally it is required have [Buildx][buildx] enabled.
 
 ### APIs
 
@@ -343,7 +343,7 @@ Machine learning API service:
 
 ## Building ACAP Runtime
 
-This repo provides Dockerfiles to be used to build ACAP Runtime. Note that buildx is used and thus BuildKit is required to be installed and enabled for the build to work.
+This repo provides Dockerfiles to be used to build ACAP Runtime. Note that Buildx is used.
 
 <!-- markdownlint-disable MD024 -->
 ### Native ACAP application
@@ -429,7 +429,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [acap-documentation-native-ml]: https://axiscommunications.github.io/acap-documentation/docs/api/native-sdk-api.html#machine-learning-api
 [acap-documentation-cv]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-computer-vision-sdk
 [acap-documentation-acap-runtime]: https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime
-[buildkit]: https://docs.docker.com/build/buildkit/
+[buildx]: https://docs.docker.com/build/install-buildx/
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
 [docker-hub-acap-runtime]: https://hub.docker.com/r/axisecp/acap-runtime
