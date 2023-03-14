@@ -140,8 +140,6 @@ jobs:
           target: runtime-base
           push: false
           load: true
-          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
-          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
       - name: Get EAP from base image
         id: get_artifact
         run: |
@@ -261,7 +259,7 @@ jobs:
           -H "Accept: application/vnd.github.manifold-preview" \
           -H "Content-Type: application/zip" \
           --data-binary @${{ env.EAP_FILE }} \
-          "https://uploads.github.com/repos/AxisCommunications/acap-runtime/releases/${{env.RELEASE_ID}}/assets?name=${{ env.EAP_FILE }}" \
+          "https://uploads.github.com/repos/AxisCommunications/acap-runtime/releases/${{env.RELEASE_ID}}/assets?name=/home/runner/work/acap-runtime/acap-runtime/${{ env.EAP_FILE }}" \
           -w "%{http_code}\n" -o /dev/null)
         echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
     - name: Check that asset has been uploaded correctly
