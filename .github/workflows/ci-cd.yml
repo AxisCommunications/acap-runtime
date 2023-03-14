@@ -233,7 +233,6 @@ jobs:
         arch: [armv7hf, aarch64]
     env:
       RELEASE_ID: ${{ needs.create_prerelease.outputs.RELEASE_ID }}
-      EAP_FILE: ${{ needs.build_and_push.outputs.EAP_FILE }}
     steps:
     - name: Get EAP file name
       run: |
@@ -259,7 +258,7 @@ jobs:
           -H "Accept: application/vnd.github.manifold-preview" \
           -H "Content-Type: application/zip" \
           --data-binary @${{ env.EAP_FILE }} \
-          "https://uploads.github.com/repos/AxisCommunications/acap-runtime/releases/${{env.RELEASE_ID}}/assets?name=/home/runner/work/acap-runtime/acap-runtime/${{ env.EAP_FILE }}" \
+          "https://uploads.github.com/repos/AxisCommunications/acap-runtime/releases/${{env.RELEASE_ID}}/assets?name=${{ env.EAP_FILE }}" \
           -w "%{http_code}\n" -o /dev/null)
         echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
     - name: Check that asset has been uploaded correctly
