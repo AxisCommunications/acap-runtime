@@ -6,18 +6,14 @@ ARG VERSION=1.7
 ARG UBUNTU_VERSION=22.04
 
 FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} as acap-native-sdk
-
-ARG ARCH
-ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
-
-# Remove abseil dynamic libs from SDK since dependencies should link to static libs
-WORKDIR ${TARGETSYSROOT}/usr/lib
-RUN [ -z "$(ls libabsl*.so*)" ] || rm -f libabsl*.so*
-
 FROM acap-native-sdk as build
 
 ARG ARCH
 ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
+
+# Remove Abseil dynamic libs from SDK since dependencies should link to static libs
+WORKDIR ${TARGETSYSROOT}/usr/lib
+RUN [ -z "$(ls libabsl*.so*)" ] || rm -f libabsl*.so*
 
 # Install openssl (to use instead of boringssl)
 RUN <<EOF
@@ -187,6 +183,7 @@ EOF
 # Copy out eap to an installation image
 # Use this to install ACAP Runtime as an ACAP on a device
 FROM acap-native-sdk as runtime-base
+
 WORKDIR /opt/app
 COPY --from=build /opt/app/*.eap ./
 COPY --from=build /opt/app/*.conf ./
@@ -207,4 +204,3 @@ done
 EOF
 
 ENTRYPOINT [ "/opt/app/acap_runtime/acapruntime" ]
-
