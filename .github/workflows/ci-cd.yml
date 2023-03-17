@@ -9,7 +9,7 @@ on:
     branches:
       - 'main'
     tags:
-      # semver, e.g. 1.2.0 (does no match 0.1.2)
+      # semver, e.g. 1.2.0 (does not match 0.1.2)
       - '[1-9]+.[0-9]+.[0-9]+'
       # semver with prerelease info, e.g. 1.0.2-beta.1 or 1.2.3-rc.10
       - '[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
@@ -22,10 +22,6 @@ on:
   pull_request:
     branches:
       - 'main'
-
-# Environment variables that are valid for all jobs
-env:
-  DOCKER_HUB_REPOSITORY: 'axisecp/acap-runtime'
 
 jobs:
   # Build and run the test suite
@@ -45,14 +41,13 @@ jobs:
       AXIS_EXTERNAL_POOL: true
     steps:
       - name: Checkout repo
-        # sha for actions/checkout@v3 at time of commit.
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        uses: actions/checkout@v3
       - name: Create test image metadata
         id: meta_test
         uses: ./.github/actions/metadata-action
         with:
           suffix: -${{ matrix.arch }}-test
-          repository: ${{ env.DOCKER_HUB_REPOSITORY }}
+          repository: ${{ vars.REPOSITORY_DOCKER_HUB }}
           latest: "false"
           get_version: "true"
       - name: Update manifest file
@@ -112,14 +107,13 @@ jobs:
       EAP_FILE_AARCH64: ${{ steps.save_full_file_name.outputs.EAP_FILE_AARCH64 }}
     steps:
       - name: Checkout repo
-        # sha for actions/checkout@v3 at time of commit.
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+        uses: actions/checkout@v3
       - name: Create base image metadata
         id: meta
         uses: ./.github/actions/metadata-action
         with:
           suffix: -${{ matrix.arch }}
-          repository: ${{ env.DOCKER_HUB_REPOSITORY }}
+          repository: ${{ vars.REPOSITORY_DOCKER_HUB }}
           get_version: "true"
       - name: Update manifest file
         if: ( github.ref_type == 'tag')
@@ -191,7 +185,7 @@ jobs:
         uses: ./.github/actions/metadata-action
         with:
           suffix: -${{ matrix.arch }}-containerized
-          repository: ${{ env.DOCKER_HUB_REPOSITORY }}
+          repository: ${{ vars.REPOSITORY_DOCKER_HUB }}
       - name: Build and push containerized image
         uses: ./.github/actions/docker-build-push-action
         with:
