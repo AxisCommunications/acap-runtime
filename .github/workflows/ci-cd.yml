@@ -7,25 +7,26 @@ name: CI/CD workflow.
 on:
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
       # semver, e.g. 1.2.0 (does no match 0.1.2)
-      - '[1-9]+.[0-9]+.[0-9]+'
+      - "[1-9]+.[0-9]+.[0-9]+"
       # semver with prerelease info, e.g. 1.0.2-beta.1 or 1.2.3-rc.10
-      - '[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
+      - "[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+"
       # do not match prerelease starting w/ 0, e.g. 1.0.2-beta.0 or 1.2.3-rc.01
-      - '![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*'
+      - "![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*"
       # semver with date info, e.g. 1.0.2-20221125
-      - '[1-9]+.[0-9]+.[0-9]+-[0-9]+'
+      - "[1-9]+.[0-9]+.[0-9]+-[0-9]+"
       # do not match date starting w/ 0, e.g. 1.0.2-01232023
-      - '![1-9]+.[0-9]+.[0-9]+-[0]*'
+      - "![1-9]+.[0-9]+.[0-9]+-[0]*"
   pull_request:
     branches:
-      - 'main'
+      - "main"
+      - "acap-signing-2"
 
 # Environment variables that are valid for all jobs
 env:
-  DOCKER_HUB_REPOSITORY: 'axisecp/acap-runtime'
+  DOCKER_HUB_REPOSITORY: "axisecp/acap-runtime"
 
 jobs:
   # Build and run the test suite
@@ -53,8 +54,8 @@ jobs:
         with:
           suffix: -${{ matrix.arch }}-test
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
-          latest: 'false'
-          get_version: 'true'
+          latest: "false"
+          get_version: "true"
       - name: Update manifest file
         if: ( github.ref_type == 'tag')
         uses: ./.github/actions/update-acap-manifest-action
@@ -120,7 +121,7 @@ jobs:
         with:
           suffix: -${{ matrix.arch }}
           repository: ${{ env.DOCKER_HUB_REPOSITORY }}
-          get_version: 'true'
+          get_version: "true"
       - name: Update manifest file
         if: ( github.ref_type == 'tag')
         uses: ./.github/actions/update-acap-manifest-action
@@ -148,8 +149,22 @@ jobs:
       - name: Sign eap-file
         run: |
           cd .build
-          curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
-          '${{ vars.ACAP_PORTAL_URL }}/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"${{ steps.get_eap_file_name.outputs.EAP_FILE }}" --output Signed_${{ steps.get_eap_file_name.outputs.EAP_FILE }}
+          RESPONSE=$(curl -XPOST -H 'accept: */*' -H 'Content-Type: multipart/form-data' -H 'Authorization: Bearer ${{secrets.ACAP_PORTAL_SIGNING_BEARER_TOKEN}}' \
+          '${{ vars.ACAP_PORTAL_URL }}/${{secrets.ACAP_PORTAL_SIGNING_ID}}/sign/binary' -F uploadedFile=@"${{ env.EAP_FILE }}" --output Signed_${{ env.EAP_FILE }} \
+          -w "%{http_code}\n" -o /dev/null)
+          echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
+      - name: Check that acap has been signed
+        run: |
+          if [[ -n "$HTTP_RESPONSE" && "$HTTP_RESPONSE" =~ ^[0-9]+$ ]]; then
+            if [ "$HTTP_RESPONSE" -eq 200 ]; then
+              echo "HTTP response code is 200, signing was succesful"
+            else
+              echo "HTTP response code is: $HTTP_RESPONSE, signing was not succesful"
+              exit 1
+            fi
+          else
+            echo "HTTP_RESPONSE is empty or not a valid integer: $HTTP_RESPONSE"
+          fi
       - name: Upload artifact
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         with:
@@ -182,9 +197,9 @@ jobs:
           labels: ${{ steps.meta_containerized.outputs.labels }}
           push: true
           build-args: |
-              ARCH=${{ matrix.arch }}
-              RUNTIME_VERSION=${{ steps.meta.outputs.version }}
-          use_qemu: 'true'
+            ARCH=${{ matrix.arch }}
+            RUNTIME_VERSION=${{ steps.meta.outputs.version }}
+          use_qemu: "true"
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
 
@@ -196,38 +211,38 @@ jobs:
     outputs:
       RELEASE_ID: ${{ steps.prerelease.outputs.RELEASE_ID }}
     steps:
-    - name: Create prerelease
-      id: prerelease
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        export RELEASE_ID=$( jq -r '.id' <<< $(
-        gh api \
-        --method POST \
-        -H "Accept: application/vnd.github+json" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        /repos/${{ vars.GITHUB_REPOSITORY }}/releases \
-        -f tag_name='${GITHUB_REF#refs/*/}' \
-        -f target_commitish='main' \
-        -f name='${{ env.TAG }}' \
-        -f body='Prerelease for ${GITHUB_REF#refs/*/}' \
-        -F draft=false \
-        -F prerelease=true \
-        -F generate_release_notes=false
-          ))
-        delimiter="$(openssl rand -hex 8)"
-        echo "RELEASE_ID<<${delimiter}" >> ${GITHUB_OUTPUT}
-        echo "${RELEASE_ID}" >> ${GITHUB_OUTPUT}
-        echo "${delimiter}" >> ${GITHUB_OUTPUT}
-        echo "RELEASE_ID ${RELEASE_ID}"
+      - name: Create prerelease
+        id: prerelease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          export RELEASE_ID=$( jq -r '.id' <<< $(
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          /repos/${{ vars.GITHUB_REPOSITORY }}/releases \
+          -f tag_name='${GITHUB_REF#refs/*/}' \
+          -f target_commitish='main' \
+          -f name='${{ env.TAG }}' \
+          -f body='Prerelease for ${GITHUB_REF#refs/*/}' \
+          -F draft=false \
+          -F prerelease=true \
+          -F generate_release_notes=false
+            ))
+          delimiter="$(openssl rand -hex 8)"
+          echo "RELEASE_ID<<${delimiter}" >> ${GITHUB_OUTPUT}
+          echo "${RELEASE_ID}" >> ${GITHUB_OUTPUT}
+          echo "${delimiter}" >> ${GITHUB_OUTPUT}
+          echo "RELEASE_ID ${RELEASE_ID}"
 
-        if [[ -z ${RELEASE_ID} ]]
-        then
-          echo "Create prerelease was not successful"
-          exit 1
-        else
-          echo "Create prerelease was successful, with id ${RELEASE_ID}"
-        fi
+          if [[ -z ${RELEASE_ID} ]]
+          then
+            echo "Create prerelease was not successful"
+            exit 1
+          else
+            echo "Create prerelease was successful, with id ${RELEASE_ID}"
+          fi
 
   download-and-upload-artifacts:
     permissions: write-all
@@ -241,43 +256,43 @@ jobs:
       EAP_FILE_AARCH64: ${{ needs.build_and_push.outputs.EAP_FILE_AARCH64 }}
       EAP_FILE_ARMV7HF: ${{ needs.build_and_push.outputs.EAP_FILE_ARMV7HF }}
     steps:
-    - name: Get EAP file name
-      id: full_eap_name
-      run: |
-        if [ ${{ matrix.arch }} = armv7hf ]
-        then
-          echo "EAP_FILE=${{ needs.build_and_push.outputs.EAP_FILE_ARMV7HF }}" >> $GITHUB_ENV
-        elif [ ${{ matrix.arch }} = aarch64 ]
-        then
-          echo "EAP_FILE=${{ needs.build_and_push.outputs.EAP_FILE_AARCH64 }}" >> $GITHUB_ENV
-        else
-          echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
-        fi
-    - name: Download artifacts
-      uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
-      with:
-        name: ${{ env.EAP_FILE }}
-        path: ./
-    - name: Upload file to GitHub release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        RESPONSE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.manifold-preview" \
-          -H "Content-Type: application/zip" \
-          --data-binary @${{ env.EAP_FILE }} \
-          "https://uploads.github.com/repos/${{ vars.GITHUB_REPOSITORY }}/releases/${{env.RELEASE_ID}}/assets?name=${{ env.EAP_FILE }}" \
-          -w "%{http_code}\n" -o /dev/null)
-        echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
-    - name: Check that asset has been uploaded correctly
-      run: |
-        if [[ -n "$HTTP_RESPONSE" && "$HTTP_RESPONSE" =~ ^[0-9]+$ ]]; then
-          if [ "$HTTP_RESPONSE" -eq 201 ]; then
-            echo "HTTP response code is 201, upload was succesful"
+      - name: Get EAP file name
+        id: full_eap_name
+        run: |
+          if [ ${{ matrix.arch }} = armv7hf ]
+          then
+            echo "EAP_FILE=${{ needs.build_and_push.outputs.EAP_FILE_ARMV7HF }}" >> $GITHUB_ENV
+          elif [ ${{ matrix.arch }} = aarch64 ]
+          then
+            echo "EAP_FILE=${{ needs.build_and_push.outputs.EAP_FILE_AARCH64 }}" >> $GITHUB_ENV
           else
-            echo "HTTP response code is: $HTTP_RESPONSE, upload was not succesful"
-            exit 1
+            echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
-        else
-          echo "HTTP_RESPONSE is empty or not a valid integer: $HTTP_RESPONSE"
-        fi
+      - name: Download artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        with:
+          name: ${{ env.EAP_FILE }}
+          path: ./
+      - name: Upload file to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RESPONSE=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.manifold-preview" \
+            -H "Content-Type: application/zip" \
+            --data-binary @${{ env.EAP_FILE }} \
+            "https://uploads.github.com/repos/${{ vars.GITHUB_REPOSITORY }}/releases/${{env.RELEASE_ID}}/assets?name=${{ env.EAP_FILE }}" \
+            -w "%{http_code}\n" -o /dev/null)
+          echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
+      - name: Check that asset has been uploaded correctly
+        run: |
+          if [[ -n "$HTTP_RESPONSE" && "$HTTP_RESPONSE" =~ ^[0-9]+$ ]]; then
+            if [ "$HTTP_RESPONSE" -eq 201 ]; then
+              echo "HTTP response code is 201, upload was succesful"
+            else
+              echo "HTTP response code is: $HTTP_RESPONSE, upload was not succesful"
+              exit 1
+            fi
+          else
+            echo "HTTP_RESPONSE is empty or not a valid integer: $HTTP_RESPONSE"
+          fi

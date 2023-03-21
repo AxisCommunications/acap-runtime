@@ -21,17 +21,18 @@ If you are new to the world of ACAPs take a moment to check out
   - [APIs](#apis)
 - [Installation and usage](#installation-and-usage)
   - [Installation](#installation)
-    - [Native ACAP application](#native-acap-application)
+  - [Native ACAP application for versions >1.2.0](#native-acap-application)
+  - [Native ACAP application for versions <=1.2.0](#native-acap-application-1)
     - [Containerized version](#containerized-version)
   - [Configuration](#configuration)
-    - [Native ACAP application](#native-acap-application-1)
+    - [Native ACAP application](#native-acap-application-2)
     - [Containerized version](#containerized-version-1)
     - [Chip id](#chip-id)
     - [TLS](#tls)
     - [gRPC socket](#grpc-socket)
   - [Examples](#examples)
 - [Building ACAP Runtime](#building-acap-runtime)
-  - [Native ACAP application](#native-acap-application-2)
+  - [Native ACAP application](#native-acap-application-3)
   - [Containerized version](#containerized-version-2)
 - [Test suite](#test-suite)
 - [Contributing](#contributing)
@@ -102,11 +103,20 @@ The ACAP Runtime service provides the following APIs:
 
 ### Installation
 
-Both variants of ACAP Runtime, the native ACAP application and the containerized
-version, are available as pre-built images on [Docker Hub][docker-hub-acap-runtime].
+The native ACAP Runtime application is available as a signed eap-file in [Releases][latest-releases]. The containerized version is available as a pre-built image on [Docker Hub][docker-hub-acap-runtime].
+
 These images are the recommended way to install and use ACAP Runtime.
 
-#### Native ACAP application
+#### **Native ACAP application for versions >1.2.0**
+
+To install and use any image from [prereleases or releases][all-releases] with
+a tag on the form `<version>_<ARCH>`, where `<version>` is the acap-runtime release
+version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
+E.g. `Signed_ACAP_Runtime_1_2_2_armv7hf.eap`.
+The eap-file can be installed as an ACAP application on the device,
+where it can be controlled in the device GUI **Apps** tab.
+
+#### **Native ACAP application for versions <=1.2.0**
 
 To install use any image from [axisecp/acap-runtime][docker-hub-acap-runtime] with
 a tag on the form `<version>-<ARCH>`, where `<version>` is the acap-runtime release
@@ -428,6 +438,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [acap-documentation-native-ml]: https://axiscommunications.github.io/acap-documentation/docs/api/native-sdk-api.html#machine-learning-api
 [acap-documentation-cv]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-computer-vision-sdk
 [acap-documentation-acap-runtime]: https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime
+[all-releases]: https://github.com/AxisCommunications/acap-runtime/releases
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
 [docker-hub-acap-runtime]: https://hub.docker.com/r/axisecp/acap-runtime
@@ -436,6 +447,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [dockerDesktop]: https://docs.docker.com/desktop/
 [dockerEngine]: https://docs.docker.com/engine/
 [gRPC]: https://grpc.io/
+[latest-releases]: https://github.com/AxisCommunications/acap-runtime/releases/latest
 [minimal-ml-inference]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/minimal-ml-inference
 [object-detector-cpp]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/object-detector-cpp
 [openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
