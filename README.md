@@ -21,8 +21,9 @@ If you are new to the world of ACAPs take a moment to check out
   - [APIs](#apis)
 - [Installation and usage](#installation-and-usage)
   - [Installation](#installation)
-  - [Native ACAP application for versions >1.2.0](#native-acap-application)
-  - [Native ACAP application for versions <=1.2.0](#native-acap-application-1)
+    - [Native ACAP application](#native-acap-application)
+      - [Installation of releases after versions 1.2.0](#installation-of-releases-after-versions-120)
+      - [Installation of version 1.2.0 and previous](#installation-of-version-120-and-previous)
     - [Containerized version](#containerized-version)
   - [Configuration](#configuration)
     - [Native ACAP application](#native-acap-application-1)
@@ -32,7 +33,7 @@ If you are new to the world of ACAPs take a moment to check out
     - [gRPC socket](#grpc-socket)
   - [Examples](#examples)
 - [Building ACAP Runtime](#building-acap-runtime)
-  - [Native ACAP application](#native-acap-application-1)
+  - [Native ACAP application](#native-acap-application-2)
   - [Containerized version](#containerized-version-2)
 - [Test suite](#test-suite)
 - [Contributing](#contributing)
@@ -103,20 +104,23 @@ The ACAP Runtime service provides the following APIs:
 
 ### Installation
 
-The native ACAP Runtime application is available as a signed eap-file in [Releases][latest-releases]. The containerized version is available as a pre-built image on [Docker Hub][docker-hub-acap-runtime].
+The native ACAP Runtime application is available as a **signed** eap-file in [Releases][latest-releases]. The containerized version is available as a pre-built image on [Docker Hub][docker-hub-acap-runtime].
 
 These images are the recommended way to install and use ACAP Runtime.
 
-#### **Native ACAP application for versions >1.2.0**
+Signing of the native ACAP Runtime application will be the standard from version 1.2.0, read more about signing [here][signing-documentation].
 
-To install and use any image from [prereleases or releases][all-releases] with
-a tag on the form `<version>_<ARCH>`, where `<version>` is the acap-runtime release
+#### Native ACAP application
+
+##### Installation of releases after versions 1.2.0
+
+The recomended way of installing and use ACAP Runtime is to download the signed eap-file from [prereleases or releases][all-releases] with a tag on the form `<version>_<ARCH>`, where `<version>` is the acap-runtime release
 version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
 E.g. `Signed_ACAP_Runtime_1_2_2_armv7hf.eap`.
 The eap-file can be installed as an ACAP application on the device,
 where it can be controlled in the device GUI **Apps** tab.
 
-#### **Native ACAP application for versions <=1.2.0**
+##### Installation of version 1.2.0 and previous
 
 To install use any image from [axisecp/acap-runtime][docker-hub-acap-runtime] with
 a tag on the form `<version>-<ARCH>`, where `<version>` is the acap-runtime release
@@ -132,24 +136,11 @@ docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device passwo
 
 Where `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
 
-The application can then be started either in the device GUI **Apps** tab or by running:
-
-```sh
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> start
-```
-
 The application log can be found by clicking on the **App log** in the
 application drop down menu in the device GUI, or directly at:
 
 ```sh
 http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
-```
-
-The application can be stopped and uninstalled by using the device GUI, or by running:
-
-```sh
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
 ```
 
 #### Containerized version
@@ -377,6 +368,22 @@ build arguments `VERSION` and `UBUNTU_VERSION` to select a specific tag of the
 docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
 ```
 
+Once the application is installed it can then be started either in the device GUI **Apps** tab or by running:
+
+```sh
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> start
+```
+
+Where `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
+
+The application can be stopped and uninstalled by using the device GUI, or by running:
+
+```sh
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
+```
+
+
 <!-- markdownlint-disable MD024 -->
 ### Containerized version
 <!-- markdownlint-enable MD024 -->
@@ -453,6 +460,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
 [parameter-api-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-python
 [paramter-api-cpp]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-cpp
+[signing-documentation]: https://axiscommunications.github.io/acap-documentation/docs/faq/security.html#sign-acap-applications
 [tensorflow]: https://github.com/tensorflow/serving
 
 <!-- markdownlint-enable MD034 -->

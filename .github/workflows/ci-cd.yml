@@ -7,26 +7,25 @@ name: CI/CD workflow.
 on:
   push:
     branches:
-      - "main"
-      - "acap-signing-2"
+      - 'main'
     tags:
       # semver, e.g. 1.2.0 (does no match 0.1.2)
-      - "[1-9]+.[0-9]+.[0-9]+"
+      - '[1-9]+.[0-9]+.[0-9]+'
       # semver with prerelease info, e.g. 1.0.2-beta.1 or 1.2.3-rc.10
-      - "[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+"
+      - '[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+'
       # do not match prerelease starting w/ 0, e.g. 1.0.2-beta.0 or 1.2.3-rc.01
-      - "![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*"
+      - '![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*'
       # semver with date info, e.g. 1.0.2-20221125
-      - "[1-9]+.[0-9]+.[0-9]+-[0-9]+"
+      - '[1-9]+.[0-9]+.[0-9]+-[0-9]+'
       # do not match date starting w/ 0, e.g. 1.0.2-01232023
-      - "![1-9]+.[0-9]+.[0-9]+-[0]*"
+      - '![1-9]+.[0-9]+.[0-9]+-[0]*'
   pull_request:
     branches:
-      - "main"
+      - 'main'
 
 # Environment variables that are valid for all jobs
 env:
-  DOCKER_HUB_REPOSITORY: "axisecp/acap-runtime"
+  DOCKER_HUB_REPOSITORY: 'axisecp/acap-runtime'
 
 jobs:
   # Build and run the test suite
