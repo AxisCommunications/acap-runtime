@@ -84,7 +84,8 @@ The following requirements need to be met.
 
 - Computer:
   - Either [Docker Desktop][dockerDesktop] version 4.11.1 or higher, or
-  [Docker Engine][dockerEngine] version 20.10.17 or higher, with BuildKit enabled.
+  [Docker Engine][dockerEngine] version 20.10.17 or higher.
+  - To build Docker ACAP locally it is required to have [Buildx][buildx] installed.
 
 ### APIs
 
@@ -344,7 +345,7 @@ Machine learning API service:
 
 ## Building ACAP Runtime
 
-This repo provides Dockerfiles to be used to build ACAP Runtime.
+This repo provides Dockerfiles to be used to build ACAP Runtime. Note that Buildx is used.
 
 <!-- markdownlint-disable MD024 -->
 ### Native ACAP application
@@ -354,7 +355,7 @@ To build as a native ACAP application use either the Dockerfile `Dockerfile.armv
 
 ```sh
 # Build ACAP Runtime image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --target runtime-base .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --target runtime-base .
 ```
 
 where `<ARCH>` is either `armv7hf` or `aarch64`.
@@ -366,7 +367,7 @@ build arguments `VERSION` and `UBUNTU_VERSION` to select a specific tag of the
 [axisecp/acap-native-sdk:1.4_beta1-armv7hf-ubuntu22.04][docker-hub-acap-native-sdk-1.4_beta1-armv7hf-ubuntu22.04]:
 
 ```sh
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
 ```
 
 Once the application is installed it can then be started either in the device GUI **Apps** tab or by running:
@@ -392,7 +393,7 @@ To build the containerized version, use either the Dockerfile `Dockerfile.armv7h
 
 ```sh
 # Build ACAP Runtime containerized version
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-containerized .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-containerized .
 ```
 
 ## Test suite
@@ -405,7 +406,7 @@ Build and install it by running:
 
 ```sh
 # Build ACAP Runtime test suite image
-docker build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes --target runtime-base .
+docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes --target runtime-base .
 
 docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> install
 ```
@@ -446,6 +447,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [acap-documentation-cv]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-computer-vision-sdk
 [acap-documentation-acap-runtime]: https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime
 [all-releases]: https://github.com/AxisCommunications/acap-runtime/releases
+[buildx]: https://docs.docker.com/build/install-buildx/
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
 [docker-hub-acap-runtime]: https://hub.docker.com/r/axisecp/acap-runtime
