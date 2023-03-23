@@ -22,7 +22,6 @@ If you are new to the world of ACAPs take a moment to check out
 - [Installation and usage](#installation-and-usage)
   - [Installation](#installation)
     - [Native ACAP application](#native-acap-application)
-      - [Installation of releases after versions 1.2.0](#installation-of-releases-after-versions-120)
       - [Installation of version 1.2.0 and previous](#installation-of-version-120-and-previous)
     - [Containerized version](#containerized-version)
   - [Configuration](#configuration)
@@ -106,19 +105,21 @@ The ACAP Runtime service provides the following APIs:
 
 The native ACAP Runtime application is available as a **signed** eap-file in [Releases][latest-releases]. The containerized version is available as a pre-built image on [Docker Hub][docker-hub-acap-runtime].
 
-These images are the recommended way to install and use ACAP Runtime.
-
-Signing of the native ACAP Runtime application will be the standard from version 1.2.0, read more about signing [here][signing-documentation].
-
 #### Native ACAP application
 
-##### Installation of releases after versions 1.2.0
+The prebuilt native ACAP Runtime application is signed, read more about signing [here][signing-documentation].
 
 The recomended way of installing and use ACAP Runtime is to download the signed eap-file from [prereleases or releases][all-releases] with a tag on the form `<version>_<ARCH>`, where `<version>` is the acap-runtime release
 version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
 E.g. `Signed_ACAP_Runtime_1_2_2_armv7hf.eap`.
 The eap-file can be installed as an ACAP application on the device,
 where it can be controlled in the device GUI **Apps** tab.
+
+```sh
+# Get download url for a signed ACAP with curl
+# Where <ARCH> is the architecture
+curl -s https://api.github.com/repos/AxisCommunications/acap-runtime/releases/latest | grep "browser_download_url.*Signed_ACAP_Runtime_.*_<ARCH>\.eap"
+```
 
 ##### Installation of version 1.2.0 and previous
 
@@ -382,7 +383,6 @@ The application can be stopped and uninstalled by using the device GUI, or by ru
 docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
 docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
 ```
-
 
 <!-- markdownlint-disable MD024 -->
 ### Containerized version

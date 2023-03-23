@@ -223,7 +223,7 @@ jobs:
           --method POST \
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2022-11-28" \
-          /repos/${{ vars.GITHUB_REPOSITORY }}/releases \
+          /repos/$GITHUB_REPOSITORY/releases \
           -f tag_name='${{ env.TAG }}' \
           -f target_commitish='main' \
           -f name='${{ env.TAG }}' \
@@ -283,7 +283,7 @@ jobs:
             -H "Accept: application/vnd.github.manifold-preview" \
             -H "Content-Type: application/zip" \
             --data-binary @${{ env.EAP_FILE }} \
-            "https://uploads.github.com/repos/${{ vars.GITHUB_REPOSITORY }}/releases/${{env.RELEASE_ID}}/assets?name=${{ env.EAP_FILE }}" \
+            "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/${{env.RELEASE_ID}}/assets?name=${{ env.EAP_FILE }}" \
             -w "%{http_code}\n" -o /dev/null)
           echo "HTTP_RESPONSE=$RESPONSE" >> $GITHUB_ENV
       - name: Check that asset has been uploaded correctly
