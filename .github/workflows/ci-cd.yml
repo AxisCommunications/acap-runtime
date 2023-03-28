@@ -92,7 +92,8 @@ jobs:
           requirements_file: ./.github/test/requirements.txt
           logfile: test_log_${{ matrix.arch }}.txt
 
-  # Build base and containerized images and push to Docker Hub
+  # Build base image and extract eap file then use ACAP portal to sign it
+  # Build containerized image and push to Docker Hub
   # This job is skipped if not on main branch or if build_and_test job has failed
   build_and_push:
     name: Build and push images
@@ -154,16 +155,16 @@ jobs:
         run: |
           if [[ -n "$HTTP_RESPONSE" && "$HTTP_RESPONSE" =~ ^[0-9]+$ ]]; then
             if [ "$HTTP_RESPONSE" -eq 200 ]; then
-              echo "HTTP response code is 200, signing was succesful"
+              echo "HTTP response code is 200, signing was successful"
             else
-              echo "HTTP response code is: $HTTP_RESPONSE, signing was not succesful"
+              echo "HTTP response code is: $HTTP_RESPONSE, signing was not successful"
               exit 1
             fi
           else
             echo "HTTP_RESPONSE is empty or not a valid integer: $HTTP_RESPONSE"
           fi
       - name: Upload artifact
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.SIGNED_EAP_FILE }}
           path: .build/${{ env.SIGNED_EAP_FILE }}
@@ -200,12 +201,14 @@ jobs:
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
 
+  # Create a pre-release and upload
+  # This job is skipped if not a tag or if build_and_push job has not run
   create_prerelease:
     permissions:
       contents: write
     runs-on: ubuntu-latest
     needs: build_and_push
-    if: (github.event_name != 'pull_request')
+    if: startsWith(github.event.ref, 'refs/tags')
     outputs:
       RELEASE_ID: ${{ steps.prerelease.outputs.RELEASE_ID }}
     steps:
@@ -213,7 +216,7 @@ jobs:
         id: vars
         run: echo "TAG=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV}
       - name: Create prerelease
-        uses: "actions/github-script@v6"
+        uses: actions/github-script@v6
         id: prerelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -234,6 +237,8 @@ jobs:
               core.setFailed(error.message);
             }
 
+  # Get the signed ACAP artifacts and copy them to the pre-release
+  # This job is skipped if create_prerelease or build_and_push jobs have not run
   download-and-upload-artifacts:
     permissions:
       contents: write
@@ -260,7 +265,7 @@ jobs:
             echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
       - name: Download artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@v3
         with:
           name: ${{ env.EAP_FILE }}
           path: ./
@@ -279,9 +284,9 @@ jobs:
         run: |
           if [[ -n "$HTTP_RESPONSE" && "$HTTP_RESPONSE" =~ ^[0-9]+$ ]]; then
             if [ "$HTTP_RESPONSE" -eq 201 ]; then
-              echo "HTTP response code is 201, upload was succesful"
+              echo "HTTP response code is 201, upload was successful"
             else
-              echo "HTTP response code is: $HTTP_RESPONSE, upload was not succesful"
+              echo "HTTP response code is: $HTTP_RESPONSE, upload was not successful"
               exit 1
             fi
           else
