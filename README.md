@@ -22,6 +22,7 @@ If you are new to the world of ACAPs take a moment to check out
 - [Installation and usage](#installation-and-usage)
   - [Installation](#installation)
     - [Native ACAP application](#native-acap-application)
+      - [Installation of version 1.2.0 and previous](#installation-of-version-120-and-previous)
     - [Containerized version](#containerized-version)
   - [Configuration](#configuration)
     - [Native ACAP application](#native-acap-application-1)
@@ -103,11 +104,25 @@ The ACAP Runtime service provides the following APIs:
 
 ### Installation
 
-Both variants of ACAP Runtime, the native ACAP application and the containerized
-version, are available as pre-built images on [Docker Hub][docker-hub-acap-runtime].
-These images are the recommended way to install and use ACAP Runtime.
+The native ACAP Runtime application is available as a **signed** eap-file in [Releases][latest-releases]. The containerized version is available as a pre-built image on [Docker Hub][docker-hub-acap-runtime].
 
 #### Native ACAP application
+
+The prebuilt native ACAP Runtime application is signed, read more about signing [here][signing-documentation].
+
+The recomended way of installing and use ACAP Runtime is to download the signed eap-file from [prereleases or releases][all-releases] with a tag on the form `<version>_<ARCH>`, where `<version>` is the acap-runtime release
+version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
+E.g. `Signed_ACAP_Runtime_1_2_2_armv7hf.eap`.
+The eap-file can be installed as an ACAP application on the device,
+where it can be controlled in the device GUI **Apps** tab.
+
+```sh
+# Get download url for a signed ACAP with curl
+# Where <ARCH> is the architecture
+curl -s https://api.github.com/repos/AxisCommunications/acap-runtime/releases/latest | grep "browser_download_url.*Signed_ACAP_Runtime_.*_<ARCH>\.eap"
+```
+
+##### Installation of version 1.2.0 and previous
 
 To install use any image from [axisecp/acap-runtime][docker-hub-acap-runtime] with
 a tag on the form `<version>-<ARCH>`, where `<version>` is the acap-runtime release
@@ -123,24 +138,11 @@ docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device passwo
 
 Where `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
 
-The application can then be started either in the device GUI **Apps** tab or by running:
-
-```sh
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> start
-```
-
 The application log can be found by clicking on the **App log** in the
 application drop down menu in the device GUI, or directly at:
 
 ```sh
 http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
-```
-
-The application can be stopped and uninstalled by using the device GUI, or by running:
-
-```sh
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
 ```
 
 #### Containerized version
@@ -368,6 +370,21 @@ build arguments `VERSION` and `UBUNTU_VERSION` to select a specific tag of the
 docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
 ```
 
+Once the application is installed it can then be started either in the device GUI **Apps** tab or by running:
+
+```sh
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> start
+```
+
+Where `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
+
+The application can be stopped and uninstalled by using the device GUI, or by running:
+
+```sh
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
+docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
+```
+
 <!-- markdownlint-disable MD024 -->
 ### Containerized version
 <!-- markdownlint-enable MD024 -->
@@ -429,6 +446,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [acap-documentation-native-ml]: https://axiscommunications.github.io/acap-documentation/docs/api/native-sdk-api.html#machine-learning-api
 [acap-documentation-cv]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-computer-vision-sdk
 [acap-documentation-acap-runtime]: https://axiscommunications.github.io/acap-documentation/docs/api/computer-vision-sdk-apis.html#beta---acap-runtime
+[all-releases]: https://github.com/AxisCommunications/acap-runtime/releases
 [buildx]: https://docs.docker.com/build/install-buildx/
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
@@ -438,11 +456,13 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [dockerDesktop]: https://docs.docker.com/desktop/
 [dockerEngine]: https://docs.docker.com/engine/
 [gRPC]: https://grpc.io/
+[latest-releases]: https://github.com/AxisCommunications/acap-runtime/releases/latest
 [minimal-ml-inference]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/minimal-ml-inference
 [object-detector-cpp]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/object-detector-cpp
 [openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
 [parameter-api-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-python
 [paramter-api-cpp]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-cpp
+[signing-documentation]: https://axiscommunications.github.io/acap-documentation/docs/faq/security.html#sign-acap-applications
 [tensorflow]: https://github.com/tensorflow/serving
 
 <!-- markdownlint-enable MD034 -->
