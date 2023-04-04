@@ -112,14 +112,14 @@ The prebuilt native ACAP Runtime application is signed, read more about signing 
 
 The recomended way of installing and use ACAP Runtime is to download the signed eap-file from [prereleases or releases][all-releases] with a tag on the form `<version>_<ARCH>`, where `<version>` is the acap-runtime release
 version and `<ARCH>` is either `armv7hf` or `aarch64` depending on device architecture.
-E.g. `Signed_ACAP_Runtime_1_2_2_armv7hf.eap`.
+E.g. `ACAP_Runtime_1_2_2_armv7hf_signed.eap`.
 The eap-file can be installed as an ACAP application on the device,
 where it can be controlled in the device GUI **Apps** tab.
 
 ```sh
 # Get download url for a signed ACAP with curl
 # Where <ARCH> is the architecture
-curl -s https://api.github.com/repos/AxisCommunications/acap-runtime/releases/latest | grep "browser_download_url.*Signed_ACAP_Runtime_.*_<ARCH>\.eap"
+curl -s https://api.github.com/repos/AxisCommunications/acap-runtime/releases/latest | grep "browser_download_url.*ACAP_Runtime_.*_<ARCH>\_signed.eap"
 ```
 
 ##### Installation of version 1.2.0 and previous
