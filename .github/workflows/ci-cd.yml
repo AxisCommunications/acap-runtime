@@ -93,10 +93,9 @@ jobs:
           logfile: test_log_${{ matrix.arch }}.txt
 
   # Build base image and extract eap file then use ACAP portal to sign it
-  # Build containerized image and push to Docker Hub
   # This job is skipped if not on main branch or if build_and_test job has failed
-  build_and_push:
-    name: Build and push images
+  build_and_sign_acap:
+    name: Build and sign acap
     runs-on: ubuntu-latest
     needs: build_and_test
     if: (github.event_name != 'pull_request')
@@ -181,12 +180,34 @@ jobs:
           else
             echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
+
+  # Build containerized image and push to Docker Hub
+  # This job is skipped if not on main branch or if build_and_test job has failed
+  # It can (and should) run in parallel to the build_and_sign_acap job
+  build_containerized:
+    name: Build and push containerized images
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: (github.event_name != 'pull_request')
+    strategy:
+      matrix:
+        arch: [armv7hf, aarch64]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
         with:
           suffix: -${{ matrix.arch }}-containerized
           repository: ${{ vars.REPOSITORY_DOCKER_HUB }}
+          get_version: "true"
+      - name: Update manifest file
+        if: ( github.ref_type == 'tag')
+        uses: ./.github/actions/update-acap-manifest-action
+        with:
+          manifest_file: ./manifest-${{ matrix.arch }}.json
+          value: ${{ steps.meta_containerized.outputs.version }}
       - name: Build and push containerized image
         uses: ./.github/actions/docker-build-push-action
         with:
@@ -202,12 +223,13 @@ jobs:
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
 
   # Create a pre-release and upload
-  # This job is skipped if not a tag or if build_and_push job has not run
+  # This job is skipped if not a tag or if the build_and_sign_acap and
+  # build_containerized jobs have not completed successfully.
   create_prerelease:
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    needs: build_and_push
+    needs: [build_and_sign_acap, build_containerized]
     if: (github.ref_type == 'tag')
     outputs:
       RELEASE_ID: ${{ steps.prerelease.outputs.RELEASE_ID }}
@@ -238,12 +260,13 @@ jobs:
             }
 
   # Get the signed ACAP artifacts and copy them to the pre-release
-  # This job is skipped if create_prerelease or build_and_push jobs have not run
+  # This job is skipped if create_prerelease or build_and_sign_acap jobs have
+  # not completed successfully.
   download-and-upload-artifacts:
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    needs: [create_prerelease, build_and_push]
+    needs: [create_prerelease, build_and_sign_acap]
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
