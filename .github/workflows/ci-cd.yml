@@ -272,18 +272,18 @@ jobs:
         arch: [armv7hf, aarch64]
     env:
       RELEASE_ID: ${{ needs.create_prerelease.outputs.RELEASE_ID }}
-      EAP_FILE_AARCH64: ${{ needs.build_and_push.outputs.EAP_FILE_AARCH64 }}
-      EAP_FILE_ARMV7HF: ${{ needs.build_and_push.outputs.EAP_FILE_ARMV7HF }}
+      EAP_FILE_AARCH64: ${{ needs.build_and_sign_acap.outputs.EAP_FILE_AARCH64 }}
+      EAP_FILE_ARMV7HF: ${{ needs.build_and_sign_acap.outputs.EAP_FILE_ARMV7HF }}
     steps:
       - name: Get EAP file name
         id: full_eap_name
         run: |
           if [ ${{ matrix.arch }} = armv7hf ]
           then
-            echo "EAP_FILE=${{ needs.build_and_push.outputs.EAP_FILE_ARMV7HF }}" >> $GITHUB_ENV
+            echo "EAP_FILE=${{ needs.build_and_sign_acap.outputs.EAP_FILE_ARMV7HF }}" >> $GITHUB_ENV
           elif [ ${{ matrix.arch }} = aarch64 ]
           then
-            echo "EAP_FILE=${{ needs.build_and_push.outputs.EAP_FILE_AARCH64 }}" >> $GITHUB_ENV
+            echo "EAP_FILE=${{ needs.build_and_sign_acap.outputs.EAP_FILE_AARCH64 }}" >> $GITHUB_ENV
           else
             echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
