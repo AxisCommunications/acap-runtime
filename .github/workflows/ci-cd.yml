@@ -98,8 +98,7 @@ jobs:
     name: Build and sign acap
     runs-on: ubuntu-latest
     needs: build_and_test
-    # Temporary disable to test job
-    #if: (github.event_name != 'pull_request')
+    if: (github.event_name != 'pull_request')
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
@@ -189,8 +188,7 @@ jobs:
     name: Build and push containerized images
     runs-on: ubuntu-latest
     needs: build_and_test
-    #Temporary disable to test job
-    #if: (github.event_name != 'pull_request')
+    if: (github.event_name != 'pull_request')
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
