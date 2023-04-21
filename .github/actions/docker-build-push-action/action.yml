@@ -54,6 +54,11 @@ inputs:
     description: Token/password for the user on the the remote registry.
       Required if push is true.
     required: false
+  provenance:
+    description: Generate provenance attestation for the build
+      (shorthand for --attest=type=provenance). Default false.
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -81,3 +86,4 @@ runs:
         tags: ${{ inputs.tags }}
         labels: ${{ inputs.labels }}
         target: ${{ inputs.target }}
+        provenance: ${{ inputs.provenance }}
