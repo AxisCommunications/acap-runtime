@@ -14,7 +14,7 @@
             "vendorUrl": "https://www.axis.com",
             "runOptions": "-o",
             "runMode": "once",
-            "version": "1.3.0"
+            "version": "1.3.1"
         },
         "configuration": {
             "paramConfig": [
