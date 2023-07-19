@@ -147,7 +147,7 @@ http://<device IP>/axis-cgi/admin/systemlog.cgi?appname=acapruntime
 
 #### Containerized version
 
-Whereas the standard ACAP Runtime Docker image will install the service as an ACAP
+Whereas the standard ACAP Runtime eap-file will install the service as an ACAP
 application, the containerized version allows to run it in a container on the device.
 This requires that [Docker ACAP][docker-acap] is installed and running on the device.
 
