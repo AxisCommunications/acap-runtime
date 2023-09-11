@@ -41,7 +41,7 @@ jobs:
       AXIS_EXTERNAL_POOL: true
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Create test image metadata
         id: meta_test
         uses: ./.github/actions/metadata-action
@@ -107,7 +107,7 @@ jobs:
       EAP_FILE_AARCH64: ${{ steps.save_full_file_name.outputs.EAP_FILE_AARCH64 }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Create base image metadata
         id: meta
         uses: ./.github/actions/metadata-action
@@ -194,7 +194,7 @@ jobs:
         arch: [armv7hf, aarch64]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
