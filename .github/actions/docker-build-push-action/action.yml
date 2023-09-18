@@ -70,7 +70,7 @@ runs:
       uses: docker/setup-qemu-action@v2
     - name: Log in to the container registry
       if: ${{ inputs.push == 'true' }}
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ${{ inputs.registry }}
         username: ${{ inputs.registry_user }}
