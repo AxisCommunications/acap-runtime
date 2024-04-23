@@ -28,7 +28,7 @@ runs:
   using: composite
   steps:
     - name: Setup python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
     - name: Install pytest and any other required packages
@@ -45,7 +45,7 @@ runs:
       run: |
         pytest -s ${{ inputs.testfile }}
     - name: Upload test log
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: ${{ failure() && inputs.logfile != '' }}
       with:
         name: ${{ inputs.logfile }}
