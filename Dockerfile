@@ -5,8 +5,11 @@ ARG REPO=axisecp
 ARG VERSION=1.7
 ARG UBUNTU_VERSION=22.04
 
-FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} as acap-native-sdk
-FROM acap-native-sdk as build
+FROM arm64v8/ubuntu:${UBUNTU_VERSION} as containerized_aarch64
+FROM arm32v7/ubuntu:${UBUNTU_VERSION} as containerized_armv7hf
+
+FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} AS acap-native-sdk
+FROM acap-native-sdk AS build-image
 
 ARG ARCH
 ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
@@ -38,11 +41,13 @@ apt-get install -y --no-install-recommends \
     edgetpu-compiler
 EOF
 
+FROM build-image AS test-image
+
 # Get testdata models
 WORKDIR /opt/app/testdata
 
 # Generate TSL/SSL test certificate
-RUN openssl req -x509 -batch -subj '/CN=localhost' -days 10000 -newkey rsa:4096 -nodes -out server.pem -keyout server.key
+#RUN openssl req -x509 -batch -subj '/CN=localhost' -days 10000 -newkey rsa:4096 -nodes -out server.pem -keyout server.key
 
 # Get SSD Mobilenet V2
 ADD https://github.com/google-coral/edgetpu/raw/master/test_data/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite .
@@ -73,6 +78,8 @@ mv efficientnet-edgetpu-M_quant*.tflite ../..
 cd ../..
 rm -rf tmp
 EOF
+
+FROM build-image AS grpc-image
 
 # Switch to build directory
 WORKDIR /opt
@@ -105,6 +112,10 @@ cmake \
 make -j4 install
 EOF
 
+FROM grpc-image AS dependency-image
+
+ARG ARCH
+
 # return to build dir
 WORKDIR /opt
 # Build for ARM
@@ -117,7 +128,11 @@ mkdir -p openssl-1.1.1l/build
 cd openssl-1.1.1l/build
 rm -rf ../doc
 ../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr
-make CC=aarch64-linux-gnu-gcc
+if [ "$ARCH" = "armv7hf" ]; then
+    make CC=arm-linux-gnueabihf-gcc
+elif [ "$ARCH" = "aarch64" ]; then
+    make CC=aarch64-linux-gnu-gcc;
+fi;
 make install
 EOF
 
@@ -130,7 +145,7 @@ RUN <<EOF
 . /opt/axis/acapsdk/environment-setup*
 CXXFLAGS="$CXXFLAGS -g0" cmake \
     -DCMAKE_SYSTEM_NAME=Linux \
-    -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+    -DCMAKE_SYSTEM_PROCESSOR="$ARCH" \
     -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
     -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
     -DgRPC_INSTALL=ON \
@@ -148,8 +163,14 @@ git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/t
 git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 EOF
 
+FROM dependency-image AS build
+
+ARG ARCH
+ENV ACAPARCH=${ARCH}
+
 ## Setup build structure
 WORKDIR /opt/app
+
 COPY . .
 RUN <<EOF
 cd apis
@@ -160,23 +181,34 @@ EOF
 # Patch the Predict call of TensorFlow Serving
 RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
 
+COPY --from=test-image /opt/app/testdata/* /opt/app/testdata/.
+
 # Building the ACAP application
 ARG TEST
 ARG DEBUG
 RUN <<EOF
+if [ "$ARCH" = "armv7hf" ]; then
+    export CXXFLAGS_DEBUG="$CXXFLAGS -O0 -ggdb"
+    export CXXFLAGS_TEST="$CXXFLAGS -g0 -DTEST"
+    export CXXFLAGS_BUILD="$CXXFLAGS -g0"
+elif [ "$ARCH" = "aarch64" ]; then
+    export CXXFLAGS_DEBUG="$CXXFLAGS -O0 -ggdb -D__arm64__"
+    export CXXFLAGS_TEST="$CXXFLAGS -g0 -D__arm64__ -DTEST"
+    export CXXFLAGS_BUILD="$CXXFLAGS -g0 -D__arm64__"
+fi;
 . /opt/axis/acapsdk/environment-setup*
 if [ -n "$DEBUG" ]; then
     printf "Building debug\n"
-    CXXFLAGS="$CXXFLAGS -O0 -ggdb -D__arm64__" \
-    acap-build . -m manifest-aarch64.json
+    CXXFLAGS="$CXXFLAGS_DEBUG" \
+    acap-build . -m manifest-"$ACAPARCH".json
 elif [ -n "$TEST" ]; then
     printf "Building test\n"
-    CXXFLAGS="$CXXFLAGS -g0 -D__arm64__ -DTEST" \
+    CXXFLAGS="$CXXFLAGS_TEST" \
     acap-build . -m manifest-test.json -a 'testdata/*'
 else
     printf "Building app\n"
-    CXXFLAGS="$CXXFLAGS -g0 -D__arm64__" \
-    acap-build . -m manifest-aarch64.json
+    CXXFLAGS="$CXXFLAGS_BUILD" \
+    acap-build . -m manifest-"$ACAPARCH".json
 fi
 EOF
 
@@ -192,7 +224,7 @@ ENTRYPOINT [ "/opt/axis/acapsdk/sysroots/x86_64-pokysdk-linux/usr/bin/eap-instal
 
 # Copy out eap to a containerized image
 # Use this to run ACAP Runtime in a container on a device
-FROM arm64v8/ubuntu:${UBUNTU_VERSION} as containerized
+FROM containerized_${ARCH}
 
 WORKDIR /opt/app/
 COPY --from=runtime-base /opt/app/*.eap ./
