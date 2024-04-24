@@ -24,10 +24,37 @@ on:
       - "main"
 
 jobs:
+  general_settings:
+    name: Set general settings
+    runs-on: ubuntu-latest
+    # strategy:
+    #   matrix:
+    #     arch: [armv7hf, aarch64]
+    outputs:
+      EVENT_TYPE: ${{ steps.set_outputs.outputs.EVENT_TYPE }}
+      SHORT_SHA: ${{ steps.set_outputs.outputs.SHORT_SHA }}
+    steps:
+      - name: get_trigger_event
+        run: |
+          eventtype=${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+          echo "EVENT_TYPE=${eventtype}" >> $GITHUB_ENV
+      - name: get_short_sha
+        run: |
+          sha=${{ github.sha }}
+          strip_sha=${sha:0:7}
+          echo "SHORT_SHA=${strip_sha}" >> $GITHUB_ENV
+
+      - name: set_outputs
+        id: set_outputs
+        run: |
+          echo "EVENT_TYPE=${{ env.EVENT_TYPE }}" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=${{ env.SHORT_SHA }}" >> $GITHUB_OUTPUT
+
   # Build and run the test suite
   build_and_test:
     name: Build and run test image
     runs-on: ubuntu-latest
+    needs: general_settings
     strategy:
       fail-fast: false
       matrix:
@@ -97,25 +124,22 @@ jobs:
   build:
     name: Build acap
     runs-on: ubuntu-latest
-    needs: build_and_test
-    if: (github.event_name != 'pull_request')
+    needs: general_settings
+    #if: (github.event_name != 'pull_request')
     strategy:
       matrix:
         arch: [armv7hf, aarch64]
+    env:
+      EVENT_TYPE: true # Temporary overide for workflow testing${{ needs.general_settings.outputs.EVENT_TYPE }}
+      SHORT_SHA: ${{ needs.general_settings.outputs.SHORT_SHA }}
     outputs:
       EAP_FILE_ARMV7HF: ${{ steps.save_full_file_name.outputs.EAP_FILE_ARMV7HF }}
       EAP_FILE_AARCH64: ${{ steps.save_full_file_name.outputs.EAP_FILE_AARCH64 }}
-      SHORT_SHA: ${{ steps.save_full_file_name.outputs.SHORT_SHA }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-      - name: get_short_sha
-        run: |
-          sha=${{ github.sha }}
-          strip_sha=${sha:0:7}
-          echo "SHORT_SHA=${strip_sha}" >> $GITHUB_ENV
       - uses: actions/cache@v4
-        if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        if: ${{ env.EVENT_TYPE }}
         with:
           path: ${{ github.workspace }}/build-${{ matrix.arch }}
           key: key-${{ env.SHORT_SHA }}-${{ github.run_id }}-${{ matrix.arch }}
@@ -128,7 +152,7 @@ jobs:
           get_version: "true"
       - name: Get changes for manifest
         id: manifest-settings
-        if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        if: ${{ env.EVENT_TYPE }}
         run: |
           if [ ${{github.ref_type}} == tag ]; then
               echo "version_value=${{ steps.meta.outputs.version }}" >> $GITHUB_OUTPUT
@@ -138,11 +162,11 @@ jobs:
               echo "append_sha='true'" >> $GITHUB_OUTPUT
           fi
       - name: Update manifest file
-        if: ( github.ref_type == 'tag')
+        if: ${{ env.EVENT_TYPE }}
         uses: ./.github/actions/update-acap-manifest-action
         with:
           manifest_file: ./manifest-${{ matrix.arch }}.json
-          append: ${{ steps.manifest-settings.outputs.append_sha}}
+          append: ${{ steps.manifest-settings.outputs.append_sha }}
           value: ${{ steps.manifest-settings.outputs.version_value }}
       - name: Build and push base image
         uses: ./.github/actions/docker-build-push-action
@@ -155,7 +179,7 @@ jobs:
           load: true
       - name: Set name of EAP-file
         id: get_eap_file_name
-        if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        if: ${{ env.EVENT_TYPE }}
         run: |
           docker cp $(docker create "${{ steps.meta.outputs.full_name }}"):/opt/app .build
           export EAP_FILE=$(find .build -type f -name "*.eap" -printf "%f\n")
@@ -164,16 +188,15 @@ jobs:
           echo "${EAP_FILE}" >> ${GITHUB_ENV}
           echo "${delimiter}" >> ${GITHUB_ENV}
       - name: Add sha to EAP-file name
-        if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        if: ${{ env.EVENT_TYPE }}
         run: |
           eap_file_w_sha=$(echo $"${{ env.EAP_FILE }}" | sed 's/\.eap/_${{ env.SHORT_SHA }}.eap/')
           echo "EAP_FILE_W_SHA=${eap_file_w_sha}" >> $GITHUB_ENV
           cp build/${{ env.EAP_FILE }} build/$eap_file_w_sha
       - name: Save full file name
         id: save_full_file_name
-        if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        if: ${{ env.EVENT_TYPE }}
         run: |
-          echo "SHORT_SHA=${{ env.SHORT_SHA }}" >> $GITHUB_OUTPUT
           if [ ${{ matrix.arch }} = armv7hf ]
           then
             echo "EAP_FILE_ARMV7HF=${{ env.EAP_FILE_W_SHA }}" >> $GITHUB_OUTPUT
@@ -184,7 +207,7 @@ jobs:
             echo "::error::Non valid architecture '${{ matrix.arch }}' encountered"
           fi
       - name: Move EAP-file to cache location
-        if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        if: ${{ env.EVENT_TYPE }}
         run: |
           mkdir -p ${{ github.workspace }}/build-${{ matrix.arch }}
           #rm -f ${{ github.workspace }}/build-${{ matrix.arch }}/${{ env.EAP_FILE_W_SHA }}
@@ -193,8 +216,12 @@ jobs:
   # Sign the eap-file from the build
   sign-eap:
     runs-on: ubuntu-latest
-    if: ${{ (github.ref_type == 'tag') || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
-    needs: build
+    needs: [general_settings, build]
+    if: ${{ needs.general_settings.outputs.EVENT_TYPE }}
+    env:
+      EAP_FILE_ARMV7HF: ${{ needs.build.outputs.EAP_FILE_ARMV7HF }}
+      EAP_FILE_AARCH64: ${{ needs.build.outputs.EAP_FILE_AARCH64 }}
+      SHORT_SHA: ${{ needs.general_settings.outputs.SHORT_SHA }}
     permissions:
       contents: write
     strategy:
@@ -202,10 +229,6 @@ jobs:
       matrix:
         arch: ["armv7hf", "aarch64"]
       max-parallel: 1
-    env:
-      EAP_FILE_ARMV7HF: ${{ needs.build.outputs.EAP_FILE_ARMV7HF }}
-      EAP_FILE_AARCH64: ${{ needs.build.outputs.EAP_FILE_AARCH64 }}
-      SHORT_SHA: ${{ needs.build.outputs.SHORT_SHA }}
     outputs:
       EAP_FILE_SIGNED_ARMV7HF: ${{ steps.save_full_file_name.outputs.EAP_FILE_SIGNED_ARMV7HF }}
       EAP_FILE_SIGNED_AARCH64: ${{ steps.save_full_file_name.outputs.EAP_FILE_SIGNED_AARCH64 }}
@@ -280,7 +303,7 @@ jobs:
   build_containerized:
     name: Build and push containerized images
     runs-on: ubuntu-latest
-    needs: [build_and_test, build]
+    needs: [general_settings, build_and_test, build]
     if: (github.event_name != 'pull_request')
     strategy:
       matrix:
