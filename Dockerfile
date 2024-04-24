@@ -1,12 +1,15 @@
 # syntax=docker/dockerfile:1
 
-ARG ARCH=aarch64
+ARG ARCH=armv7hf
 ARG REPO=axisecp
 ARG VERSION=1.7
 ARG UBUNTU_VERSION=22.04
 
-FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} as acap-native-sdk
-FROM acap-native-sdk as build
+FROM arm64v8/ubuntu:${UBUNTU_VERSION} AS containerized_aarch64
+FROM arm32v7/ubuntu:${UBUNTU_VERSION} AS containerized_armv7hf
+
+FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} AS acap-native-sdk
+FROM acap-native-sdk AS build
 
 ARG ARCH
 ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
@@ -55,23 +58,23 @@ ADD http://download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224_q
 ADD https://github.com/google-coral/edgetpu/raw/master/test_data/mobilenet_v2_1.0_224_quant_edgetpu.tflite .
 ADD https://github.com/google-coral/edgetpu/raw/master/test_data/imagenet_labels.txt .
 RUN <<EOF
-cd tmp
-tar -xvf mobilenet_v2_1.0_224_quant.tgz
-mv ./*.tflite ..
-cd ..
-rm -rf tmp
+    cd tmp
+    tar -xvf mobilenet_v2_1.0_224_quant.tgz
+    mv ./*.tflite ..
+    cd ..
+    rm -rf tmp
 EOF
 
 # Get EfficientNet-EdgeTpu (M)
 ADD https://storage.googleapis.com/cloud-tpu-checkpoints/efficientnet/efficientnet-edgetpu-M.tar.gz tmp/
 RUN <<EOF
-cd tmp
-tar -xvf efficientnet-edgetpu-M.tar.gz
-cd efficientnet-edgetpu-M
-edgetpu_compiler --min_runtime_version 13 efficientnet-edgetpu-M_quant.tflite
-mv efficientnet-edgetpu-M_quant*.tflite ../..
-cd ../..
-rm -rf tmp
+    cd tmp
+    tar -xvf efficientnet-edgetpu-M.tar.gz
+    cd efficientnet-edgetpu-M
+    edgetpu_compiler --min_runtime_version 13 efficientnet-edgetpu-M_quant.tflite
+    mv efficientnet-edgetpu-M_quant*.tflite ../..
+    cd ../..
+    rm -rf tmp
 EOF
 
 # Switch to build directory
@@ -81,9 +84,9 @@ WORKDIR /opt
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
 RUN <<EOF
-git clone -b v1.46.3 https://github.com/grpc/grpc
-cd grpc
-git submodule update --init
+    git clone -b v1.46.3 https://github.com/grpc/grpc
+    cd grpc
+    git submodule update --init
 EOF
 
 #Quick patch security warning
@@ -96,13 +99,13 @@ RUN sed -i 's/gpr_log(GPR_INFO, __func__);/gpr_log(GPR_INFO, "%s", __func__);/g'
 # while cross-compiling.
 WORKDIR /opt/grpc/cmake/build
 RUN <<EOF
-cmake \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DgRPC_INSTALL=ON \
-    -DgRPC_BUILD_TESTS=OFF \
-    -DgRPC_SSL_PROVIDER=package \
-    ../..
-make -j4 install
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_BUILD_TESTS=OFF \
+        -DgRPC_SSL_PROVIDER=package \
+        ../..
+    make -j4 install
 EOF
 
 # return to build dir
@@ -111,14 +114,19 @@ WORKDIR /opt
 
 # Clone openssl and extract source code
 RUN <<EOF
-curl -O https://www.openssl.org/source/openssl-1.1.1l.tar.gz
-tar xzvf openssl-1.1.1l.tar.gz
-mkdir -p openssl-1.1.1l/build
-cd openssl-1.1.1l/build
-rm -rf ../doc
-../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr
-make CC=aarch64-linux-gnu-gcc
-make install
+    if [ "$ARCH" = "armv7hf" ]; then
+        export CC_SETTING="arm-linux-gnueabihf-gcc";
+    elif [ "$ARCH" = "aarch64" ]; then
+        export CC_SETTING="aarch64-linux-gnu-gcc";
+    fi;
+    curl -O https://www.openssl.org/source/openssl-1.1.1l.tar.gz
+    tar xzvf openssl-1.1.1l.tar.gz
+    mkdir -p openssl-1.1.1l/build
+    cd openssl-1.1.1l/build
+    rm -rf ../doc
+    ../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr
+    make CC="$CC_SETTING"
+    make install
 EOF
 
 # Build and install gRPC for ARM.
@@ -127,62 +135,69 @@ EOF
 # to a location in our PATH (/usr/local/bin).
 WORKDIR /opt/grpc/cmake/build_arm
 RUN <<EOF
-. /opt/axis/acapsdk/environment-setup*
-CXXFLAGS="$CXXFLAGS -g0" cmake \
-    -DCMAKE_SYSTEM_NAME=Linux \
-    -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-    -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
-    -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
-    -DgRPC_INSTALL=ON \
-    -DgRPC_SSL_PROVIDER=package \
-    -DCMAKE_BUILD_TYPE=Release \
-    ../..
-make -j4 install/strip
-cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
-    "$SDKTARGETSYSROOT"/usr/include
+    export SYSTEM_PROCESSOR_ARCH="$ARCH";
+    . /opt/axis/acapsdk/environment-setup*
+    CXXFLAGS="$CXXFLAGS -g0" cmake \
+        -DCMAKE_SYSTEM_NAME=Linux \
+        -DCMAKE_SYSTEM_PROCESSOR="$SYSTEM_PROCESSOR_ARCH" \
+        -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
+        -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
+        -DgRPC_INSTALL=ON \
+        -DgRPC_SSL_PROVIDER=package \
+        -DCMAKE_BUILD_TYPE=Release \
+        ../..
+    make -j4 install/strip
+    cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
+        "$SDKTARGETSYSROOT"/usr/include
 EOF
 
 # Get TensorFlow and TensorFlow Serving
 RUN <<EOF
-git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
-git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+    git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
+    git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
 EOF
 
 ## Setup build structure
 WORKDIR /opt/app
+
 COPY . .
 RUN <<EOF
-cd apis
-ln -fs /opt/tensorflow/tensorflow/tensorflow .
-ln -fs /opt/tensorflow/serving/tensorflow_serving .
+    cd apis
+    ln -fs /opt/tensorflow/tensorflow/tensorflow .
+    ln -fs /opt/tensorflow/serving/tensorflow_serving .
 EOF
 
 # Patch the Predict call of TensorFlow Serving
 RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
 
 # Building the ACAP application
+
 ARG TEST
 ARG DEBUG
+
+# hadolint ignore=SC2155
 RUN <<EOF
-. /opt/axis/acapsdk/environment-setup*
-if [ -n "$DEBUG" ]; then
-    printf "Building debug\n"
-    CXXFLAGS="$CXXFLAGS -O0 -ggdb -D__arm64__" \
-    acap-build . -m manifest-aarch64.json
-elif [ -n "$TEST" ]; then
-    printf "Building test\n"
-    CXXFLAGS="$CXXFLAGS -g0 -D__arm64__ -DTEST" \
-    acap-build . -m manifest-test.json -a 'testdata/*'
-else
-    printf "Building app\n"
-    CXXFLAGS="$CXXFLAGS -g0 -D__arm64__" \
-    acap-build . -m manifest-aarch64.json
-fi
+    export MANIFEST="manifest-$ARCH.json";
+    export EXTRA_FLAGS=$([ "$ARCH" = "aarch64" ] && echo "-D__arm64__" || echo "");
+    . /opt/axis/acapsdk/environment-setup*
+    if [ -n "$DEBUG" ]; then
+        printf "Building debug\n"
+        CXXFLAGS="$CXXFLAGS -O0 -ggdb $EXTRA_FLAGS" \
+        acap-build . -m "$MANIFEST"
+    elif [ -n "$TEST" ]; then
+        printf "Building test\n"
+        CXXFLAGS="$CXXFLAGS -g0 $EXTRA_FLAGS -DTEST" \
+        acap-build . -m manifest-test.json -a 'testdata/*'
+    else
+        printf "Building app\n"
+        CXXFLAGS="$CXXFLAGS -g0 $EXTRA_FLAGS" \
+        acap-build . -m "$MANIFEST"
+    fi
 EOF
 
 # Copy out eap to an installation image
 # Use this to install ACAP Runtime as an ACAP on a device
-FROM acap-native-sdk as runtime-base
+FROM acap-native-sdk AS runtime-base
 
 WORKDIR /opt/app
 COPY --from=build /opt/app/*.eap ./
@@ -192,15 +207,20 @@ ENTRYPOINT [ "/opt/axis/acapsdk/sysroots/x86_64-pokysdk-linux/usr/bin/eap-instal
 
 # Copy out eap to a containerized image
 # Use this to run ACAP Runtime in a container on a device
-FROM arm64v8/ubuntu:${UBUNTU_VERSION} as containerized
+# hadolint ignore=DL3006
+FROM containerized_${ARCH} AS containerized
 
 WORKDIR /opt/app/
 COPY --from=runtime-base /opt/app/*.eap ./
 RUN <<EOF
-mkdir -p acap_runtime
-for f in *.eap; do
-    tar -xzf "$f" -C acap_runtime
-done
+    mkdir -p acap_runtime
+    for f in *.eap; do
+        tar -xzf "$f" -C acap_runtime
+    done
 EOF
 
 ENTRYPOINT [ "/opt/app/acap_runtime/acapruntime" ]
+
+FROM scratch AS binaries
+
+COPY --from=runtime-base /opt/app/*.eap /
