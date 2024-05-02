@@ -337,11 +337,10 @@ ACAP application:
 
 - [parameter-api-python][parameter-api-python]
 
-The following examples use the ACAP Runtime containerized version to use the
+The following example use the ACAP Runtime containerized version to use the
 Machine learning API service:
 
 - [minimal-ml-inference][minimal-ml-inference]
-
 
 ## Building ACAP Runtime
 
