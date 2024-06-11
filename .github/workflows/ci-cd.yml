@@ -86,11 +86,13 @@ jobs:
       - name: Build test image
         uses: ./.github/actions/docker-build-push-action
         with:
-          dockerfile: Dockerfile.${{ matrix.arch }}
+          dockerfile: Dockerfile
           tags: ${{ steps.meta_test.outputs.tags }}
           labels: ${{ steps.meta_test.outputs.labels }}
           push: true
-          build-args: TEST=true
+          build-args: |
+            ARCH=${{ matrix.arch }}
+            TEST=true
           target: runtime-base
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
@@ -171,9 +173,11 @@ jobs:
       - name: Build and push base image
         uses: ./.github/actions/docker-build-push-action
         with:
-          dockerfile: Dockerfile.${{ matrix.arch }}
+          dockerfile: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ARCH=${{ matrix.arch }}
           target: runtime-base
           push: false
           load: true
@@ -327,7 +331,7 @@ jobs:
       - name: Build and push containerized image
         uses: ./.github/actions/docker-build-push-action
         with:
-          dockerfile: Dockerfile.${{ matrix.arch }}
+          dockerfile: Dockerfile
           tags: ${{ steps.meta_containerized.outputs.tags }}
           labels: ${{ steps.meta_containerized.outputs.labels }}
           push: true
