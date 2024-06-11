@@ -225,7 +225,6 @@ ENTRYPOINT [ "/opt/axis/acapsdk/sysroots/x86_64-pokysdk-linux/usr/bin/eap-instal
 # Copy out eap to a containerized image
 # Use this to run ACAP Runtime in a container on a device
 FROM containerized_${ARCH}
-
 WORKDIR /opt/app/
 COPY --from=runtime-base /opt/app/*.eap ./
 RUN <<EOF
