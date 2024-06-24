@@ -81,6 +81,8 @@ runs:
         password: ${{ inputs.registry_token }}
     - name: Build and push image to registry
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_NO_SUMMARY: true
       with:
         context: .
         push: ${{ inputs.push }}
