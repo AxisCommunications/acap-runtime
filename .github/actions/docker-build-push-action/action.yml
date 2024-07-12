@@ -63,6 +63,10 @@ inputs:
     description: List of output destinations (format type=local,dest=path)
     required: false
     default: ''
+  platform:
+    description: "Target platform for the build (e.g., linux/amd64, linux/arm64)"
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -94,3 +98,4 @@ runs:
         target: ${{ inputs.target }}
         provenance: ${{ inputs.provenance }}
         outputs: ${{ inputs.outputs }}
+        platforms: ${{ inputs.platform }}

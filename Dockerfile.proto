@@ -1,0 +1,85 @@
+# syntax=docker/dockerfile:1
+
+ARG UBUNTU_VERSION=22.04
+ARG TFSERVING_VERSION=2.9.0
+ARG GRPC_VERSION=1.46.3
+ARG PROTOBUF_VERSION=4.21.1
+ARG SIX_VERSION=1.16.0
+ARG GRPCIO_TOOLS_VERSION=1.47.0
+
+# Build image, generates proto files
+FROM arm64v8/ubuntu:${UBUNTU_VERSION}  AS build-image
+
+ARG TFSERVING_VERSION
+ARG GRPC_VERSION
+ARG PROTOBUF_VERSION
+ARG SIX_VERSION
+ARG GRPCIO_TOOLS_VERSION
+
+RUN <<EOF
+    apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        git
+    rm -rf /var/lib/apt/lists/*
+EOF
+
+# grpcio-tools contains protoc, which allows to build the pb2.py files in the install-tf.sh script.
+# Installing directly grpcio-tools result in an older version of protobuf.
+RUN <<EOF
+    pip install --no-cache-dir \
+        grpcio==${GRPC_VERSION} \
+        protobuf==${PROTOBUF_VERSION} \
+        six==${SIX_VERSION}
+    pip install --no-dependencies \
+        grpcio-tools==${GRPCIO_TOOLS_VERSION}
+EOF
+
+# Build TensorFlow serving proto files
+WORKDIR /build/tf
+
+RUN <<EOF
+    git clone --depth 1 --branch v${TFSERVING_VERSION}  https://github.com/tensorflow/tensorflow.git
+    git clone --depth 1 --branch ${TFSERVING_VERSION}  https://github.com/tensorflow/serving.git
+
+    TF_DIR="./tensorflow"
+    TFS_DIR="./serving"
+    OUT_DIR="./proto_utils"
+
+    mkdir -p $OUT_DIR
+
+    PROTO_FILES="$TF_DIR/tensorflow/core/example/*.proto
+                 $TF_DIR/tensorflow/core/framework/*.proto \
+                 $TF_DIR/tensorflow/core/protobuf/*.proto \
+                 $TFS_DIR/tensorflow_serving/apis/*.proto \
+                "
+
+    PROTO_FILES_GRPC="$TFS_DIR/tensorflow_serving/apis/predict.proto \
+                      $TFS_DIR/tensorflow_serving/apis/prediction_service.proto \
+                     "
+
+    python3 -m grpc_tools.protoc -I "$TF_DIR" -I "$TFS_DIR" --python_out="$OUT_DIR" $PROTO_FILES
+    python3 -m grpc_tools.protoc -I "$TF_DIR" -I "$TFS_DIR" --grpc_python_out="$OUT_DIR" $PROTO_FILES_GRPC
+EOF
+
+COPY apis/wrappers/tf_proto_utils.py ./proto_utils
+
+#Build vdo proto
+WORKDIR /build/vdo
+COPY apis/videocapture.proto ./
+RUN <<EOF
+   mkdir -p ./proto_utils
+   python3 -m grpc_tools.protoc -I . --python_out=./proto_utils --grpc_python_out=./proto_utils videocapture.proto
+EOF
+COPY apis/wrappers/vdo_proto_utils.py ./proto_utils
+
+# Build keyvalue proto
+WORKDIR /build/param
+COPY apis/keyvaluestore.proto ./
+RUN <<EOF
+   mkdir -p ./proto_utils
+   python3 -m grpc_tools.protoc -I . --python_out=./proto_utils --grpc_python_out=./proto_utils keyvaluestore.proto
+EOF
+
+# Saving required libraries versions into a file
+RUN pip freeze | grep -E '^(grpcio|protobuf|six)==' > /build/requirements.txt
