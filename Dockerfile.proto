@@ -48,13 +48,13 @@ python3 -m grpc_tools.protoc -I "$TF_DIR" -I "$TFS_DIR" --python_out="$OUT_DIR" 
 python3 -m grpc_tools.protoc -I "$TF_DIR" -I "$TFS_DIR" --grpc_python_out="$OUT_DIR" $PROTO_FILES_GRPC
 
 EOF
-
+COPY apis/wrappers/tf_proto_utils.py ./proto_utils
 
 #Build vdo proto
 WORKDIR /build/vdo
 COPY apis/videocapture.proto ./
 RUN mkdir ./proto_utils && python3 -m grpc_tools.protoc -I . --python_out=./proto_utils --grpc_python_out=./proto_utils videocapture.proto
-
+COPY apis/wrappers/vdo_proto_utils.py ./proto_utils
 
 #Build keyvalue proto
 WORKDIR /build/param
@@ -62,5 +62,5 @@ COPY apis/keyvaluestore.proto ./
 RUN mkdir ./proto_utils && python3 -m grpc_tools.protoc -I . --python_out=./proto_utils --grpc_python_out=./proto_utils keyvaluestore.proto
 
 
-COPY apis/wrappers/* ./proto_utils
+
 
