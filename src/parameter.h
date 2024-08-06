@@ -34,7 +34,7 @@ class Parameter final : public KeyValueStore::Service {
     bool Init(const bool verbose);
 
   private:
-    Status GetValues(ServerContext* context, ServerReaderWriter<Response, Request>* stream);
+    Status GetValues(ServerContext* context, const Request* request, Response* response);
 
     AXParameter* ax_parameter;
     GError* _error;

@@ -69,28 +69,24 @@ vector<pair<string, string>> GetValues(unique_ptr<KeyValueStore::Stub>& stub,
                                        const vector<string>& keys) {
     vector<pair<string, string>> values;
     ClientContext context;
-    auto stream = stub->GetValues(&context);
+    Request request;
+    Response response;
+
     for (const auto& key : keys) {
         // Key we are sending to the server.
-        Request request;
         request.set_key(key);
-        stream->Write(request);
+        auto status = stub->GetValues(&context, request, &response);
+        if (!status.ok()) {
+            throw std::runtime_error("Error from gRPC: " + status.error_message());
+        }
+        EXPECT_TRUE(status.ok());
 
         // Get the value for the sent key
-        Response response;
         std::string value;
-        stream->Read(&response);
         value = response.value();
         value.erase(std::remove(value.begin(), value.end(), '\n'), value.end());
         values.push_back(make_pair(key, value));
     }
-
-    stream->WritesDone();
-    Status status = stream->Finish();
-    if (!status.ok()) {
-        throw std::runtime_error("Error from gRPC: " + status.error_message());
-    }
-    EXPECT_TRUE(status.ok());
 
     return values;
 }

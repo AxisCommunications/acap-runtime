@@ -43,33 +43,28 @@ bool Parameter::Init(const bool verbose) {
     return true;
 }
 
-Status Parameter::GetValues(ServerContext* context, ServerReaderWriter<Response, Request>* stream) {
-    Request request;
-    Response response;
-    while (stream->Read(&request)) {
-        if (ax_parameter == NULL) {
-            ERRORLOG << "axparameter not initalized" << endl;
-            return Status::CANCELLED;
-        }
-
-        const gchar* parameter_key = request.key().c_str();
-        const regex pattern("[a-zA-Z0-9.]+");
-        if (!regex_match(parameter_key, pattern)) {
-            TRACELOG << "No valid input request" << endl;
-            return Status(StatusCode::INVALID_ARGUMENT, "No valid input request");
-        }
-        char* parameter_value = NULL;
-        if (!ax_parameter_get(ax_parameter, parameter_key, &parameter_value, &_error)) {
-            ERRORLOG << "Error when getting axparameter: " << _error->message << endl;
-            parameter_value = g_strdup("");
-            g_clear_error(&_error);
-        }
-        TRACELOG << parameter_key << ": " << parameter_value << endl;
-
-        response.set_value(parameter_value);
-        stream->Write(response);
-        free(parameter_value);
+Status Parameter::GetValues(ServerContext* context, const Request* request, Response* response) {
+    if (ax_parameter == NULL) {
+        ERRORLOG << "axparameter not initalized" << endl;
+        return Status::CANCELLED;
     }
+
+    const gchar* parameter_key = request->key().c_str();
+    const regex pattern("[a-zA-Z0-9.]+");
+    if (!regex_match(parameter_key, pattern)) {
+        TRACELOG << "No valid input request" << endl;
+        return Status(StatusCode::INVALID_ARGUMENT, "No valid input request");
+    }
+    char* parameter_value = NULL;
+    if (!ax_parameter_get(ax_parameter, parameter_key, &parameter_value, &_error)) {
+        ERRORLOG << "Error when getting axparameter: " << _error->message << endl;
+        parameter_value = g_strdup("");
+        g_clear_error(&_error);
+    }
+    TRACELOG << parameter_key << ": " << parameter_value << endl;
+
+    response->set_value(parameter_value);
+    free(parameter_value);
 
     return Status::OK;
 }
