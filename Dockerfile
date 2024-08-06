@@ -2,7 +2,7 @@
 
 ARG ARCH=armv7hf
 ARG REPO=axisecp
-ARG VERSION=1.7
+ARG VERSION=1.14
 ARG UBUNTU_VERSION=22.04
 
 FROM arm64v8/ubuntu:${UBUNTU_VERSION} AS containerized_aarch64

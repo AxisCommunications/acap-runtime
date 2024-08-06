@@ -33,7 +33,7 @@ PKG_CONFIG_CFLAGS_OTHER := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(P
 PKG_CONFIG_LDFLAGS := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
 PKG_CONFIG_LDLIBS := $(shell PKG_CONFIG_SYSROOT_DIR="" PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-l $(PKGS))
 
-PKGS = gio-2.0 glib-2.0 vdostream
+PKGS = gio-2.0 glib-2.0 vdostream axparameter
 PKG_CONFIG_CFLAGS_I += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-I $(PKGS))
 PKG_CONFIG_CFLAGS_OTHER += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags-only-other $(PKGS))
 PKG_CONFIG_LDFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs-only-L $(PKGS))
