@@ -343,55 +343,32 @@ Machine learning API service:
 
 ## Building ACAP Runtime
 
-This repo provides Dockerfiles to be used to build ACAP Runtime. Note that Buildx is used.
+Docker is used to build ACAP Runtime by using the provided Dockerfile. Note that Buildx is used.
 
 <!-- markdownlint-disable MD024 -->
 ### Native ACAP application
 <!-- markdownlint-enable MD024 -->
 
-To build as a native ACAP application use either the Dockerfile `Dockerfile.armv7hf` or `Dockerfile.aarch64`. Select the one that matches the architecture of your device:
+To build and extract the native ACAP application run:
 
 ```sh
 # Build ACAP Runtime image
-docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --target runtime-base .
+docker buildx build --file Dockerfile --build-arg ARCH=<ARCH> --target runtime-base --output <build-folder> .
 ```
 
-where `<ARCH>` is either `armv7hf` or `aarch64`.
+where `<ARCH>` is either `armv7hf` or `aarch64` and <build-folder> is the path to an output folder on your machine, eg. build. This will be created for you if not already existing. Once the build has completed the EAP file can be found in the <build-folder>.
 
-The build is based on [axisecp/acap-native-sdk][docker-hub-acap-native-sdk]. To
-base it on a different version than what is on main branch you can provide the
-build arguments `VERSION` and `UBUNTU_VERSION` to select a specific tag of the
-`acap-native-sdk` image. E.g. to use
-[axisecp/acap-native-sdk:1.4_beta1-armv7hf-ubuntu22.04][docker-hub-acap-native-sdk-1.4_beta1-armv7hf-ubuntu22.04]:
-
-```sh
-docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH> --build-arg VERSION=1.4beta1 --build-arg UBUNTU_VERSION=22.04 .
-```
-
-Once the application is installed it can then be started either in the device GUI **Apps** tab or by running:
-
-```sh
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> start
-```
-
-Where `<device IP>` is the IP address of the device and `<device password>` is the password for the root user.
-
-The application can be stopped and uninstalled by using the device GUI, or by running:
-
-```sh
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> stop
-docker run --rm axisecp/acap-runtime:<version>-<ARCH> <device IP> <device password> remove
-```
+Once the application is installed it can then be started in the device GUI **Apps** tab.
 
 <!-- markdownlint-disable MD024 -->
 ### Containerized version
 <!-- markdownlint-enable MD024 -->
 
-To build the containerized version, use either the Dockerfile `Dockerfile.armv7hf` or `Dockerfile.aarch64`. Select the one that matches the architecture of your device:
+To build the containerized version run:
 
 ```sh
 # Build ACAP Runtime containerized version
-docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-containerized .
+docker buildx build --file Dockerfile --build-arg ARCH=<ARCH> --tag acap-runtime:<ARCH>-containerized .
 ```
 
 ## Building protofiles for Python
@@ -414,7 +391,7 @@ Build and install it by running:
 
 ```sh
 # Build ACAP Runtime test suite image
-docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-test --build-arg TEST=yes --target runtime-base .
+docker buildx build --file Dockerfile --build-arg ARCH=<ARCH> --build-arg TEST=yes --tag acap-runtime:<ARCH>-test  --target runtime-base .
 
 docker run --rm acap-runtime:<ARCH>-test <device IP> <device password> install
 ```
@@ -459,8 +436,6 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [devices]: https://axiscommunications.github.io/acap-documentation/docs/axis-devices-and-compatibility#sdk-and-device-compatibility
 [docker-acap]: https://github.com/AxisCommunications/docker-acap
 [docker-hub-acap-runtime]: https://hub.docker.com/r/axisecp/acap-runtime
-[docker-hub-acap-native-sdk]: https://hub.docker.com/repository/docker/axisecp/acap-native-sdk
-[docker-hub-acap-native-sdk-1.4_beta1-armv7hf-ubuntu22.04]: https://hub.docker.com/layers/axisecp/acap-native-sdk/1.4_beta1-armv7hf-ubuntu22.04/images/sha256-07ed766f7a68033a2717b1334c8fdee29b1a55386b37d67924e5401c91ed9ecd?context=repo
 [dockerDesktop]: https://docs.docker.com/desktop/
 [dockerEngine]: https://docs.docker.com/engine/
 [gRPC]: https://grpc.io/
@@ -468,7 +443,6 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [minimal-ml-inference]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/minimal-ml-inference
 [openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
 [parameter-api-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-python
-[opencv-qr-decoder-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/opencv-qr-decoder-python
 [signing-documentation]: https://axiscommunications.github.io/acap-documentation/docs/faq/security.html#sign-acap-applications
 [tensorflow]: https://github.com/tensorflow/serving
 
