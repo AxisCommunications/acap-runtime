@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#include <gtest/gtest.h>
 #include "verbose_setting.h"
 #include "util.h"
+#include <gtest/gtest.h>
 
 using namespace ::testing;
 using namespace std;
 
-bool get_verbose_status(){
-    return 
-        (FLAGS_gtest_color == "yes") ||
-        (strcmp(get_parameter_value("Verbose","Acapruntimetest"),"yes") == 0);
+bool get_verbose_status() {
+    return (FLAGS_gtest_color == "yes") ||
+           (strcmp(get_parameter_value("Verbose", "Acapruntimetest"), "yes") == 0);
 }

@@ -14,27 +14,24 @@
  * limitations under the License.
  */
 
-#include <string.h>
-#include <stdexcept>
 #include "util.h"
 
 using namespace std;
 
-const char *get_parameter_value(string parameter_name, string app_name)
-{
+const char* get_parameter_value(string parameter_name, string app_name) {
     size_t pos = 0;
     char parhand_result[BUFSIZ];
-    const char *parameter_value= NULL;
+    const char* parameter_value = NULL;
     string parhand_cmd = "parhandclient get root." + app_name + ".";
     string parhandclient_cmd = parhand_cmd + parameter_name;
 
-    FILE *fp = popen(parhandclient_cmd.c_str(), "r");
+    FILE* fp = popen(parhandclient_cmd.c_str(), "r");
     if (!fp) {
         throw runtime_error("popen() failed!");
     }
 
     string value;
-    if ( fgets( parhand_result, BUFSIZ, fp ) != NULL ) {
+    if (fgets(parhand_result, BUFSIZ, fp) != NULL) {
         // remove trailing newline, or else strcmp of the return value will always fail.
         parhand_result[strcspn(parhand_result, "\r\n")] = 0;
         value.assign(parhand_result);
@@ -47,7 +44,6 @@ const char *get_parameter_value(string parameter_name, string app_name)
         parameter_value = "";
     }
     pclose(fp);
-    
+
     return parameter_value;
 }
-
