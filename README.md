@@ -98,8 +98,7 @@ The ACAP Runtime service provides the following APIs:
   There are usage examples available for the Parameter API written in
   [Python][parameter-api-python].
 - Video capture API - Enables capture of images from a camera.
-  There are usage examples available for the Parameter API written in
-  [Python][opencv-qr-decoder-python].
+  No usage examples for this API exist yet.
 
 ## Installation and usage
 
