@@ -5,3 +5,4 @@ build/
 build_x86_64-linux-gnu/
 serving/
 tensorflow/
+*.eap
