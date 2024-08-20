@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+#include <stdexcept>
+#include <string.h>
+
 using namespace std;
 
 /**
-* @brief Fetch the value of the parameter as a string
-*
-* @return The value of the parameter as string if successful, NULL otherwise
-*/
-const char *get_parameter_value(string parameter_name, string app_name="Acapruntime");
+ * @brief Fetch the value of the parameter as a string
+ *
+ * @return The value of the parameter as string if successful, NULL otherwise
+ */
+const char* get_parameter_value(string parameter_name, string app_name = "Acapruntime");
