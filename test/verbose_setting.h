@@ -15,9 +15,9 @@
  */
 
 /**
-* @brief Checks if either the app setting "Verbose" or the gtest_color flag
-*   is set to "yes".
-*
-* @return True if either "input" is set, False otherwise.
-*/
+ * @brief Checks if either the app setting "Verbose" or the gtest_color flag
+ *   is set to "yes".
+ *
+ * @return True if either "input" is set, False otherwise.
+ */
 bool get_verbose_status();
