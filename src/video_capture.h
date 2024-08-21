@@ -25,7 +25,6 @@
 
 #include "videocapture.grpc.pb.h"
 
-using namespace std;
 using namespace grpc;
 using namespace videocapture::v1;
 
@@ -39,7 +38,7 @@ struct Buffer {
 
 struct Stream {
     VdoStream* vdo_stream;
-    deque<Buffer> buffers;
+    std::deque<Buffer> buffers;
 };
 
 class Capture final : public VideoCapture::Service {
@@ -70,9 +69,9 @@ class Capture final : public VideoCapture::Service {
     Status OutputError(const char* msg, StatusCode code);
     Status OutputError(const char* msg, StatusCode code, GError* error);
 
-    string GetTypeString(VdoFrame* frame);
+    std::string GetTypeString(VdoFrame* frame);
 
-    map<unsigned int, Stream> _streams;
+    std::map<unsigned int, Stream> _streams;
     bool _verbose;
     const uint32_t MAX_NBR_SAVED_FRAMES = 3;
     pthread_mutex_t _mutex;
