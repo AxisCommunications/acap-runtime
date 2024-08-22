@@ -21,6 +21,7 @@ on:
     branches:
       - "main"
 
+
 jobs:
   build_proto_image:
     name: Build Proto Image
