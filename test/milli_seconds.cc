@@ -16,6 +16,8 @@
 
 #include "milli_seconds.h"
 
+using namespace std::chrono;
+
 uint64_t MilliSeconds() {
     return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }

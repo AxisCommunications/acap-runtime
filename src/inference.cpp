@@ -28,6 +28,7 @@
     if (_verbose) \
     std::cout << "TRACE in Inference: "
 
+using namespace std;
 using namespace std::chrono;
 
 namespace acap_runtime {

@@ -16,6 +16,4 @@
 
 #include <chrono>
 
-using namespace std::chrono;
-
 uint64_t MilliSeconds();
