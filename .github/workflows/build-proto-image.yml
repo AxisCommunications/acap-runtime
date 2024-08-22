@@ -1,0 +1,14 @@
+# yamllint disable rule:line-length
+---
+name: Proto Build Workflow
+
+on:
+  pull_request:
+    branches:
+      - "main"
+
+jobs:
+  dummy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Placeholder workflow"
