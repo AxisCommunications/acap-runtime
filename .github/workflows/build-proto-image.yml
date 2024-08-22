@@ -3,24 +3,23 @@
 name: Proto Build Workflow
 
 on:
-#  push:
-#    branches:
-#      - "main"
-#    tags:
-#      # semver, e.g. 1.2.0 (does not match 0.1.2)
-#      - "[1-9]+.[0-9]+.[0-9]+"
-#      # semver with prerelease info, e.g. 1.0.2-beta.1 or 1.2.3-rc.10
-#      - "[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+"
-#      # do not match prerelease starting w/ 0, e.g. 1.0.2-beta.0 or 1.2.3-rc.01
-#      - "![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*"
-#      # semver with date info, e.g. 1.0.2-20221125
-#      - "[1-9]+.[0-9]+.[0-9]+-[0-9]+"
-#      # do not match date starting w/ 0, e.g. 1.0.2-01232023
-#      - "![1-9]+.[0-9]+.[0-9]+-[0]*"
+  push:
+    branches:
+      - "main"
+    tags:
+      # semver, e.g. 1.2.0 (does not match 0.1.2)
+      - "[1-9]+.[0-9]+.[0-9]+"
+      # semver with prerelease info, e.g. 1.0.2-beta.1 or 1.2.3-rc.10
+      - "[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+"
+      # do not match prerelease starting w/ 0, e.g. 1.0.2-beta.0 or 1.2.3-rc.01
+      - "![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*"
+      # semver with date info, e.g. 1.0.2-20221125
+      - "[1-9]+.[0-9]+.[0-9]+-[0-9]+"
+      # do not match date starting w/ 0, e.g. 1.0.2-01232023
+      - "![1-9]+.[0-9]+.[0-9]+-[0]*"
   pull_request:
     branches:
       - "main"
-  workflow_dispatch:
 
 jobs:
   build_proto_image:
@@ -45,13 +44,14 @@ jobs:
           push: false
           load: true
           tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
+          use_qemu: true
 
       - name: List Docker images
         run: docker images
 
       - name: Extract proto files
         run: |
-          container_id=$(docker create axisecp/acap-runtime:protofiles)
+          container_id=$(docker create axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles)
           docker cp $container_id:/build/param/proto_utils ./proto_utils_param
           docker cp $container_id:/build/vdo/proto_utils ./proto_utils_vdo
           docker cp $container_id:/build/tf/proto_utils ./proto_utils_tf
@@ -100,7 +100,7 @@ jobs:
             ./proto_utils_tf
 
       - name: Push Proto image
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         uses: ./.github/actions/docker-build-push-action
         with:
           dockerfile: ./Dockerfile.proto
