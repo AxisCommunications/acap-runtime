@@ -16,6 +16,4 @@
 
 #include <string>
 
-using namespace std;
-
-string read_text(const char* path);
+std::string read_text(const char* path);

@@ -18,6 +18,8 @@
 #include <stdexcept>
 #include <string.h>
 
+using namespace std;
+
 string read_text(const char* path) {
     FILE* fptr = fopen(path, "r");
     if (fptr == nullptr) {
