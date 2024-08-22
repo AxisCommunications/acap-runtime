@@ -25,7 +25,7 @@ on:
 jobs:
   build_proto_image:
     name: Build Proto Image
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
