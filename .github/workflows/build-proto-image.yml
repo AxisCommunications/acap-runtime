@@ -3,6 +3,7 @@
 name: Proto Build Workflow
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - "main"
