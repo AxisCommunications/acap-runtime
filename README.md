@@ -84,20 +84,17 @@ The following requirements need to be met.
 - Computer:
   - Either [Docker Desktop][dockerDesktop] version 4.11.1 or higher, or
   [Docker Engine][dockerEngine] version 20.10.17 or higher.
-  - To build Docker ACAP locally it is required to have [Buildx][buildx] installed.
+  - To build ACAP Runtime locally it is required to have [Buildx][buildx] installed.
 
 ### APIs
 
 The ACAP Runtime service provides the following APIs:
 
-- Machine learning API - An implementation of [TensorFlow Serving][tensorflow]. There
-  are usage examples available for the Machine learning API written in
-  [Python][minimal-ml-inference].
+- Machine learning API - An implementation of [TensorFlow Serving][tensorflow]. A usage example for the Machine learning API written in Python can be found in [minimal-ml-inference][minimal-ml-inference].
 - Parameter API - Provides gRPC read access to the parameters of an Axis device.
-  There are usage examples available for the Parameter API written in
-  [Python][parameter-api-python].
+  A usage example for the Parameter API written in Python can be found in [parameter-api-python][parameter-api-python].
 - Video capture API - Enables capture of images from a camera.
-  No usage examples for this API exist yet.
+  A usage example for the Video capture API written in Python can be found in [object-detector-python][object-detector-python].
 
 ## Installation and usage
 
@@ -433,6 +430,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [latest-releases]: https://github.com/AxisCommunications/acap-runtime/releases/latest
 [minimal-ml-inference]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/minimal-ml-inference
 [openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
+[object-detector-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/object-detector-python
 [parameter-api-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/parameter-api-python
 [signing-documentation]: https://axiscommunications.github.io/acap-documentation/docs/faq/security.html#sign-acap-applications
 [tensorflow]: https://github.com/tensorflow/serving
