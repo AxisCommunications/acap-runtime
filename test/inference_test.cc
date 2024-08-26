@@ -419,7 +419,12 @@ TEST(InferenceTest, ServerAuthentication) {
     string root_cert = read_text(serverCertificatePath);
     SslCredentialsOptions ssl_opts = {root_cert.c_str(), "", ""};
     shared_ptr<ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
-    shared_ptr<Channel> channel = CreateChannel(target, creds);
+    grpc::ChannelArguments args;
+    // gRPC/ssl doesn't support skipping server common-name verification so we force target name to
+    // localhost as used in the cert creation.
+    args.SetSslTargetNameOverride("localhost");
+    shared_ptr<Channel> channel = grpc::CreateCustomChannel(target, creds, args);
+
     ASSERT_TRUE(channel->WaitForConnected(
         gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
     unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
@@ -566,7 +571,11 @@ TEST(InferenceTest, ServerAuthenticationDlpu) {
     string root_cert = read_text(serverCertificatePath);
     SslCredentialsOptions ssl_opts = {root_cert.c_str(), "", ""};
     shared_ptr<ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
-    shared_ptr<Channel> channel = CreateChannel(target, creds);
+    grpc::ChannelArguments args;
+    // gRPC/ssl doesn't support skipping server common-name verification so we force target name to
+    // localhost as used in the cert creation.
+    args.SetSslTargetNameOverride("localhost");
+    shared_ptr<Channel> channel = grpc::CreateCustomChannel(target, creds, args);
     ASSERT_TRUE(channel->WaitForConnected(
         gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
     unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
@@ -657,7 +666,11 @@ TEST(InferenceTest, ServerAuthenticationTpu) {
     string root_cert = read_text(serverCertificatePath);
     SslCredentialsOptions ssl_opts = {root_cert.c_str(), "", ""};
     shared_ptr<ChannelCredentials> creds = grpc::SslCredentials(ssl_opts);
-    shared_ptr<Channel> channel = CreateChannel(target, creds);
+    grpc::ChannelArguments args;
+    // gRPC/ssl doesn't support skipping server common-name verification so we force target name to
+    // localhost as used in the cert creation.
+    args.SetSslTargetNameOverride("localhost");
+    shared_ptr<Channel> channel = grpc::CreateCustomChannel(target, creds, args);
     ASSERT_TRUE(channel->WaitForConnected(
         gpr_time_add(gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(5, GPR_TIMESPAN))));
     unique_ptr<PredictionService::Stub> stub = PredictionService::NewStub(channel);
