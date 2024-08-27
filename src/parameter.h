@@ -15,6 +15,7 @@
  */
 
 #include "keyvaluestore.grpc.pb.h"
+#include <axsdk/axparameter.h>
 
 #ifdef TEST
 #define APP_NAME "acapruntimetest"
@@ -35,6 +36,8 @@ class Parameter final : public KeyValueStore::Service {
   private:
     Status GetValues(ServerContext* context, ServerReaderWriter<Response, Request>* stream);
 
+    AXParameter* ax_parameter;
+    GError* _error;
     bool _verbose;
 };
 }  // namespace acap_runtime

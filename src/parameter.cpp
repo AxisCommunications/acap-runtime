@@ -31,49 +31,44 @@ namespace acap_runtime {
 bool Parameter::Init(const bool verbose) {
     _verbose = verbose;
     TRACELOG << "Init" << endl;
+    _error = NULL;
+    if (ax_parameter == NULL)
+        ax_parameter = ax_parameter_new(APP_NAME, &_error);
+    if (ax_parameter == NULL) {
+        ERRORLOG << "Error when creating axparameter: " << _error->message << endl;
+        g_clear_error(&_error);
+        return false;
+    }
+
     return true;
 }
 
-// Logic and data behind the server's behavior.
 Status Parameter::GetValues(ServerContext* context, ServerReaderWriter<Response, Request>* stream) {
-    char parhand_result[BUFSIZ];
-
     Request request;
+    Response response;
     while (stream->Read(&request)) {
-        size_t pos = 0;
-        const char* parameter_value = NULL;
-        string parhand_cmd = "parhandclient get ";
-        string parameter_key = request.key().c_str();
+        if (ax_parameter == NULL) {
+            ERRORLOG << "axparameter not initalized" << endl;
+            return Status::CANCELLED;
+        }
+
+        const gchar* parameter_key = request.key().c_str();
         const regex pattern("[a-zA-Z0-9.]+");
-        if (regex_match(parameter_key, pattern)) {
-            string parhandclient_cmd = parhand_cmd + parameter_key;
-
-            FILE* fp = popen(parhandclient_cmd.c_str(), "r");
-            if (!fp) {
-                throw std::runtime_error("popen() failed!");
-            }
-            std::string value;
-            if (fgets(parhand_result, BUFSIZ, fp) != NULL) {
-                value = parhand_result;
-                while ((pos = value.find('"', pos)) != std::string::npos)
-                    value = value.erase(pos, 1);
-                parameter_value = value.c_str();
-            }
-            if (parameter_value != nullptr) {
-                TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
-            } else {
-                parameter_value = "";
-                TRACELOG << request.key().c_str() << ": " << parameter_value << endl;
-            }
-
-            Response response;
-            response.set_value(parameter_value);
-            stream->Write(response);
-            pclose(fp);
-        } else {
+        if (!regex_match(parameter_key, pattern)) {
             TRACELOG << "No valid input request" << endl;
             return Status(StatusCode::INVALID_ARGUMENT, "No valid input request");
         }
+        char* parameter_value = NULL;
+        if (!ax_parameter_get(ax_parameter, parameter_key, &parameter_value, &_error)) {
+            ERRORLOG << "Error when getting axparameter: " << _error->message << endl;
+            parameter_value = g_strdup("");
+            g_clear_error(&_error);
+        }
+        TRACELOG << parameter_key << ": " << parameter_value << endl;
+
+        response.set_value(parameter_value);
+        stream->Write(response);
+        free(parameter_value);
     }
 
     return Status::OK;
