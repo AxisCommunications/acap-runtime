@@ -398,7 +398,7 @@ docker buildx build --file Dockerfile.<ARCH> --tag acap-runtime:<ARCH>-container
 
 ## Building protofiles for Python
 
-The repository includes a Dockerfile (`Dockerfile.proto`) for building the APIs protofiles for Python. The Dockerfile generates the necessary Python files from the protobuf definitions, allowing gRPC communication with the ACAP Runtime service, without the need to build the protofiles in your application.
+The repository includes a Dockerfile (`Dockerfile.proto`) for building the APIs protofiles for Python. The Dockerfile generates the necessary Python files from the protobuf definitions, allowing gRPC communication with the ACAP Runtime service. This means that applications can copy these prebuilt files from ACAP Runtime container image instead of having to build the protofiles themselves.
 
 To build the protofiles:
 
