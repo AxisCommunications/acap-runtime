@@ -1,4 +1,4 @@
-
+# syntax=docker/dockerfile:1
 ARG UBUNTU_VERSION=22.04
 ARG TFSERVING_VERSION=2.9.0
 
