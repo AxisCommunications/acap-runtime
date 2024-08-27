@@ -114,11 +114,7 @@ int RunServer(const string& address,
     LOG(INFO) << "Server listening on " << server_address.str() << endl;
 
     // Register parameter service
-    Parameter parameter;
-    if (!parameter.Init(_verbose)) {
-        syslog(LOG_ERR, "Could not Init Parameter Service");
-        return EXIT_FAILURE;
-    }
+    Parameter parameter{_verbose};
     builder.RegisterService(&parameter);
 
     // Register video capture service
@@ -273,7 +269,14 @@ int AcapRuntime(int argc, char* argv[]) {
     }
 
     LOG(INFO) << "Start " << argv[0] << endl;
-    int ret = RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
+    int ret = [&]() {
+        try {
+            return RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
+        } catch (const exception& err) {
+            syslog(LOG_ERR, "%s", err.what());
+            return EXIT_FAILURE;
+        }
+    }();
     LOG(INFO) << "Exit " << argv[0] << endl;
     return ret;
 }

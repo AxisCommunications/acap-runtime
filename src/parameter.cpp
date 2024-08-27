@@ -27,28 +27,22 @@ using namespace std;
 
 namespace acap_runtime {
 
-// Initialize Parameter Service
-bool Parameter::Init(const bool verbose) {
-    _verbose = verbose;
+Parameter::Parameter(bool verbose) : _verbose(verbose) {
     TRACELOG << "Init" << endl;
     _error = NULL;
-    if (ax_parameter == NULL)
-        ax_parameter = ax_parameter_new(APP_NAME, &_error);
+    ax_parameter = ax_parameter_new(APP_NAME, &_error);
     if (ax_parameter == NULL) {
         ERRORLOG << "Error when creating axparameter: " << _error->message << endl;
         g_clear_error(&_error);
-        return false;
+        throw runtime_error{"Could not Init Parameter Service"};
     }
+}
 
-    return true;
+Parameter::~Parameter() {
+    ax_parameter_free(ax_parameter);
 }
 
 Status Parameter::GetValues(ServerContext* context, const Request* request, Response* response) {
-    if (ax_parameter == NULL) {
-        ERRORLOG << "axparameter not initalized" << endl;
-        return Status::CANCELLED;
-    }
-
     const gchar* parameter_key = request->key().c_str();
     const regex pattern("[a-zA-Z0-9.]+");
     if (!regex_match(parameter_key, pattern)) {
