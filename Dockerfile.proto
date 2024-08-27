@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+
 ARG UBUNTU_VERSION=22.04
 ARG TFSERVING_VERSION=2.9.0
 
@@ -17,11 +18,14 @@ EOF
 
 # grpcio-tools contains protoc, which allows to build the pb2.py files in the install-tf.sh script.
 # Installing directly grpcio-tools result in an older version of protobuf.
-# So we install first the dependencies with the desired version and then grpcio-tool without dependencies.
-RUN pip install protobuf==4.21.1 six==1.16.0 grpcio==1.46.3 --no-cache-dir
-RUN pip install --no-dependencies grpcio-tools==1.47.0
+RUN pip install  --no-cache-dir \
+      grpcio==1.46.3 \
+      protobuf==4.21.1 \
+      six==1.16.0
+RUN pip install --no-dependencies \
+      grpcio-tools==1.47.0
 
-#Build tensorflow serving
+# Build TensorFlow serving proto files
 WORKDIR /build/tf
 
 RUN <<EOF
