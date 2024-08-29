@@ -64,12 +64,7 @@ COPY apis/wrappers/vdo_proto_utils.py ./proto_utils
 WORKDIR /build/param
 COPY apis/keyvaluestore.proto ./
 RUN mkdir ./proto_utils && python3 -m grpc_tools.protoc -I . --python_out=./proto_utils --grpc_python_out=./proto_utils keyvaluestore.proto
-<<<<<<< HEAD
-=======
 
 # Saving required libraries versions into a file
 RUN pip freeze | grep -E '^(grpcio|protobuf|six)==' > /build/requirements.txt
 
-
-
->>>>>>> 9f2e89f (save grpc version in file)
