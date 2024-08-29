@@ -47,9 +47,6 @@ jobs:
           tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
           use_qemu: true
 
-      - name: List Docker images
-        run: docker images
-
       - name: Extract proto files
         run: |
           container_id=$(docker create axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles)
@@ -91,27 +88,12 @@ jobs:
 
           echo "All proto files verified successfully"
 
-      - name: Upload proto files artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: proto-files
-          path: |
-            ./proto_utils_param
-            ./proto_utils_vdo
-            ./proto_utils_tf
-
       - name: Push Proto image
         if: success() && github.event_name != 'pull_request'
         uses: ./.github/actions/docker-build-push-action
         with:
           dockerfile: ./Dockerfile.proto
-          # Set push to true before merge to main. Disabled during pull req work
-          push: false # true
+          push: true
           tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
-
-      - name: Clean up
-        if: always()
-        run: |
-          docker image prune -af
