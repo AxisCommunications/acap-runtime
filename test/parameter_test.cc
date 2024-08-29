@@ -68,11 +68,12 @@ void Service(int seconds) {
 vector<pair<string, string>> GetValues(unique_ptr<KeyValueStore::Stub>& stub,
                                        const vector<string>& keys) {
     vector<pair<string, string>> values;
-    ClientContext context;
-    Request request;
-    Response response;
 
     for (const auto& key : keys) {
+        ClientContext context;
+        Request request;
+        Response response;
+
         // Key we are sending to the server.
         request.set_key(key);
         auto status = stub->GetValues(&context, request, &response);
