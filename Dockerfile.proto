@@ -64,7 +64,3 @@ COPY apis/wrappers/vdo_proto_utils.py ./proto_utils
 WORKDIR /build/param
 COPY apis/keyvaluestore.proto ./
 RUN mkdir ./proto_utils && python3 -m grpc_tools.protoc -I . --python_out=./proto_utils --grpc_python_out=./proto_utils keyvaluestore.proto
-
-
-
-
