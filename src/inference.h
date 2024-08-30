@@ -17,6 +17,7 @@
 #include "prediction_service.grpc.pb.h"
 #include "video_capture.h"
 #include <larod.h>
+#include <mutex>
 
 namespace acap_runtime {
 class Inference : public tensorflow::serving::PredictionService::Service {
@@ -77,7 +78,7 @@ class Inference : public tensorflow::serving::PredictionService::Service {
     std::map<std::string, larodModel*> _models;
     larodModel* _ppModel;
     larodMap* _ppMap;
-    pthread_mutex_t _mtx;
+    std::mutex _mutex;
     larodTensor** _ppInputTensors;
     larodTensor** _ppOutputTensors;
     larodTensor** _inputTensors;

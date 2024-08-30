@@ -22,6 +22,7 @@
 
 #include <deque>
 #include <map>
+#include <mutex>
 
 #include "videocapture.grpc.pb.h"
 
@@ -83,7 +84,7 @@ class Capture final : public videocapture::v1::VideoCapture::Service {
     std::map<unsigned int, Stream> _streams;
     bool _verbose;
     const uint32_t MAX_NBR_SAVED_FRAMES = 3;
-    pthread_mutex_t _mutex;
+    std::mutex _mutex;
 };
 }  // namespace acap_runtime
 
