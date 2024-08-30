@@ -25,6 +25,7 @@ apt-get install -y --no-install-recommends \
     pkg-config \
     g++ \
     cmake \
+    inotify-tools \
     libssl-dev \
     gnupg \
     openssl
