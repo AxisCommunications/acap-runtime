@@ -50,7 +50,7 @@ class Capture final : public videocapture::v1::VideoCapture::Service {
     using Status = grpc::Status;
     using StatusCode = grpc::StatusCode;
 
-    bool Init(const bool verbose);
+    Capture(bool verbose);
 
     Status NewStream(ServerContext* context,
                      const NewStreamRequest* request,

@@ -38,16 +38,13 @@ using namespace videocapture::v1;
 namespace acap_runtime {
 
 // Initialize the capture service
-bool Capture::Init(const bool verbose) {
-    this->_verbose = verbose;
+Capture::Capture(const bool verbose) : _verbose(verbose) {
     TRACELOG << "Init" << endl;
 
     if (pthread_mutex_init(&_mutex, NULL) != 0) {
         ERRORLOG << "Init mutex failed" << endl;
-        return false;
+        throw runtime_error("Could not initialize VideoCapture service");
     }
-
-    return true;
 }
 
 // Create a new stream
