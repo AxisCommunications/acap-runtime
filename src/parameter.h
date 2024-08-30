@@ -40,7 +40,6 @@ class Parameter final : public keyvaluestore::KeyValueStore::Service {
     Status GetValues(ServerContext* context, const Request* request, Response* response) override;
 
     AXParameter* ax_parameter;
-    GError* _error;
     bool _verbose;
 };
 }  // namespace acap_runtime
