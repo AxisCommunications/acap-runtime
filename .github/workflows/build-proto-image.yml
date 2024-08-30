@@ -1,0 +1,99 @@
+# yamllint disable rule:line-length
+---
+name: Proto Build Workflow
+
+on:
+  push:
+    branches:
+      - "main"
+    tags:
+      # semver, e.g. 1.2.0 (does not match 0.1.2)
+      - "[1-9]+.[0-9]+.[0-9]+"
+      # semver with prerelease info, e.g. 1.0.2-beta.1 or 1.2.3-rc.10
+      - "[1-9]+.[0-9]+.[0-9]+-[a-z]+.[0-9]+"
+      # do not match prerelease starting w/ 0, e.g. 1.0.2-beta.0 or 1.2.3-rc.01
+      - "![1-9]+.[0-9]+.[0-9]+-[a-z]+.[0]*"
+      # semver with date info, e.g. 1.0.2-20221125
+      - "[1-9]+.[0-9]+.[0-9]+-[0-9]+"
+      # do not match date starting w/ 0, e.g. 1.0.2-01232023
+      - "![1-9]+.[0-9]+.[0-9]+-[0]*"
+  pull_request:
+    branches:
+      - "main"
+
+
+jobs:
+  build_proto_image:
+    name: Build Proto Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create image metadata
+        id: meta
+        uses: ./.github/actions/metadata-action
+        with:
+          repository: axisecp/acap-runtime
+          get_version: "true"
+
+      - name: Build Proto image
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: ./Dockerfile.proto
+          push: false
+          load: true
+          tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
+          use_qemu: true
+
+      - name: Extract proto files
+        run: |
+          container_id=$(docker create axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles)
+          docker cp $container_id:/build/param/proto_utils ./proto_utils_param
+          docker cp $container_id:/build/vdo/proto_utils ./proto_utils_vdo
+          docker cp $container_id:/build/tf/proto_utils ./proto_utils_tf
+          docker rm $container_id
+
+      - name: Verify proto files
+        run: |
+          echo "Verifying proto files..."
+
+          # Check param proto files
+          if [ "$(ls -A ./proto_utils_param)" ]; then
+            echo "param proto files found:"
+            ls -l ./proto_utils_param
+          else
+            echo "Error: param proto files are missing"
+            exit 1
+          fi
+
+          # Check vdo proto files
+          if [ "$(ls -A ./proto_utils_vdo)" ]; then
+            echo "vdo proto files found:"
+            ls -l ./proto_utils_vdo
+          else
+            echo "Error: vdo proto files are missing"
+            exit 1
+          fi
+
+          # Check tf proto files
+          if [ "$(ls -A ./proto_utils_tf)" ]; then
+            echo "tf proto files found:"
+            ls -l ./proto_utils_tf
+          else
+            echo "Error: tf proto files are missing"
+            exit 1
+          fi
+
+          echo "All proto files verified successfully"
+
+      - name: Push Proto image
+        if: success() && github.event_name != 'pull_request'
+        uses: ./.github/actions/docker-build-push-action
+        with:
+          dockerfile: ./Dockerfile.proto
+          push: true
+          tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
+          registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
+          registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
