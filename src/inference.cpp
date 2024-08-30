@@ -54,7 +54,58 @@ const char* const LAYOUTS[] = {"LAROD_TENSOR_LAYOUT_INVALID",
                                "LAROD_TENSOR_LAYOUT_NCHW",
                                "LAROD_TENSOR_LAYOUT_420SP"};
 
-Inference::Inference() : _conn(nullptr), _chipId(LAROD_CHIP_INVALID), _verbose(false) {}
+Inference::Inference(const bool verbose,
+                     const uint64_t chipId,
+                     const vector<string>& models,
+                     Capture* captureService)
+    : _verbose(verbose) {
+    if (chipId <= 0)
+        return;
+
+    larodError* error = nullptr;
+
+    _captureService = captureService;
+
+    TRACELOG << "Init chipId=" << chipId << endl;
+
+    if (pthread_mutex_init(&_mtx, NULL) != 0) {
+        ERRORLOG << "Init mutex FAILED" << endl;
+        throw runtime_error("Could not Init Inference Service");
+    }
+
+    // Connect to larod service
+    if (!larodConnect(&_conn, &error)) {
+        PrintError("Connecting to larod FAILED", error);
+        larodClearError(&error);
+        throw runtime_error("Could not Init Inference Service");
+    }
+
+    // List available chip id:s
+    larodChip* chipIds = nullptr;
+    size_t numChipIds = 0;
+    if (larodListChips(_conn, &chipIds, &numChipIds, &error)) {
+        TRACELOG << "Available chip ids:" << endl;
+        for (size_t i = 0; i < numChipIds; ++i) {
+            TRACELOG << chipIds[i] << ": " << larodGetChipName(chipIds[i]) << endl;
+        }
+        free(chipIds);
+    } else {
+        PrintError("Failed to list available chip id:s", error);
+        larodClearError(&error);
+    }
+
+    // Show selected chip
+    _chipId = static_cast<larodChip>(chipId);
+    TRACELOG << "Selected chip for this session: " << larodGetChipName(_chipId) << endl;
+
+    // Load models if any
+    _models.clear();
+    for (auto model : models) {
+        if (!LoadModel(*_conn, model.c_str(), _chipId, LAROD_ACCESS_PRIVATE)) {
+            throw runtime_error("Could not Init Inference Service");
+        }
+    }
+}
 
 Inference::~Inference() {
     if (nullptr != _conn) {
@@ -80,59 +131,6 @@ Inference::~Inference() {
     for (auto& [model_name, model] : _models) {
         larodDestroyModel(&model);
     }
-}
-
-// Initialize inference
-bool Inference::Init(const bool verbose,
-                     const uint64_t chipId,
-                     const vector<string>& models,
-                     Capture* captureService) {
-    _verbose = verbose;
-    larodError* error = nullptr;
-
-    _captureService = captureService;
-
-    TRACELOG << "Init chipId=" << chipId << endl;
-
-    if (pthread_mutex_init(&_mtx, NULL) != 0) {
-        ERRORLOG << "Init mutex FAILED" << endl;
-        return false;
-    }
-
-    // Connect to larod service
-    if (!larodConnect(&_conn, &error)) {
-        PrintError("Connecting to larod FAILED", error);
-        larodClearError(&error);
-        return false;
-    }
-
-    // List available chip id:s
-    larodChip* chipIds = nullptr;
-    size_t numChipIds = 0;
-    if (larodListChips(_conn, &chipIds, &numChipIds, &error)) {
-        TRACELOG << "Available chip ids:" << endl;
-        for (size_t i = 0; i < numChipIds; ++i) {
-            TRACELOG << chipIds[i] << ": " << larodGetChipName(chipIds[i]) << endl;
-        }
-        free(chipIds);
-    } else {
-        PrintError("Failed to list available chip id:s", error);
-        larodClearError(&error);
-    }
-
-    // Show selected chip
-    _chipId = static_cast<larodChip>(chipId);
-    TRACELOG << "Selected chip for this session: " << larodGetChipName(_chipId) << endl;
-
-    // Load models if any
-    _models.clear();
-    for (auto model : models) {
-        if (!LoadModel(*_conn, model.c_str(), _chipId, LAROD_ACCESS_PRIVATE)) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 // Run inference on a single image

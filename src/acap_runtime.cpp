@@ -121,15 +121,8 @@ int RunServer(const string& address,
     Capture capture{_verbose};
     builder.RegisterService(&capture);
 
-    // Register inference service
-    Inference inference;
-    if (chipId > 0) {
-        if (!inference.Init(_verbose, chipId, models, &capture)) {
-            syslog(LOG_ERR, "Could not Init Inference Service");
-            return EXIT_FAILURE;
-        }
-        builder.RegisterService(&inference);
-    }
+    Inference inference{_verbose, chipId, models, &capture};
+    builder.RegisterService(&inference);
 
     // Start server
     unique_ptr<Server> server(builder.BuildAndStart());
