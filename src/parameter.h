@@ -31,10 +31,11 @@ namespace acap_runtime {
 // Logic and data behind the server's behavior.
 class Parameter final : public KeyValueStore::Service {
   public:
-    bool Init(const bool verbose);
+    Parameter(bool verbose);
+    ~Parameter();
 
   private:
-    Status GetValues(ServerContext* context, const Request* request, Response* response);
+    Status GetValues(ServerContext* context, const Request* request, Response* response) override;
 
     AXParameter* ax_parameter;
     GError* _error;
