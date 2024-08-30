@@ -39,7 +39,7 @@ const uint64_t cpuChipId = 2;
 const uint64_t tpuChipId = 4;
 const uint64_t dlpuChipId = 12;
 const char* sharedFile = "/test.bmp";
-Capture capture;
+Capture capture{true};
 
 void PredictModel1(Inference& inference,
                    string modelName,

@@ -118,11 +118,7 @@ int RunServer(const string& address,
     builder.RegisterService(&parameter);
 
     // Register video capture service
-    Capture capture;
-    if (!capture.Init(_verbose)) {
-        syslog(LOG_ERR, "Could not initialize VideoCapture service");
-        return EXIT_FAILURE;
-    }
+    Capture capture{_verbose};
     builder.RegisterService(&capture);
 
     // Register inference service
