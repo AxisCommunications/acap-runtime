@@ -23,14 +23,16 @@
 #define APP_NAME "acapruntime"
 #endif
 
-using namespace grpc;
-using namespace keyvaluestore;
-
 namespace acap_runtime {
 
 // Logic and data behind the server's behavior.
-class Parameter final : public KeyValueStore::Service {
+class Parameter final : public keyvaluestore::KeyValueStore::Service {
   public:
+    using Request = keyvaluestore::Request;
+    using Response = keyvaluestore::Response;
+    using ServerContext = grpc::ServerContext;
+    using Status = grpc::Status;
+
     Parameter(bool verbose);
     ~Parameter();
 

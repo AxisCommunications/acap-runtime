@@ -25,9 +25,6 @@
 
 #include "videocapture.grpc.pb.h"
 
-using namespace grpc;
-using namespace videocapture::v1;
-
 namespace acap_runtime {
 
 struct Buffer {
@@ -41,19 +38,31 @@ struct Stream {
     std::deque<Buffer> buffers;
 };
 
-class Capture final : public VideoCapture::Service {
+class Capture final : public videocapture::v1::VideoCapture::Service {
   public:
+    using DeleteStreamRequest = videocapture::v1::DeleteStreamRequest;
+    using DeleteStreamResponse = videocapture::v1::DeleteStreamResponse;
+    using GetFrameRequest = videocapture::v1::GetFrameRequest;
+    using GetFrameResponse = videocapture::v1::GetFrameResponse;
+    using NewStreamRequest = videocapture::v1::NewStreamRequest;
+    using NewStreamResponse = videocapture::v1::NewStreamResponse;
+    using ServerContext = grpc::ServerContext;
+    using Status = grpc::Status;
+    using StatusCode = grpc::StatusCode;
+
     bool Init(const bool verbose);
 
-    Status
-    NewStream(ServerContext* context, const NewStreamRequest* request, NewStreamResponse* response);
+    Status NewStream(ServerContext* context,
+                     const NewStreamRequest* request,
+                     NewStreamResponse* response) override;
 
     Status DeleteStream(ServerContext* context,
                         const DeleteStreamRequest* request,
-                        DeleteStreamResponse* response);
+                        DeleteStreamResponse* response) override;
 
-    Status
-    GetFrame(ServerContext* context, const GetFrameRequest* request, GetFrameResponse* response);
+    Status GetFrame(ServerContext* context,
+                    const GetFrameRequest* request,
+                    GetFrameResponse* response) override;
 
     bool GetImgDataFromStream(unsigned int stream, void** data, size_t& size, uint32_t& frameRef);
 

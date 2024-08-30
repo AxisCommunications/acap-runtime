@@ -18,13 +18,16 @@
 #include "video_capture.h"
 #include <larod.h>
 
-using namespace grpc;
-using namespace tensorflow;
-using namespace tensorflow::serving;
-
 namespace acap_runtime {
-class Inference : public PredictionService::Service {
+class Inference : public tensorflow::serving::PredictionService::Service {
   public:
+    using ModelSpec = tensorflow::serving::ModelSpec;
+    using PredictRequest = tensorflow::serving::PredictRequest;
+    using PredictResponse = tensorflow::serving::PredictResponse;
+    using ServerContext = grpc::ServerContext;
+    using Status = grpc::Status;
+    using TensorProto = tensorflow::TensorProto;
+
     Inference();
     ~Inference();
     bool Init(const bool verbose,

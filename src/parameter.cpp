@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <regex>
 
+using namespace grpc;
 using namespace std;
 
 #define ERRORLOG cerr << "ERROR in Parameter: "

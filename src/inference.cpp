@@ -28,8 +28,10 @@
     if (_verbose) \
     std::cout << "TRACE in Inference: "
 
+using namespace grpc;
 using namespace std;
 using namespace std::chrono;
+using namespace tensorflow;
 
 namespace acap_runtime {
 const char* const DATA_TYPES[] = {"LAROD_TENSOR_DATA_TYPE_INVALID",
