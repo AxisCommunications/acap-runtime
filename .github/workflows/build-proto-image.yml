@@ -46,10 +46,11 @@ jobs:
           load: true
           tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
           use_qemu: true
+          platform: linux/arm64
 
       - name: Extract proto files
         run: |
-          container_id=$(docker create axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles)
+          container_id=$(docker create --platform linux/arm64 axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles)
           docker cp $container_id:/build/param/proto_utils ./proto_utils_param
           docker cp $container_id:/build/vdo/proto_utils ./proto_utils_vdo
           docker cp $container_id:/build/tf/proto_utils ./proto_utils_tf
@@ -94,6 +95,8 @@ jobs:
         with:
           dockerfile: ./Dockerfile.proto
           push: true
+          platform: linux/arm64
+          use_qemu: true
           tags: axisecp/acap-runtime:${{ steps.meta.outputs.version }}-protofiles
           registry_user: ${{ secrets.ECOSYSTEM_SERVICE_USER_DOCKER_HUB }}
           registry_token: ${{ secrets.ECOSYSTEM_ACCESS_TOKEN_DOCKER_HUB }}
