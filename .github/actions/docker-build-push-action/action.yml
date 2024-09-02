@@ -79,10 +79,10 @@ runs:
         registry: ${{ inputs.registry }}
         username: ${{ inputs.registry_user }}
         password: ${{ inputs.registry_token }}
-    - name: Build and push image to registry
+    - name: Build image
       uses: docker/build-push-action@v6
       env:
-          DOCKER_BUILD_NO_SUMMARY: true
+          DOCKER_BUILD_SUMMARY: false
       with:
         context: .
         push: ${{ inputs.push }}

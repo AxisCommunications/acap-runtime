@@ -15,11 +15,12 @@
  */
 
 #include "keyvaluestore.grpc.pb.h"
+#include <axsdk/axparameter.h>
 
 #ifdef TEST
-  #define APP_NAME "acapruntimetest"
+#define APP_NAME "acapruntimetest"
 #else
-  #define APP_NAME "acapruntime"
+#define APP_NAME "acapruntime"
 #endif
 
 using namespace grpc;
@@ -27,16 +28,17 @@ using namespace keyvaluestore;
 
 namespace acap_runtime {
 
-  // Logic and data behind the server's behavior.
-  class Parameter final : public KeyValueStore::Service {
-
+// Logic and data behind the server's behavior.
+class Parameter final : public KeyValueStore::Service {
   public:
-    bool Init(const bool verbose);
+    Parameter(bool verbose);
+    ~Parameter();
 
   private:
-    Status GetValues(ServerContext* context,
-      ServerReaderWriter<Response, Request>* stream);
+    Status GetValues(ServerContext* context, const Request* request, Response* response) override;
 
+    AXParameter* ax_parameter;
+    GError* _error;
     bool _verbose;
-  };
+};
 }  // namespace acap_runtime
