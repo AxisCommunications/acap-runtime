@@ -9,7 +9,8 @@ FROM arm64v8/ubuntu:${UBUNTU_VERSION} AS containerized_aarch64
 FROM arm32v7/ubuntu:${UBUNTU_VERSION} AS containerized_armv7hf
 
 FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} AS acap-native-sdk
-FROM acap-native-sdk AS build
+
+FROM acap-native-sdk AS build_base
 
 ARG ARCH
 ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
@@ -19,6 +20,7 @@ WORKDIR ${TARGETSYSROOT}/usr/lib
 RUN [ -z "$(ls libabsl*.so*)" ] || rm -f libabsl*.so*
 
 # Install openssl (to use instead of boringssl)
+# hadolint ignore=DL3009
 RUN <<EOF
 apt-get update
 apt-get install -y --no-install-recommends \
@@ -29,6 +31,18 @@ apt-get install -y --no-install-recommends \
     gnupg \
     openssl
 EOF
+
+FROM build_base AS tensorflow
+
+WORKDIR /opt
+
+# Get TensorFlow and TensorFlow Serving - doing this in parallel saves a little bit of time
+RUN <<EOF
+    git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
+    git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
+EOF
+
+FROM build_base AS testdata
 
 # Install Edge TPU compiler
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -77,6 +91,11 @@ RUN <<EOF
     rm -rf tmp
 EOF
 
+FROM build_base AS build_grpc
+
+ARG ARCH
+ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
+
 # Switch to build directory
 WORKDIR /opt
 
@@ -107,6 +126,11 @@ RUN <<EOF
         ../..
     make -j4 install
 EOF
+
+FROM build_grpc AS build_grpc_arm
+
+ARG ARCH
+ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
 
 # return to build dir
 WORKDIR /opt
@@ -151,11 +175,14 @@ RUN <<EOF
         "$SDKTARGETSYSROOT"/usr/include
 EOF
 
-# Get TensorFlow and TensorFlow Serving
-RUN <<EOF
-    git clone -b r2.9 https://github.com/tensorflow/tensorflow.git /opt/tensorflow/tensorflow
-    git clone -b r2.9 https://github.com/tensorflow/serving.git /opt/tensorflow/serving
-EOF
+FROM build_grpc_arm AS build
+
+ARG TEST
+ARG DEBUG
+
+# Get TensorFlow, TensorFlow Serving and testdata that we pulled in paralell
+COPY --from=tensorflow /opt/tensorflow /opt/tensorflow
+COPY --from=testdata /opt/app/testdata /opt/app/testdata
 
 ## Setup build structure
 WORKDIR /opt/app
@@ -172,10 +199,7 @@ RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/pred
 
 # Building the ACAP application
 
-ARG TEST
-ARG DEBUG
-
-# hadolint ignore=SC2155
+# hadolint ignore=SC2046,SC2155
 RUN <<EOF
     export MANIFEST="manifest-$ARCH.json";
     export EXTRA_FLAGS=$([ "$ARCH" = "aarch64" ] && echo "-D__arm64__" || echo "");
