@@ -26,7 +26,9 @@
 
 #include <sstream>
 
+using namespace grpc;
 using namespace std;
+using namespace videocapture::v1;
 
 #define ERRORLOG cerr << "ERROR in VideoCapture: "
 #define TRACELOG  \
