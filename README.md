@@ -13,6 +13,11 @@ the same device. ACAP Runtime is also described in the [ACAP documentation][acap
 If you are new to the world of ACAPs take a moment to check out
 [What is ACAP?][acap-documentation]
 
+> [!NOTE]
+>
+> Up until release v1.3.1 ACAP Runtime was distributed both as an ACAP Application eap-file and as a Docker Image.
+> All comming releases will be done only as Docker Images.
+
 <!-- omit in toc -->
 ## Table of contents
 
