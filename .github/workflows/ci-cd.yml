@@ -20,6 +20,11 @@ on:
       # do not match date starting w/ 0, e.g. 1.0.2-01232023
       - "![1-9]+.[0-9]+.[0-9]+-[0]*"
   pull_request:
+    paths-ignore:
+      # do not run if only markdown or other administrative files have been updated
+      - "*.md"
+      - "CODEOWNERS"
+      - "LICENSE"
     branches:
       - "main"
 
