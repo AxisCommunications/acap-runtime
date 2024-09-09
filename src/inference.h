@@ -28,12 +28,12 @@ class Inference : public tensorflow::serving::PredictionService::Service {
     using Status = grpc::Status;
     using TensorProto = tensorflow::TensorProto;
 
-    Inference();
-    ~Inference();
-    bool Init(const bool verbose,
+    Inference(const bool verbose,
               const uint64_t chipId,
               const std::vector<std::string>& models,
               Capture* captureService);
+    ~Inference();
+
     Status Predict(ServerContext* context,
                    const PredictRequest* request,
                    PredictResponse* response) override;
@@ -72,7 +72,7 @@ class Inference : public tensorflow::serving::PredictionService::Service {
                                       larodError*& error);
 
     bool _verbose;
-    larodConnection* _conn;
+    larodConnection* _conn = nullptr;
     larodChip _chipId;
     std::map<std::string, larodModel*> _models;
     larodModel* _ppModel;

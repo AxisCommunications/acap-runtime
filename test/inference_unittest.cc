@@ -339,16 +339,19 @@ TEST(InferenceUnittest, InitCpu) {
     }
 
     const vector<string> models = {cpuModel1};
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, cpuChipId, models, &capture));
+    Inference inference{verbose, cpuChipId, models, &capture};
+    SUCCEED();
 }
 
 TEST(InferenceUnittest, Init_Fail) {
     const bool verbose = get_verbose_status();
     const vector<string> models = {cpuModel1, "invalid"};
-
-    Inference inference;
-    ASSERT_FALSE(inference.Init(verbose, cpuChipId, models, &capture));
+    try {
+        Inference inference{verbose, cpuChipId, models, &capture};
+        FAIL();
+    } catch (const runtime_error&) {
+        SUCCEED();
+    }
 }
 
 TEST(InferenceUnittest, PredictCpuModel1Preload) {
@@ -356,8 +359,7 @@ TEST(InferenceUnittest, PredictCpuModel1Preload) {
     const vector<string> models = {cpuModel1};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, cpuChipId, models, &capture));
+    Inference inference{verbose, cpuChipId, models, &capture};
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
@@ -378,8 +380,7 @@ TEST(InferenceUnittest, PredictCpuModel1) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, cpuChipId, models, &capture));
+    Inference inference{verbose, cpuChipId, models, &capture};
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, true);
@@ -400,8 +401,7 @@ TEST(InferenceUnittest, PredictCpuModel2) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, cpuChipId, models, &capture));
+    Inference inference{verbose, cpuChipId, models, &capture};
 #ifdef __arm64__
     PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
     PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
@@ -428,8 +428,7 @@ TEST(InferenceUnittest, PredictCpuModel3) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, cpuChipId, models, &capture));
+    Inference inference{verbose, cpuChipId, models, &capture};
 #ifdef __arm64__
     PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
     PredictModel3(inference, cpuModel3, imageFile1, 653, 190, false);
@@ -456,8 +455,7 @@ TEST(InferenceUnittest, PredictCpuModelMix) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, cpuChipId, models, &capture));
+    Inference inference{verbose, cpuChipId, models, &capture};
 #ifdef __arm64__
     PredictModel1(inference, cpuModel1, imageFile1, 0.87890601, 0.58203125, false);
     PredictModel2(inference, cpuModel2, imageFile1, 653, 168, false);
@@ -485,8 +483,7 @@ TEST(InferenceUnittest, InitDlpu) {
     const bool verbose = get_verbose_status();
     const vector<string> models = {cpuModel1};
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
+    Inference inference{verbose, dlpuChipId, models, &capture};
 }
 
 TEST(InferenceUnittest, PredictDlpuModel1Preload) {
@@ -494,8 +491,7 @@ TEST(InferenceUnittest, PredictDlpuModel1Preload) {
     const vector<string> models = {cpuModel1};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
+    Inference inference{verbose, dlpuChipId, models, &capture};
     PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
     PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
     PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
@@ -513,8 +509,7 @@ TEST(InferenceUnittest, PredictDlpuModel1) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
+    Inference inference{verbose, dlpuChipId, models, &capture};
     PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, false);
     PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, false);
     PredictModel1(inference, cpuModel1, imageFile1, 0.878906, 0.5, true);
@@ -527,8 +522,7 @@ TEST(InferenceUnittest, PredictDlpuModel2) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
+    Inference inference{verbose, dlpuChipId, models, &capture};
     PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
     PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
     PredictModel2(inference, cpuModel2, imageFile1, 653, 166, false);
@@ -544,8 +538,7 @@ TEST(InferenceUnittest, DISABLED_PredictDlpuModel3)
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, dlpuChipId, models, &capture));
+    Inference inference{verbose, dlpuChipId, models, &capture};
     PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
     PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
     PredictModel3(inference, cpuModel3, imageFile1, 653, 197, false);
@@ -557,8 +550,7 @@ TEST(InferenceUnittest, InitTpu) {
     const bool verbose = get_verbose_status();
     const vector<string> models = {tpuModel1};
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, tpuChipId, models, &capture));
+    Inference inference{verbose, tpuChipId, models, &capture};
 }
 
 TEST(InferenceUnittest, PredictTpuModel1Preload) {
@@ -566,8 +558,7 @@ TEST(InferenceUnittest, PredictTpuModel1Preload) {
     const vector<string> models = {tpuModel1};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, tpuChipId, models, &capture));
+    Inference inference{verbose, tpuChipId, models, &capture};
     PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
     PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
     PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
@@ -585,8 +576,7 @@ TEST(InferenceUnittest, PredictTpuModel1) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, tpuChipId, models, &capture));
+    Inference inference{verbose, tpuChipId, models, &capture};
     PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, false);
     PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, false);
     PredictModel1(inference, tpuModel1, imageFile1, 0.878906, 0.5, true);
@@ -599,8 +589,7 @@ TEST(InferenceUnittest, PredictTpuModel2) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, tpuChipId, models, &capture));
+    Inference inference{verbose, tpuChipId, models, &capture};
     PredictModel2(inference, tpuModel2, imageFile1, 653, 118, false);
     PredictModel2(inference, tpuModel2, imageFile1, 653, 118, false);
     PredictModel2(inference, tpuModel2, imageFile1, 653, 118, false);
@@ -613,8 +602,7 @@ TEST(InferenceUnittest, PredictTpuModel3) {
     const vector<string> models = {};
     shm_unlink(sharedFile);
 
-    Inference inference;
-    ASSERT_TRUE(inference.Init(verbose, tpuChipId, models, &capture));
+    Inference inference{verbose, tpuChipId, models, &capture};
     PredictModel3(inference, tpuModel3, imageFile1, 653, 197, false);
     PredictModel3(inference, tpuModel3, imageFile1, 653, 197, false);
     PredictModel3(inference, tpuModel3, imageFile1, 653, 197, false);
