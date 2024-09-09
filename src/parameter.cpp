@@ -30,11 +30,11 @@ namespace acap_runtime {
 
 Parameter::Parameter(bool verbose) : _verbose(verbose) {
     TRACELOG << "Init" << endl;
-    _error = NULL;
-    ax_parameter = ax_parameter_new(APP_NAME, &_error);
+    GError* error = nullptr;
+    ax_parameter = ax_parameter_new(APP_NAME, &error);
     if (ax_parameter == NULL) {
-        ERRORLOG << "Error when creating axparameter: " << _error->message << endl;
-        g_clear_error(&_error);
+        ERRORLOG << "Error when creating axparameter: " << error->message << endl;
+        g_clear_error(&error);
         throw runtime_error{"Could not Init Parameter Service"};
     }
 }
@@ -51,10 +51,11 @@ Status Parameter::GetValues(ServerContext* context, const Request* request, Resp
         return Status(StatusCode::INVALID_ARGUMENT, "No valid input request");
     }
     char* parameter_value = NULL;
-    if (!ax_parameter_get(ax_parameter, parameter_key, &parameter_value, &_error)) {
-        ERRORLOG << "Error when getting axparameter: " << _error->message << endl;
+    GError* error = nullptr;
+    if (!ax_parameter_get(ax_parameter, parameter_key, &parameter_value, &error)) {
+        ERRORLOG << "Error when getting axparameter: " << error->message << endl;
         parameter_value = g_strdup("");
-        g_clear_error(&_error);
+        g_clear_error(&error);
     }
     TRACELOG << parameter_key << ": " << parameter_value << endl;
 
