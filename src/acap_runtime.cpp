@@ -78,13 +78,13 @@ static void init_signals(void) {
 }
 
 // Initialize acap-runtime and start gRPC service
-int RunServer(const string& address,
-              const int port,
-              const uint64_t chipId,
-              const unsigned int time,
-              const string& certificateFile,
-              const string& keyFile,
-              const vector<string>& models) {
+static void RunServer(const string& address,
+                      const int port,
+                      const uint64_t chipId,
+                      const unsigned int time,
+                      const string& certificateFile,
+                      const string& keyFile,
+                      const vector<string>& models) {
     // Setup gRPC service and credentials
     LOG(INFO) << "RunServer port=" << port << " chipId=" << chipId << endl;
     ServerBuilder builder;
@@ -126,23 +126,17 @@ int RunServer(const string& address,
 
     // Start server
     unique_ptr<Server> server(builder.BuildAndStart());
-    if (!server) {
-        syslog(LOG_ERR, "Could not start gRPC server");
-        return EXIT_FAILURE;
-    }
+    if (!server)
+        throw runtime_error("Could not start gRPC server");
 
     if (port == 0) {
         // set uds ownership for current user
-        if (chown(uds_path, geteuid(), getegid()) != 0) {
-            syslog(LOG_ERR, "Error setting uds ownership: %s", strerror(errno));
-            return EXIT_FAILURE;
-        }
+        if (chown(uds_path, geteuid(), getegid()) != 0)
+            throw runtime_error("Error setting uds ownership: "s + strerror(errno));
 
         // set uds permission as read-write for current user & group
-        if (chmod(uds_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) != 0) {
-            syslog(LOG_ERR, "Error setting uds permissions: %s", strerror(errno));
-            return EXIT_FAILURE;
-        }
+        if (chmod(uds_path, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP) != 0)
+            throw runtime_error("Error setting uds permissions: "s + strerror(errno));
     }
 
     // Wait for gRPC service termination
@@ -158,7 +152,6 @@ int RunServer(const string& address,
 
     LOG(INFO) << "Server shutdown" << endl;
     server->Shutdown();
-    return EXIT_SUCCESS;
 }
 
 // Print help
@@ -260,7 +253,8 @@ int AcapRuntime(int argc, char* argv[]) {
     LOG(INFO) << "Start " << argv[0] << endl;
     int ret = [&]() {
         try {
-            return RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
+            RunServer(address, ipPort, chipId, time, pem_file, key_file, models);
+            return 0;
         } catch (const exception& err) {
             syslog(LOG_ERR, "%s", err.what());
             return EXIT_FAILURE;
