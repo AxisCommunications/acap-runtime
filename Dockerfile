@@ -4,6 +4,7 @@ ARG ARCH=armv7hf
 ARG REPO=axisecp
 ARG VERSION=1.14
 ARG UBUNTU_VERSION=22.04
+ARG GRPC_VERSION=v1.65.5
 
 FROM arm64v8/ubuntu:${UBUNTU_VERSION} AS containerized_aarch64
 FROM arm32v7/ubuntu:${UBUNTU_VERSION} AS containerized_armv7hf
@@ -46,6 +47,7 @@ FROM build_base AS testdata
 
 # Install Edge TPU compiler
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3009
 RUN <<EOF
 echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" \
     | tee /etc/apt/sources.list.d/coral-edgetpu.list
@@ -95,6 +97,7 @@ FROM build_base AS build_grpc
 
 ARG ARCH
 ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
+ARG GRPC_VERSION
 
 # Switch to build directory
 WORKDIR /opt
@@ -103,7 +106,7 @@ WORKDIR /opt
 # We do this because we need to be able to run protoc and grpc_cpp_plugin
 # while cross-compiling.
 RUN <<EOF
-    git clone -b v1.46.3 https://github.com/grpc/grpc
+    git clone -b ${GRPC_VERSION} https://github.com/grpc/grpc
     cd grpc
     git submodule update --init
 EOF
@@ -134,24 +137,6 @@ ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
 
 # return to build dir
 WORKDIR /opt
-# Build for ARM
-
-# Clone openssl and extract source code
-RUN <<EOF
-    if [ "$ARCH" = "armv7hf" ]; then
-        export CC_SETTING="arm-linux-gnueabihf-gcc";
-    elif [ "$ARCH" = "aarch64" ]; then
-        export CC_SETTING="aarch64-linux-gnu-gcc";
-    fi;
-    curl -O https://www.openssl.org/source/openssl-1.1.1l.tar.gz
-    tar xzvf openssl-1.1.1l.tar.gz
-    mkdir -p openssl-1.1.1l/build
-    cd openssl-1.1.1l/build
-    rm -rf ../doc
-    ../Configure linux-armv4 no-asm --prefix=$TARGETSYSROOT/usr
-    make CC="$CC_SETTING"
-    make install
-EOF
 
 # Build and install gRPC for ARM.
 # This build will use the host architecture copies of protoc and
@@ -164,10 +149,12 @@ RUN <<EOF
     CXXFLAGS="$CXXFLAGS -g0" cmake \
         -DCMAKE_SYSTEM_NAME=Linux \
         -DCMAKE_SYSTEM_PROCESSOR="$SYSTEM_PROCESSOR_ARCH" \
+        -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+        -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
+        -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
+        -DCMAKE_FIND_ROOT_PATH_MODE_PACKAGE=ONLY \
         -DCMAKE_INSTALL_PREFIX="$SDKTARGETSYSROOT"/usr \
         -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
-        -DgRPC_INSTALL=ON \
-        -DgRPC_SSL_PROVIDER=package \
         -DCMAKE_BUILD_TYPE=Release \
         ../..
     make -j4 install/strip
@@ -177,6 +164,8 @@ EOF
 
 FROM build_grpc_arm AS build
 
+ARG ARCH
+ARG TARGETSYSROOT=/opt/axis/acapsdk/sysroots/${ARCH}
 ARG TEST
 ARG DEBUG
 
@@ -198,7 +187,6 @@ EOF
 RUN patch /opt/app/apis/tensorflow_serving/apis/predict.proto /opt/app/apis/predict_additions.patch
 
 # Building the ACAP application
-
 # hadolint ignore=SC2046,SC2155
 RUN <<EOF
     export MANIFEST="manifest-$ARCH.json";
