@@ -2,6 +2,7 @@
 .github/test/__pycache__/
 apis/
 !apis/keyvaluestore.proto
+!apis/wrappers
 build/
 build_x86_64-linux-gnu/
 larod/
