@@ -40,11 +40,6 @@ namespace acap_runtime {
 // Initialize the capture service
 Capture::Capture(const bool verbose) : _verbose(verbose) {
     TRACELOG << "Init" << endl;
-
-    if (pthread_mutex_init(&_mutex, NULL) != 0) {
-        ERRORLOG << "Init mutex failed" << endl;
-        throw runtime_error("Could not initialize VideoCapture service");
-    }
 }
 
 // Create a new stream
@@ -182,7 +177,7 @@ bool Capture::GetImgDataFromStream(unsigned int stream,
         PrintStreamInfo(vdoStream);
     }
 
-    pthread_mutex_lock(&_mutex);
+    scoped_lock lock(_mutex);
 
     MaybeDeleteOldestFrame(currentStream->second);
 
@@ -204,8 +199,6 @@ bool Capture::GetImgDataFromStream(unsigned int stream,
     *data = bufferData;
 
     frameRef = SaveFrame(currentStream->second, buffer, size);
-
-    pthread_mutex_unlock(&_mutex);
 
     return true;
 }
@@ -240,8 +233,7 @@ void Capture::MaybeDeleteOldestFrame(Stream& stream) {
 
 // Find a frame based on the frame reference and put its data into the response
 bool Capture::GetDataFromSavedFrame(Stream& stream, uint32_t frameRef, GetFrameResponse* response) {
-    pthread_mutex_lock(&_mutex);
-    bool ret = false;
+    scoped_lock lock(_mutex);
     gpointer data = NULL;
 
     // Find the buffer
@@ -250,7 +242,7 @@ bool Capture::GetDataFromSavedFrame(Stream& stream, uint32_t frameRef, GetFrameR
     });
     if (buffer == stream.buffers.end()) {
         ERRORLOG << "Frame reference " << frameRef << " not found" << endl;
-        goto end;
+        return false;
     }
 
     TRACELOG << "Found saved VDO buffer. ID: " << buffer->id << endl;
@@ -258,17 +250,12 @@ bool Capture::GetDataFromSavedFrame(Stream& stream, uint32_t frameRef, GetFrameR
     data = vdo_buffer_get_data(buffer->vdo_buffer);
     if (nullptr == data) {
         ERRORLOG << "Getting data from saved buffer failed" << endl;
-        goto end;
+        return false;
     }
 
     response->set_data(data, buffer->size);
     response->set_size(buffer->size);
-
-    ret = true;
-
-end:
-    pthread_mutex_unlock(&_mutex);
-    return ret;
+    return true;
 }
 
 // Print dimensions and fps of the stream

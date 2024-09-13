@@ -68,11 +68,6 @@ Inference::Inference(const bool verbose,
 
     TRACELOG << "Init chipId=" << chipId << endl;
 
-    if (pthread_mutex_init(&_mtx, NULL) != 0) {
-        ERRORLOG << "Init mutex FAILED" << endl;
-        throw runtime_error("Could not Init Inference Service");
-    }
-
     // Connect to larod service
     if (!larodConnect(&_conn, &error)) {
         PrintError("Connecting to larod FAILED", error);
@@ -189,7 +184,7 @@ Status Inference::Predict(ServerContext* context,
     auto& model = model_it->second;
 
     // Make larod calls atomic and threadsafe
-    pthread_mutex_lock(&_mtx);
+    scoped_lock lock(_mutex);
 
     // Clear class data
     _ppModel = nullptr;
@@ -309,7 +304,6 @@ predict_error:
     larodDestroyModel(&_ppModel);
     CloseTmpFiles(inFiles);
     CloseTmpFiles(outFiles);
-    pthread_mutex_unlock(&_mtx);
     larodClearError(&error);
     return status;
 }
