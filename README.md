@@ -5,6 +5,7 @@
 
 [![Lint codebase](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/lint.yml)
 [![CI/CD](https://github.com/AxisCommunications/acap-runtime/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/ci-cd.yml)
+[![Proto build](https://github.com/AxisCommunications/acap-runtime/actions/workflows/build-proto-image.yml/badge.svg)](https://github.com/AxisCommunications/acap-runtime/actions/workflows/build-proto-image.yml)
 
 ACAP Runtime is a network protocol based service, using [gRPC][gRPC].
 This makes the service available to clients written in different languages on
@@ -13,10 +14,18 @@ the same device. ACAP Runtime is also described in the [ACAP documentation][acap
 If you are new to the world of ACAPs take a moment to check out
 [What is ACAP?][acap-documentation]
 
+<!-- omit in toc -->
+## Notable Releases
+<!-- markdownlint-disable MD013 -->
+| Release                  | AXIS OS min. version | Comment                         |
+| -----------------------: | -------------------: |---------------------------------|
+| [2.0.0][latest-release]  | 11.10                | Latest release                  |
+| [1.3.1][1.3.1-release]   | 10.12                | Legacy release AXIS OS 2022 LTS |
+
 > [!NOTE]
 >
-> Up until release v1.3.1 ACAP Runtime was distributed both as an ACAP Application eap-file and as a Docker Image.
-> All comming releases will be done only as Docker Images.
+> Up until release 1.3.1 ACAP Runtime was distributed both as an ACAP Application eap-file and as a Docker Image.
+> All coming releases will be done only as Docker Images.
 
 <!-- omit in toc -->
 ## Table of contents
@@ -66,8 +75,8 @@ authentication when using ACAP Runtime.
 The following requirements need to be met.
 
 - Axis device:
-  - [Docker ACAP][docker-acap] or [Docker Compose ACAP][docker-compose-acap] installed and running.
-  - AXIS OS version 10.12 or higher.
+  - [Docker ACAP][docker-acap] or [Docker Compose ACAP][docker-compose-acap] version 2.0.0 or higher, installed and running.
+  - AXIS OS version 11.10 or higher.
   - Certificate files if [TLS](#tls) is used.
 
 - Computer:
@@ -255,7 +264,7 @@ where `<ARCH>` is either `armv7hf` or `aarch64`.
 
 ## Building protofiles for Python
 
-The repository includes a Dockerfile (`Dockerfile.proto`) for building the APIs protofiles for Python. The Dockerfile generates the necessary Python files from the protobuf definitions, allowing gRPC communication with the ACAP Runtime service. This means that applications can copy these prebuilt files from ACAP Runtime container image instead of having to build the protofiles themselves.
+The repository includes a Dockerfile (`Dockerfile.proto`) for building the APIs protofiles for Python. The Dockerfile generates the necessary Python files from the protobuf definitions, allowing gRPC communication with the ACAP Runtime service. This means that applications can copy these prebuilt files from `axisecp/acap-runtime:<Release version>-protofiles` image instead of having to build the protofiles themselves.
 
 To build the protofiles:
 
@@ -308,6 +317,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 <!-- Links to external references -->
 <!-- markdownlint-disable MD034 -->
+[1.3.1-release]: https://github.com/AxisCommunications/acap-runtime/releases/tag/1.3.1
 [acap-documentation]: https://axiscommunications.github.io/acap-documentation/docs/introduction/what-is-acap.html
 [acap-documentation-native]: https://axiscommunications.github.io/acap-documentation/docs/introduction/acap-sdk-overview.html#acap-native-sdk
 [acap-documentation-native-ml]: https://axiscommunications.github.io/acap-documentation/docs/api/native-sdk-api.html#machine-learning-api
@@ -320,6 +330,7 @@ Take a look at the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 [dockerDesktop]: https://docs.docker.com/desktop/
 [dockerEngine]: https://docs.docker.com/engine/
 [gRPC]: https://grpc.io/
+[latest-release]: https://github.com/AxisCommunications/acap-runtime/releases/latest
 [minimal-ml-inference]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/minimal-ml-inference
 [openssl-req]: https://www.openssl.org/docs/man3.0/man1/openssl-req.html
 [object-detector-python]: https://github.com/AxisCommunications/acap-computer-vision-sdk-examples/tree/main/object-detector-python
