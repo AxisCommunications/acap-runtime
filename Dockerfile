@@ -127,7 +127,7 @@ RUN <<EOF
         -DgRPC_BUILD_TESTS=OFF \
         -DgRPC_SSL_PROVIDER=package \
         ../..
-    make -j4 install
+    make "-j$(nproc)" install
 EOF
 
 FROM build_grpc AS build_grpc_arm
@@ -157,7 +157,7 @@ RUN <<EOF
         -DCMAKE_FIND_ROOT_PATH="$SDKTARGETSYSROOT"/usr \
         -DCMAKE_BUILD_TYPE=Release \
         ../..
-    make -j4 install/strip
+    make "-j$(nproc)" install/strip
     cp -r /opt/grpc/third_party/googletest/googletest/include/gtest \
         "$SDKTARGETSYSROOT"/usr/include
 EOF
