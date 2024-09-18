@@ -24,8 +24,8 @@ If you are new to the world of ACAPs take a moment to check out
 
 > [!NOTE]
 >
-> Up until release 1.3.1 ACAP Runtime was distributed both as an ACAP Application eap-file and as a Docker Image.
-> All coming releases will be done only as Docker Images.
+> Up until release 1.3.1 ACAP Runtime was distributed both in the form of an ACAP application eap-file and as a Docker image.
+> From release 2.0.0 and onwards ACAP Runtime will be distributed as a Docker image only.
 
 <!-- omit in toc -->
 ## Table of contents
@@ -62,7 +62,7 @@ A client for the ACAP Runtime gRPC server could be developed either using the
 [ACAP Computer Vision SDK][acap-documentation-cv]. See the [Examples](#examples)
 section for examples of how ACAP Runtime is used together with ACAP Computer Vision SDK.
 
-> **Note**
+> [!NOTE]
 >
 > The ACAP Runtime service can run with TLS authentication or without.
 > Be aware that running without TLS authentication is extremely insecure and we
