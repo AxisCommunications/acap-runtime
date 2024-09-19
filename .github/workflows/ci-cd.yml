@@ -25,6 +25,12 @@ on:
       - "*.md"
       - "CODEOWNERS"
       - "LICENSE"
+      - ".clang-format"
+      - ".editorconfig"
+      - ".gitignore"
+      - ".hadolint.yaml"
+      - ".yamllint.yaml"
+      - ".vscode/*"
     branches:
       - "main"
 
