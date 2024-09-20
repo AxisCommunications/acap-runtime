@@ -24,12 +24,8 @@ If you are new to the world of ACAPs take a moment to check out
 - [Overview](#overview)
   - [Requirements](#requirements)
   - [APIs](#apis)
-- [Installation and usage](#installation-and-usage)
-  - [Installation](#installation)
+- [Usage](#usage)
   - [Configuration](#configuration)
-    - [Chip id](#chip-id)
-    - [TLS](#tls)
-    - [gRPC socket](#grpc-socket)
   - [Examples](#examples)
 - [Building ACAP Runtime](#building-acap-runtime)
 - [Building protofiles for Python](#building-protofiles-for-python)
@@ -50,7 +46,7 @@ For further information on the gRPC protocol and how to write gRPC clients see
 ACAP Runtime is available as a docker image and requires that [Docker ACAP][docker-acap] or [Docker Compose ACAP][docker-compose-acap]
 is installed and running on the device. Configuration
 options are described in the Configuration sub section
-in the [Installation and usage](#installation-and-usage).
+in the [Usage](#usage) section.
 
 A client for the ACAP Runtime gRPC server could be developed either using the
 [ACAP Native SDK][acap-documentation-native] or the
@@ -89,31 +85,44 @@ The ACAP Runtime service provides the following APIs:
 - Video capture API - Enables capture of images from a camera.
   A usage example for the Video capture API written in Python can be found in [object-detector-python][object-detector-python].
 
-## Installation and usage
+## Usage
 
-### Installation
+To use ACAP Runtime on an AXIS device first install [Docker ACAP][docker-acap] or [Docker Compose ACAP][docker-compose-acap] on the device. Please refer to the documentation in the repo of either of those applications to make sure the device is compatible.
 
 Pre-built versions of the ACAP Runtime Docker image are available on
 [axisecp/acap-runtime][docker-hub-acap-runtime] with tags on the form
-`<version>-<ARCH>-containerized`.
+`<version>-<ARCH>-containerized`. The documentation of the Docker ACAP/Docker Compose ACAP describes how to upload a docker image to the device as well as how to run it.
+
 To include the containerized ACAP Runtime server in a project, add the image in
 the projects `docker-compose.yml` file. The following is an illustrative
 example of how the service can be set up with docker-compose. Here we use the
-image for `armv7hf` architecture. For a complete description
+image for `aarch64` architecture. For a complete description
 see one of the working project [examples](#examples).
 
 ```yml
 services:
     acap-runtime-server:
-      image: axisecp/acap-runtime:1.1.2-armv7hf-containerized
-      entrypoint: ["/opt/app/acap_runtime/acapruntime", "-o", "-j", "4"]
+      image: axisecp/acap-runtime:2.0.0-aarch64-containerized
+      entrypoint: ["/opt/app/acap_runtime/acapruntime", "-j", "12"]
+      volumes:
+        - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+        - /run/parhand/parhandsocket:/run/parhand/parhandsocket
+        - /usr/lib:/usr/lib
+        - /usr/bin:/usr/bin
+        - shared_volume:/tmp
 
     acap-runtime-client:
         image: <client app image>
         environment:
             - INFERENCE_HOST=unix:///tmp/acap-runtime.sock
             - INFERENCE_PORT=0
+        volumes:
+          - shared_volume:/tmp
+
     <any other apps>
+
+    volumes:
+      shared_volume: {}
 ```
 
 ### Configuration
@@ -195,12 +204,16 @@ openssl req -x509 \
             -keyout server.key
 ```
 
-Where `<days valid>` is the number of days you want the certificate to be valid.
+Where `<days valid>` is the number of days you wish the certificate to be valid.
 
 To use the certificates make sure they are available to the ACAP Runtime service, e.g. by placing them in a location that will be mounted to the container when running. Then use the `-c` and `-k` settings to point them out:
 
 ```sh
-docker run -v <HOST_PATH>:/opt/app/certificates --entrypoint="/opt/app/acap_runtime/acapruntime -k /opt/app/certificates/server.key -c /opt/app/certificates/server.pem axisecp/acap-runtime:<version>-<ARCH>-containerized
+docker run  -v <HOST_PATH>:/opt/app/certificates \
+            --entrypoint="/opt/app/acap_runtime/acapruntime \
+                          -k /opt/app/certificates/server.key \
+                          -c /opt/app/certificates/server.pem" \
+            axisecp/acap-runtime:<version>-<ARCH>-containerized
 ```
 
 where `<HOST_PATH>` is the path on the host system where the certificates are stored.
