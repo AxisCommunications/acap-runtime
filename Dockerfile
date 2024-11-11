@@ -8,6 +8,7 @@ ARG GRPC_VERSION=v1.65.5
 
 # hadolint ignore=DL3029
 FROM --platform=linux/arm64/v8 ubuntu:${UBUNTU_VERSION} AS containerized_aarch64
+# hadolint ignore=DL3029
 FROM --platform=linux/arm/v7 ubuntu:${UBUNTU_VERSION} AS containerized_armv7hf
 
 FROM ${REPO}/acap-native-sdk:${VERSION}-${ARCH}-ubuntu${UBUNTU_VERSION} AS acap-native-sdk
