@@ -8,7 +8,7 @@ ARG SIX_VERSION=1.16.0
 ARG GRPCIO_TOOLS_VERSION=1.65.5
 
 # Build image, generates proto files
-FROM arm64v8/ubuntu:${UBUNTU_VERSION}  AS build-image
+FROM --platform=linux/arm64/v8 ubuntu:${UBUNTU_VERSION} AS build-image
 
 ARG TFSERVING_VERSION
 ARG GRPC_VERSION
