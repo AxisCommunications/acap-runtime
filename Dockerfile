@@ -6,6 +6,7 @@ ARG VERSION=1.14
 ARG UBUNTU_VERSION=22.04
 ARG GRPC_VERSION=v1.65.5
 
+# hadolint ignore=DL3029
 FROM --platform=linux/arm64/v8 ubuntu:${UBUNTU_VERSION} AS containerized_aarch64
 FROM --platform=linux/arm/v7 ubuntu:${UBUNTU_VERSION} AS containerized_armv7hf
 
