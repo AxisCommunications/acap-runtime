@@ -15,6 +15,7 @@
  */
 
 #include <getopt.h>
+#include <glib-unix.h>
 #include <glib.h>
 #include <grpcpp/grpcpp.h>
 #include <sys/stat.h>
@@ -53,28 +54,21 @@ static GMainLoop* loop = NULL;
  *
  * @param signal_num Signal number.
  */
-static void handle_signals(__attribute__((unused)) int signal_num) {
-    switch (signal_num) {
+static gboolean handle_signals(gpointer signal_num) {
+    switch (GPOINTER_TO_INT(signal_num)) {
         case SIGINT:
         case SIGTERM:
-        case SIGQUIT:
             g_main_loop_quit(loop);
     }
+    return G_SOURCE_REMOVE;
 }
 
 /**
  * @brief Initialize signals
  */
 static void init_signals(void) {
-    struct sigaction sa;
-
-    sa.sa_flags = 0;
-
-    sigemptyset(&sa.sa_mask);
-    sa.sa_handler = handle_signals;
-    sigaction(SIGINT, &sa, NULL);
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGQUIT, &sa, NULL);
+    g_unix_signal_add(SIGINT, handle_signals, GINT_TO_POINTER(SIGINT));
+    g_unix_signal_add(SIGTERM, handle_signals, GINT_TO_POINTER(SIGTERM));
 }
 
 // Initialize acap-runtime and start gRPC service
