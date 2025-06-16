@@ -31,7 +31,7 @@ def make_tensor_proto(values):
     dtype = NP_TO_PB[values.dtype.type]
     dims = [tensor_shape_pb2.TensorShapeProto.Dim(size=size) for size in shape]
     tensor_shape_proto = tensor_shape_pb2.TensorShapeProto(dim=dims)
-    return tensor_pb2.TensorProto(dtype=dtype, tensor_shape=tensor_shape_proto, tensor_content=values.tostring())
+    return tensor_pb2.TensorProto(dtype=dtype, tensor_shape=tensor_shape_proto, tensor_content=values.tobytes())
 
 
 def make_ndarray(proto):
