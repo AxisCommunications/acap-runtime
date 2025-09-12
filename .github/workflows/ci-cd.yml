@@ -78,7 +78,7 @@ jobs:
       AXIS_EXTERNAL_POOL: true
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Create test image metadata
         id: meta_test
         uses: ./.github/actions/metadata-action
@@ -142,7 +142,7 @@ jobs:
         arch: [armv7hf, aarch64]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
