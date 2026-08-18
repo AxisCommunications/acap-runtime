@@ -189,7 +189,7 @@ be started.
 | 10      | LAROD_CHIP_ACE                | Axis Compute Engine                                                                         |
 | 11      | LAROD_CHIP_LIBYUV             | CPU with libyuv.                                                                            |
 | 12      | LAROD_CHIP_TFLITE_ARTPEC8DLPU | ARTPEC-8 DLPU with TensorFlow Lite.                                                         |
-| 13      | LAROD_CHIP_OPENCL              | Image processing using OpenCL                                                              |
+| 13      | LAROD_CHIP_OPENCL             | Image processing using OpenCL                                                               |
 
 #### TLS
 
