@@ -34,6 +34,9 @@ on:
     branches:
       - "main"
 
+permissions:
+  contents: read
+
 jobs:
   general_settings:
     name: Set general settings

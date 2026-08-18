@@ -32,6 +32,9 @@ on:
     branches:
       - "main"
 
+permissions:
+  contents: read
+
 jobs:
   build_proto_image:
     name: Build Proto Image
