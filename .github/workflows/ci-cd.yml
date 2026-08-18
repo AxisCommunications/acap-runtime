@@ -81,7 +81,7 @@ jobs:
       AXIS_EXTERNAL_POOL: true
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Create test image metadata
         id: meta_test
         uses: ./.github/actions/metadata-action
@@ -145,7 +145,7 @@ jobs:
         arch: [armv7hf, aarch64]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Create containerized image metadata
         id: meta_containerized
         uses: ./.github/actions/metadata-action
@@ -191,7 +191,7 @@ jobs:
         id: vars
         run: echo "TAG=${GITHUB_REF#refs/*/}" >> ${GITHUB_ENV}
       - name: Create prerelease
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         id: prerelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
