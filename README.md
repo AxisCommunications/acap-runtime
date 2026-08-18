@@ -178,18 +178,18 @@ See the table below for a full list of supported values.
 If the value is set to 0 (LAROD_CHIP_INVALID) the Machine learning API inference service will not
 be started.
 
-| Chip id | Name                          | Description                                |
-|---------|-------------------------------|--------------------------------------------|
-| 0       | LAROD_CHIP_INVALID            | Invalid chip      |
-| 1       | LAROD_CHIP_DEBUG              | Dummy chip for debugging |
-| 4       | LAROD_CHIP_TPU                | Google TPU |
-| 6       | LAROD_CHIP_CVFLOW_NN          | Ambarella CVFlow (NN) |
+| Chip id | Name                          | Description                                                                                 |
+|---------|-------------------------------|---------------------------------------------------------------------------------------------|
+| 0       | LAROD_CHIP_INVALID            | Invalid chip                                                                                |
+| 1       | LAROD_CHIP_DEBUG              | Dummy chip for debugging                                                                    |
+| 4       | LAROD_CHIP_TPU                | Google TPU                                                                                  |
+| 6       | LAROD_CHIP_CVFLOW_NN          | Ambarella CVFlow (NN)                                                                       |
 | 8       | LAROD_CHIP_TFLITE_GLGPU       | GPU with TensorFlow Lite. WARNING: This is an experimental chip which is subject to change. |
-| 9       | LAROD_CHIP_CVFLOW_PROC        | Ambarella CVFlow (proc) |
-| 10      | LAROD_CHIP_ACE                | Axis Compute Engine |
-| 11      | LAROD_CHIP_LIBYUV             | CPU with libyuv. |
-| 12      | LAROD_CHIP_TFLITE_ARTPEC8DLPU | ARTPEC-8 DLPU with TensorFlow Lite. |
-| 13      | LAROD_CHIP_OPENCL | Image processing using OpenCL |
+| 9       | LAROD_CHIP_CVFLOW_PROC        | Ambarella CVFlow (proc)                                                                     |
+| 10      | LAROD_CHIP_ACE                | Axis Compute Engine                                                                         |
+| 11      | LAROD_CHIP_LIBYUV             | CPU with libyuv.                                                                            |
+| 12      | LAROD_CHIP_TFLITE_ARTPEC8DLPU | ARTPEC-8 DLPU with TensorFlow Lite.                                                         |
+| 13      | LAROD_CHIP_OPENCL              | Image processing using OpenCL                                                              |
 
 #### TLS
 
