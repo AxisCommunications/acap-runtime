@@ -1,27 +1,32 @@
 {
-    "schemaVersion": "1.3",
-    "acapPackageConf": {
-        "setup": {
-            "friendlyName": "ACAP Runtime Test Suite",
-            "appName": "acapruntimetest",
-            "vendor": "Axis Communications",
-            "embeddedSdkVersion": "3.0",
-            "user": {
-                "group": "sdk",
-                "username": "sdk"
-            },
-            "vendorUrl": "https://www.axis.com",
-            "runMode": "once",
-            "version": "1.3.1"
-        },
-        "configuration": {
-            "paramConfig": [
-                {
-                    "name": "Verbose",
-                    "default": "no",
-                    "type": "enum:no|No, yes|Yes"
-                }
-            ]
-        }
-    }
+  "job_id": "test-001",
+  "platform": "youtube",
+  "duration_min": 1,
+  "quality": "1080p",
+  "mode": "mixed",
+  "aspect_ratio": "16:9",
+  "script": {
+    "title": "Historia viral de éxito",
+    "hook": "Esto parece imposible, pero ocurrió.",
+    "chapters": [
+      {
+        "start_sec": 0,
+        "end_sec": 30,
+        "title": "El inicio",
+        "narration": "Todo comenzó con una idea simple. Nadie creía que funcionaría.",
+        "visual_prompt": "Persona trabajando en escritorio moderno",
+        "on_screen_text": "El comienzo"
+      },
+      {
+        "start_sec": 30,
+        "end_sec": 60,
+        "title": "El giro",
+        "narration": "Pero un día, todo cambió. Los resultados hablan por sí solos.",
+        "visual_prompt": "Gráficos subiendo, ciudad de noche",
+        "on_screen_text": "El momento clave"
+      }
+    ],
+    "full_narration": "Esto parece imposible, pero ocurrió. Todo comenzó con una idea simple. Nadie creía que funcionaría. Pero un día, todo cambió. Los resultados hablan por sí solos. Sígueme para más historias como esta.",
+    "cta": "Sígueme para más contenido viral."
+  }
 }
